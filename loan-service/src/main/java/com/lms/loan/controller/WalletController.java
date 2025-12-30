@@ -25,8 +25,14 @@ public class WalletController {
      * In production, this would get userId from JWT token.
      */
     @GetMapping("/balance")
-    public ResponseEntity<WalletResponse> getBalance(@RequestHeader("X-User-Id") Long userId) {
-        return ResponseEntity.ok(walletService.getBalance(userId));
+    public ResponseEntity<WalletResponse> getBalance(
+            @RequestParam(value = "userId", required = false) Long userId,
+            @RequestHeader(value = "X-User-Id", required = false) Long headerUserId) {
+        Long effectiveUserId = userId != null ? userId : headerUserId;
+        if (effectiveUserId == null) {
+            throw new IllegalArgumentException("userId is required as query param or X-User-Id header");
+        }
+        return ResponseEntity.ok(walletService.getBalance(effectiveUserId));
     }
 
     /**

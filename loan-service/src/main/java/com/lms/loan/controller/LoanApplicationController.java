@@ -34,8 +34,13 @@ public class LoanApplicationController {
 
     @GetMapping("/my-loans")
     public ResponseEntity<List<LoanApplicationResponse>> getMyLoans(
-            @RequestHeader("X-User-Id") Long userId) {
-        return ResponseEntity.ok(loanService.getMyLoans(userId));
+            @RequestParam(value = "userId", required = false) Long userId,
+            @RequestHeader(value = "X-User-Id", required = false) Long headerUserId) {
+        Long effectiveUserId = userId != null ? userId : headerUserId;
+        if (effectiveUserId == null) {
+            throw new IllegalArgumentException("userId is required as query param or X-User-Id header");
+        }
+        return ResponseEntity.ok(loanService.getMyLoans(effectiveUserId));
     }
 
     @GetMapping("/{id}")
