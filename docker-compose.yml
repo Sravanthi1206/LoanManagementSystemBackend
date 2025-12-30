@@ -1,0 +1,266 @@
+version: '3.8'
+
+services:
+  # ============================================
+  # DATABASES
+  # ============================================
+  
+  mysql:
+    image: mysql:8.0
+    container_name: lms-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_USER: lms_user
+      MYSQL_PASSWORD: lms_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./init-mysql.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - lms-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mongodb:
+    image: mongo:6.0
+    container_name: lms-mongodb
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin123
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - lms-network
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mongo-express:
+    image: mongo-express
+    container_name: lms-mongo-express
+    restart: unless-stopped
+    ports:
+      - "8181:8081"
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: admin
+      ME_CONFIG_MONGODB_ADMINPASSWORD: admin123
+      ME_CONFIG_MONGODB_URL: mongodb://admin:admin123@mongodb:27017/
+    depends_on:
+      - mongodb
+    networks:
+      - lms-network
+
+  # ============================================
+  # MESSAGE BROKER
+  # ============================================
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: lms-rabbitmq
+    restart: unless-stopped
+    ports:
+      - "5672:5672"    # AMQP port
+      - "15672:15672"  # Management UI
+    environment:
+      RABBITMQ_DEFAULT_USER: lms_user
+      RABBITMQ_DEFAULT_PASS: lms_password
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - lms-network
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ============================================
+  # INFRASTRUCTURE SERVICES
+  # ============================================
+
+  config-server:
+    build:
+      context: ./config-server
+      dockerfile: Dockerfile
+    container_name: lms-config-server
+    ports:
+      - "8888:8888"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    networks:
+      - lms-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8888/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  discovery-server:
+    build:
+      context: ./discovery-server
+      dockerfile: Dockerfile
+    container_name: lms-discovery-server
+    ports:
+      - "8761:8761"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
+    depends_on:
+      config-server:
+        condition: service_healthy
+    networks:
+      - lms-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  api-gateway:
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile
+    container_name: lms-api-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+    networks:
+      - lms-network
+
+  # ============================================
+  # APPLICATION SERVICES
+  # ============================================
+
+  identity-service:
+    build:
+      context: ./identity-service
+      dockerfile: Dockerfile
+    container_name: lms-identity-service
+    ports:
+      - "8081:8081"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/lms_users?createDatabaseIfNotExist=true
+      - SPRING_DATASOURCE_USERNAME=lms_user
+      - SPRING_DATASOURCE_PASSWORD=lms_password
+    depends_on:
+      - mysql
+      - discovery-server
+    networks:
+      - lms-network
+
+  loan-service:
+    build:
+      context: ./loan-service
+      dockerfile: Dockerfile
+    container_name: lms-loan-service
+    ports:
+      - "8082:8082"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/lms_loans?createDatabaseIfNotExist=true
+      - SPRING_DATASOURCE_USERNAME=lms_user
+      - SPRING_DATASOURCE_PASSWORD=lms_password
+      - SPRING_RABBITMQ_HOST=rabbitmq
+      - SPRING_RABBITMQ_PORT=5672
+      - SPRING_RABBITMQ_USERNAME=lms_user
+      - SPRING_RABBITMQ_PASSWORD=lms_password
+    volumes:
+      - loan_uploads:/app/uploads
+    depends_on:
+      - mysql
+      - discovery-server
+      - rabbitmq
+    networks:
+      - lms-network
+
+  emi-service:
+    build:
+      context: ./emi-service
+      dockerfile: Dockerfile
+    container_name: lms-emi-service
+    ports:
+      - "8083:8083"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka
+      - SPRING_DATA_MONGODB_URI=mongodb://admin:admin123@mongodb:27017/lms_emi?authSource=admin
+    depends_on:
+      - mongodb
+      - discovery-server
+    networks:
+      - lms-network
+
+  payment-service:
+    build:
+      context: ./payment-service
+      dockerfile: Dockerfile
+    container_name: lms-payment-service
+    ports:
+      - "8084:8084"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/lms_loans?createDatabaseIfNotExist=true
+      - SPRING_DATASOURCE_USERNAME=lms_user
+      - SPRING_DATASOURCE_PASSWORD=lms_password
+    depends_on:
+      - mysql
+      - discovery-server
+    networks:
+      - lms-network
+
+  notification-service:
+    build:
+      context: ./notification-service
+      dockerfile: Dockerfile
+    container_name: lms-notification-service
+    ports:
+      - "8085:8085"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka
+      - SPRING_DATA_MONGODB_URI=mongodb://admin:admin123@mongodb:27017/lms_notifications?authSource=admin
+      - SPRING_RABBITMQ_HOST=rabbitmq
+      - SPRING_RABBITMQ_PORT=5672
+      - SPRING_RABBITMQ_USERNAME=lms_user
+      - SPRING_RABBITMQ_PASSWORD=lms_password
+    depends_on:
+      - mongodb
+      - discovery-server
+      - rabbitmq
+    networks:
+      - lms-network
+
+volumes:
+  mysql_data:
+  mongo_data:
+  loan_uploads:
+  rabbitmq_data:
+
+networks:
+  lms-network:
+    driver: bridge
