@@ -3,17 +3,32 @@ REM ============================================
 REM LMS Backend - Fully Local Startup Script
 REM ============================================
 REM This script:
-REM 1. Builds all microservices (mvn clean package)
-REM 2. Starts them using java -jar
+REM 1. Loads environment variables from .env
+REM 2. Builds all microservices (mvn clean package)
+REM 3. Starts them using java -jar
 REM ============================================
 
 echo ========================================
-echo    LMS Backend - Build & Run
+echo    LMS Backend - Build ^& Run
 echo ========================================
 echo.
 
 REM Navigate to script directory
 cd /d "%~dp0"
+
+REM Load environment variables from .env file if it exists
+if exist .env (
+    echo [Loading] Environment variables from .env...
+    for /f "usebackq tokens=1,2 delims==" %%a in (".env") do (
+        if not "%%a"=="" if not "%%a:~0,1%"=="#" (
+            set "%%a=%%b"
+        )
+    )
+    echo Environment loaded!
+) else (
+    echo [Info] No .env file found, using default values.
+)
+echo.
 
 REM Check if MySQL is running
 echo [Checking] MySQL service...
@@ -105,9 +120,9 @@ echo   - Eureka Dashboard: http://localhost:8761
 echo   - API Gateway:      http://localhost:8080
 echo   - Config Server:    http://localhost:8888
 echo.
-echo Database Connections (Local):
-echo   - MySQL:   localhost:3306
-echo   - MongoDB: localhost:27017
+echo Database Connections:
+echo   - MySQL:   %MYSQL_HOST%:%MYSQL_PORT%
+echo   - MongoDB: %MONGO_HOST%:%MONGO_PORT%
 echo.
 echo Test Credentials:
 echo   - Customer: customer@lms.com / Password@123
