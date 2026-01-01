@@ -19,8 +19,8 @@ public class AuthConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http.csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/register", "/auth/login", "/auth/validate").permitAll()
-                        .anyRequest().authenticated()
+                        // Gateway handles JWT validation - permit all requests here
+                        .anyRequest().permitAll()
                 )
                 // Stateless session for JWT
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) 
