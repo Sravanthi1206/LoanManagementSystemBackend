@@ -1,5 +1,6 @@
 package com.lms.gateway.util;
 
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
@@ -14,6 +15,24 @@ public class JwtUtil {
 
     public void validateToken(final String token) {
         Jwts.parserBuilder().setSigningKey(getSignKey()).build().parseClaimsJws(token);
+    }
+
+    public String getEmailFromToken(final String token) {
+        Claims claims = getClaims(token);
+        return claims.getSubject();
+    }
+
+    public String getRoleFromToken(final String token) {
+        Claims claims = getClaims(token);
+        return claims.get("role", String.class);
+    }
+
+    private Claims getClaims(final String token) {
+        return Jwts.parserBuilder()
+                .setSigningKey(getSignKey())
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
     }
 
     private Key getSignKey() {

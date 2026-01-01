@@ -7,48 +7,69 @@ spring:
   cloud:
     gateway:
       routes:
-        - id: identity-service
+        # Identity Service - Auth endpoints (public)
+        - id: identity-auth
           uri: lb://identity-service
           predicates:
-            - Path=/api/auth/**, /api/users/**, /auth/**, /users/**
+            - Path=/auth/**
           filters:
-            - StripPrefix=1
+            - AuthenticationFilter
+        # Identity Service - User endpoints
+        - id: identity-users
+          uri: lb://identity-service
+          predicates:
+            - Path=/users/**
+          filters:
+            - AuthenticationFilter
+        # Identity Service - Admin endpoints
+        - id: identity-admin
+          uri: lb://identity-service
+          predicates:
+            - Path=/admin/**
+          filters:
+            - AuthenticationFilter
+        # Loan Service - Loans endpoints
         - id: loan-service
           uri: lb://loan-service
           predicates:
-            - Path=/api/loans/**, /api/documents/**, /api/wallet/**, /loans/**, /documents/**, /wallet/**, /dashboard/**
+            - Path=/loans/**
           filters:
-            - name: RewritePath
-              args:
-                regexp: /api/(?<segment>.*)
-                replacement: /${segment}
+            - AuthenticationFilter
+        # Loan Service - Dashboard
+        - id: dashboard-service
+          uri: lb://loan-service
+          predicates:
+            - Path=/dashboard/**
+          filters:
+            - AuthenticationFilter
+        # Loan Service - Wallet
+        - id: wallet-service
+          uri: lb://loan-service
+          predicates:
+            - Path=/wallet/**
+          filters:
+            - AuthenticationFilter
+        # EMI Service
         - id: emi-service
           uri: lb://emi-service
           predicates:
-            - Path=/api/emi/**, /emi/**
+            - Path=/emi/**
           filters:
-            - name: RewritePath
-              args:
-                regexp: /api/(?<segment>.*)
-                replacement: /${segment}
+            - AuthenticationFilter
+        # Payment Service
         - id: payment-service
           uri: lb://payment-service
           predicates:
-            - Path=/api/payments/**, /payments/**
+            - Path=/payments/**
           filters:
-            - name: RewritePath
-              args:
-                regexp: /api/(?<segment>.*)
-                replacement: /${segment}
+            - AuthenticationFilter
+        # Notification Service
         - id: notification-service
           uri: lb://notification-service
           predicates:
-            - Path=/api/notifications/**, /notifications/**
+            - Path=/notifications/**
           filters:
-            - name: RewritePath
-              args:
-                regexp: /api/(?<segment>.*)
-                replacement: /${segment}
+            - AuthenticationFilter
       default-filters:
         - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials, RETAIN_FIRST
 
