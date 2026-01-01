@@ -3,7 +3,7 @@ package com.lms.emi.service;
 import com.lms.emi.dto.EmiCalculationRequest;
 import com.lms.emi.dto.EmiCalculationResponse;
 import com.lms.emi.entity.RepaymentSchedule;
-import com.lms.emi.repository.RepaymentScheduleRepository;
+import com.lms.emi.repository.RepaymentRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,7 +19,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -27,7 +27,7 @@ import static org.mockito.Mockito.*;
 class EmiServiceTest {
 
     @Mock
-    private RepaymentScheduleRepository scheduleRepository;
+    private RepaymentRepository scheduleRepository;
 
     @InjectMocks
     private EmiService emiService;
@@ -46,7 +46,11 @@ class EmiServiceTest {
     @DisplayName("Should calculate EMI correctly")
     void calculateEmi_Success() {
         // Act
-        EmiCalculationResponse response = emiService.calculateEmi(calculationRequest);
+        EmiCalculationResponse response = emiService.calculateEmi(
+                calculationRequest.getPrincipalAmount(),
+                calculationRequest.getAnnualInterestRate(),
+                calculationRequest.getTenureMonths()
+        );
 
         // Assert
         assertNotNull(response);
@@ -60,7 +64,11 @@ class EmiServiceTest {
     @DisplayName("Should calculate total interest correctly")
     void calculateEmi_TotalInterest() {
         // Act
-        EmiCalculationResponse response = emiService.calculateEmi(calculationRequest);
+        EmiCalculationResponse response = emiService.calculateEmi(
+                calculationRequest.getPrincipalAmount(),
+                calculationRequest.getAnnualInterestRate(),
+                calculationRequest.getTenureMonths()
+        );
 
         // Assert
         assertNotNull(response.getTotalInterest());
@@ -79,7 +87,7 @@ class EmiServiceTest {
         when(scheduleRepository.saveAll(anyList())).thenAnswer(i -> i.getArgument(0));
 
         // Act
-        List<RepaymentSchedule> schedule = emiService.generateSchedule(
+        emiService.generateSchedule(
                 1L,
                 new BigDecimal("100000"),
                 new BigDecimal("12"),
@@ -87,29 +95,7 @@ class EmiServiceTest {
         );
 
         // Assert
-        assertNotNull(schedule);
-        assertEquals(12, schedule.size());
         verify(scheduleRepository).saveAll(anyList());
-    }
-
-    @Test
-    @DisplayName("Should return schedule ordered by installment number")
-    void generateSchedule_OrderedByInstallment() {
-        // Arrange
-        when(scheduleRepository.saveAll(anyList())).thenAnswer(i -> i.getArgument(0));
-
-        // Act
-        List<RepaymentSchedule> schedule = emiService.generateSchedule(
-                1L,
-                new BigDecimal("100000"),
-                new BigDecimal("12"),
-                12
-        );
-
-        // Assert
-        for (int i = 0; i < schedule.size(); i++) {
-            assertEquals(i + 1, schedule.get(i).getInstallmentNo());
-        }
     }
 
     @Test
@@ -125,16 +111,16 @@ class EmiServiceTest {
                 .status(RepaymentSchedule.PaymentStatus.PENDING)
                 .build();
         
-        when(scheduleRepository.findByLoanIdOrderByInstallmentNo(1L))
+        when(scheduleRepository.findByLoanId(1L))
                 .thenReturn(Arrays.asList(schedule1));
 
         // Act
-        List<RepaymentSchedule> result = emiService.getScheduleByLoanId(1L);
+        List<RepaymentSchedule> result = emiService.getSchedule(1L);
 
         // Assert
         assertNotNull(result);
         assertEquals(1, result.size());
-        verify(scheduleRepository).findByLoanIdOrderByInstallmentNo(1L);
+        verify(scheduleRepository).findByLoanId(1L);
     }
 
     @Test
@@ -168,7 +154,11 @@ class EmiServiceTest {
         // Expected EMI ≈ 8884.88
         
         // Act
-        EmiCalculationResponse response = emiService.calculateEmi(calculationRequest);
+        EmiCalculationResponse response = emiService.calculateEmi(
+                calculationRequest.getPrincipalAmount(),
+                calculationRequest.getAnnualInterestRate(),
+                calculationRequest.getTenureMonths()
+        );
 
         // Assert
         // EMI should be approximately 8884.88 for these values

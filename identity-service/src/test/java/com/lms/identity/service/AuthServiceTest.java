@@ -1,8 +1,9 @@
 package com.lms.identity.service;
 
-import com.lms.identity.dto.AuthRequest;
-import com.lms.identity.dto.AuthResponse;
-import com.lms.identity.dto.RegisterRequest;
+import com.lms.identity.dto.LoginRequest;
+import com.lms.identity.dto.LoginResponse;
+import com.lms.identity.dto.UserRegisterRequest;
+import com.lms.identity.dto.UserResponse;
 import com.lms.identity.entity.User;
 import com.lms.identity.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -38,8 +39,8 @@ class AuthServiceTest {
     private AuthService authService;
 
     private User testUser;
-    private RegisterRequest registerRequest;
-    private AuthRequest authRequest;
+    private UserRegisterRequest registerRequest;
+    private LoginRequest loginRequest;
 
     @BeforeEach
     void setUp() {
@@ -54,16 +55,16 @@ class AuthServiceTest {
                 .active(true)
                 .build();
 
-        registerRequest = new RegisterRequest();
+        registerRequest = new UserRegisterRequest();
         registerRequest.setEmail("newuser@example.com");
         registerRequest.setPassword("Password@123");
         registerRequest.setFirstName("Jane");
         registerRequest.setLastName("Doe");
         registerRequest.setPhone("9876543210");
 
-        authRequest = new AuthRequest();
-        authRequest.setEmail("test@example.com");
-        authRequest.setPassword("Password@123");
+        loginRequest = new LoginRequest();
+        loginRequest.setEmail("test@example.com");
+        loginRequest.setPassword("Password@123");
     }
 
     @Test
@@ -73,12 +74,14 @@ class AuthServiceTest {
         when(userRepository.existsByEmail(anyString())).thenReturn(false);
         when(passwordEncoder.encode(anyString())).thenReturn("encodedPassword");
         when(userRepository.save(any(User.class))).thenReturn(testUser);
+        when(jwtService.generateToken(anyString(), anyString())).thenReturn("jwt-token");
 
         // Act
-        User result = authService.register(registerRequest);
+        LoginResponse result = authService.register(registerRequest);
 
         // Assert
         assertNotNull(result);
+        assertEquals("jwt-token", result.getAccessToken());
         verify(userRepository).existsByEmail(registerRequest.getEmail());
         verify(passwordEncoder).encode(registerRequest.getPassword());
         verify(userRepository).save(any(User.class));
@@ -101,15 +104,15 @@ class AuthServiceTest {
         // Arrange
         when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(testUser));
         when(passwordEncoder.matches(anyString(), anyString())).thenReturn(true);
-        when(jwtService.generateToken(any(User.class))).thenReturn("jwt-token");
+        when(jwtService.generateToken(anyString(), anyString())).thenReturn("jwt-token");
 
         // Act
-        AuthResponse response = authService.authenticate(authRequest);
+        LoginResponse response = authService.login(loginRequest);
 
         // Assert
         assertNotNull(response);
-        assertEquals("jwt-token", response.getToken());
-        verify(jwtService).generateToken(testUser);
+        assertEquals("jwt-token", response.getAccessToken());
+        verify(jwtService).generateToken(testUser.getEmail(), testUser.getRole().name());
     }
 
     @Test
@@ -120,8 +123,8 @@ class AuthServiceTest {
         when(passwordEncoder.matches(anyString(), anyString())).thenReturn(false);
 
         // Act & Assert
-        assertThrows(RuntimeException.class, () -> authService.authenticate(authRequest));
-        verify(jwtService, never()).generateToken(any());
+        assertThrows(RuntimeException.class, () -> authService.login(loginRequest));
+        verify(jwtService, never()).generateToken(anyString(), anyString());
     }
 
     @Test
@@ -131,6 +134,6 @@ class AuthServiceTest {
         when(userRepository.findByEmail(anyString())).thenReturn(Optional.empty());
 
         // Act & Assert
-        assertThrows(RuntimeException.class, () -> authService.authenticate(authRequest));
+        assertThrows(RuntimeException.class, () -> authService.login(loginRequest));
     }
 }

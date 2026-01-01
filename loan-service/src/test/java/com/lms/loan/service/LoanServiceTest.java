@@ -5,6 +5,7 @@ import com.lms.loan.dto.LoanApplicationResponse;
 import com.lms.loan.dto.LoanApprovalRequest;
 import com.lms.loan.entity.Loan;
 import com.lms.loan.repository.LoanRepository;
+import com.lms.loan.messaging.NotificationPublisher;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -34,6 +35,9 @@ class LoanServiceTest {
 
     @Mock
     private LoanRepository loanRepository;
+    
+    @Mock
+    private NotificationPublisher notificationPublisher;
 
     @InjectMocks
     private LoanService loanService;
@@ -44,7 +48,7 @@ class LoanServiceTest {
     @BeforeEach
     void setUp() {
         testLoan = Loan.builder()
-                .id(1L)
+                .loanId(1L)
                 .userId(100L)
                 .type(Loan.LoanType.PERSONAL)
                 .amountRequested(new BigDecimal("100000"))
@@ -57,9 +61,10 @@ class LoanServiceTest {
                 .build();
 
         applicationRequest = new LoanApplicationRequest();
+        applicationRequest.setUserId(100L);
         applicationRequest.setType(Loan.LoanType.PERSONAL);
-        applicationRequest.setAmountRequested(new BigDecimal("100000"));
-        applicationRequest.setTenureMonths(12);
+        applicationRequest.setAmount(new BigDecimal("100000"));
+        applicationRequest.setTenure(12);
         applicationRequest.setPurpose("Home renovation");
         applicationRequest.setEmploymentType(Loan.EmploymentType.SALARIED);
         applicationRequest.setMonthlyIncome(new BigDecimal("50000"));
@@ -72,12 +77,13 @@ class LoanServiceTest {
         when(loanRepository.save(any(Loan.class))).thenReturn(testLoan);
 
         // Act
-        LoanApplicationResponse response = loanService.applyForLoan(100L, applicationRequest);
+        LoanApplicationResponse response = loanService.applyLoan(applicationRequest);
 
         // Assert
         assertNotNull(response);
         assertEquals(Loan.LoanStatus.APPLIED, response.getStatus());
         verify(loanRepository).save(any(Loan.class));
+        verify(notificationPublisher).sendLoanNotification(anyLong(), any(), any(), any(), any(), any());
     }
 
     @Test
@@ -88,7 +94,7 @@ class LoanServiceTest {
         when(loanRepository.findByUserId(100L)).thenReturn(loans);
 
         // Act
-        List<LoanApplicationResponse> result = loanService.getLoansByUserId(100L);
+        List<LoanApplicationResponse> result = loanService.getMyLoans(100L);
 
         // Assert
         assertNotNull(result);
@@ -133,6 +139,7 @@ class LoanServiceTest {
         // Assert
         assertNotNull(response);
         assertEquals(Loan.LoanStatus.APPROVED, response.getStatus());
+        verify(notificationPublisher).sendLoanNotification(anyLong(), any(), any(), any(), any(), any());
     }
 
     @Test
@@ -149,6 +156,7 @@ class LoanServiceTest {
         // Assert
         assertNotNull(response);
         assertEquals(Loan.LoanStatus.REJECTED, response.getStatus());
+        verify(notificationPublisher).sendLoanNotification(anyLong(), any(), any(), any(), any(), any());
     }
 
     @Test
