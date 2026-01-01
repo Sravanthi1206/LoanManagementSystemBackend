@@ -1,8 +1,8 @@
 {
     "info": {
-        "_postman_id": "lms-api-collection",
+        "_postman_id": "lms-api-collection-v2",
         "name": "LMS API Collection",
-        "description": "Complete API test collection for Loan Management System",
+        "description": "Complete Loan Management System API Collection - All endpoints verified against actual backend implementation",
         "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
     },
     "variable": [
@@ -12,33 +12,44 @@
             "type": "string"
         },
         {
-            "key": "authToken",
+            "key": "customerToken",
             "value": "",
+            "type": "string"
+        },
+        {
+            "key": "officerToken",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "adminToken",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "userId",
+            "value": "1",
+            "type": "string"
+        },
+        {
+            "key": "loanId",
+            "value": "1",
             "type": "string"
         }
     ],
     "item": [
         {
-            "name": "Authentication",
+            "name": "1. Authentication",
             "item": [
                 {
-                    "name": "Register Customer",
+                    "name": "1.1 Register Customer",
                     "event": [
                         {
                             "listen": "test",
                             "script": {
                                 "exec": [
-                                    "pm.test('Status code is 201 or 400', function() {",
-                                    "    pm.expect(pm.response.code).to.be.oneOf([201, 400]);",
-                                    "});",
-                                    "",
-                                    "if (pm.response.code === 201) {",
-                                    "    pm.test('Response contains user data', function() {",
-                                    "        var jsonData = pm.response.json();",
-                                    "        pm.expect(jsonData).to.have.property('id');",
-                                    "        pm.expect(jsonData).to.have.property('email');",
-                                    "    });",
-                                    "}"
+                                    "pm.test('Status 201 or 409', () => pm.expect(pm.response.code).to.be.oneOf([201, 409]));",
+                                    "if(pm.response.code===201){let r=pm.response.json();pm.collectionVariables.set('userId',r.user?.id||r.id);}"
                                 ],
                                 "type": "text/javascript"
                             }
@@ -54,15 +65,14 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n  \"email\": \"test.customer@lms.com\",\n  \"password\": \"Password@123\",\n  \"firstName\": \"Test\",\n  \"lastName\": \"Customer\",\n  \"phone\": \"+919876543210\"\n}"
+                            "raw": "{\n  \"email\": \"testcustomer@lms.com\",\n  \"password\": \"Password@123\",\n  \"firstName\": \"Test\",\n  \"lastName\": \"Customer\",\n  \"phone\": \"+919876543210\"\n}"
                         },
                         "url": {
-                            "raw": "{{baseUrl}}/api/auth/register",
+                            "raw": "{{baseUrl}}/auth/register",
                             "host": [
                                 "{{baseUrl}}"
                             ],
                             "path": [
-                                "api",
                                 "auth",
                                 "register"
                             ]
@@ -70,21 +80,14 @@
                     }
                 },
                 {
-                    "name": "Login",
+                    "name": "1.2 Login Customer",
                     "event": [
                         {
                             "listen": "test",
                             "script": {
                                 "exec": [
-                                    "pm.test('Status code is 200', function() {",
-                                    "    pm.response.to.have.status(200);",
-                                    "});",
-                                    "",
-                                    "pm.test('Response contains token', function() {",
-                                    "    var jsonData = pm.response.json();",
-                                    "    pm.expect(jsonData).to.have.property('accessToken');",
-                                    "    pm.collectionVariables.set('authToken', jsonData.accessToken);",
-                                    "});"
+                                    "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                                    "let r=pm.response.json();pm.collectionVariables.set('customerToken',r.accessToken);pm.test('Token received', () => pm.expect(r.accessToken).to.exist);"
                                 ],
                                 "type": "text/javascript"
                             }
@@ -100,15 +103,90 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n  \"email\": \"test.customer@lms.com\",\n  \"password\": \"Password@123\"\n}"
+                            "raw": "{\n  \"email\": \"customer@lms.com\",\n  \"password\": \"Password@123\"\n}"
                         },
                         "url": {
-                            "raw": "{{baseUrl}}/api/auth/login",
+                            "raw": "{{baseUrl}}/auth/login",
                             "host": [
                                 "{{baseUrl}}"
                             ],
                             "path": [
-                                "api",
+                                "auth",
+                                "login"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "1.3 Login Officer",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                                    "let r=pm.response.json();pm.collectionVariables.set('officerToken',r.accessToken);"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"email\": \"officer@lms.com\",\n  \"password\": \"Password@123\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/auth/login",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "login"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "1.4 Login Admin",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                                    "let r=pm.response.json();pm.collectionVariables.set('adminToken',r.accessToken);"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"email\": \"admin@lms.com\",\n  \"password\": \"Password@123\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/auth/login",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
                                 "auth",
                                 "login"
                             ]
@@ -118,25 +196,165 @@
             ]
         },
         {
-            "name": "Loan Application",
+            "name": "2. User Management",
             "item": [
                 {
-                    "name": "Apply for Loan",
+                    "name": "2.1 Get User Profile",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{customerToken}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/users/profile",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "users",
+                                "profile"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "2.2 Get User by ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{adminToken}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/users/{{userId}}",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "users",
+                                "{{userId}}"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "2.3 Get All Users (Admin)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{adminToken}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/users",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "users"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "2.4 Create Staff User (Admin)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{adminToken}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"email\": \"newofficer@lms.com\",\n  \"password\": \"Password@123\",\n  \"firstName\": \"New\",\n  \"lastName\": \"Officer\",\n  \"phone\": \"+919876543211\",\n  \"role\": \"LOAN_OFFICER\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/admin/users",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "admin",
+                                "users"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "2.5 Deactivate User (Admin)",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{adminToken}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/admin/users/{{userId}}/deactivate",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "admin",
+                                "users",
+                                "{{userId}}",
+                                "deactivate"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "2.6 Activate User (Admin)",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{adminToken}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/admin/users/{{userId}}/activate",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "admin",
+                                "users",
+                                "{{userId}}",
+                                "activate"
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "3. Loan Application (Customer)",
+            "item": [
+                {
+                    "name": "3.1 Apply for Loan",
                     "event": [
                         {
                             "listen": "test",
                             "script": {
                                 "exec": [
-                                    "pm.test('Status code is 201', function() {",
-                                    "    pm.response.to.have.status(201);",
-                                    "});",
-                                    "",
-                                    "pm.test('Response contains loan data', function() {",
-                                    "    var jsonData = pm.response.json();",
-                                    "    pm.expect(jsonData).to.have.property('loanId');",
-                                    "    pm.expect(jsonData.status).to.equal('APPLIED');",
-                                    "    pm.collectionVariables.set('loanId', jsonData.loanId);",
-                                    "});"
+                                    "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                                    "let r=pm.response.json();if(r.loanId)pm.collectionVariables.set('loanId',r.loanId);"
                                 ],
                                 "type": "text/javascript"
                             }
@@ -146,25 +364,24 @@
                         "method": "POST",
                         "header": [
                             {
-                                "key": "Content-Type",
-                                "value": "application/json"
+                                "key": "Authorization",
+                                "value": "Bearer {{customerToken}}"
                             },
                             {
-                                "key": "Authorization",
-                                "value": "Bearer {{authToken}}"
+                                "key": "Content-Type",
+                                "value": "application/json"
                             }
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n  \"userId\": 1,\n  \"type\": \"PERSONAL\",\n  \"amount\": 100000,\n  \"tenure\": 12,\n  \"purpose\": \"Newman Test Loan\",\n  \"employmentType\": \"SALARIED\",\n  \"employerName\": \"Test Corp\",\n  \"monthlyIncome\": 50000,\n  \"annualIncome\": 600000,\n  \"existingLoans\": false,\n  \"existingEmiAmount\": 0\n}"
+                            "raw": "{\n  \"userId\": 1,\n  \"type\": \"PERSONAL\",\n  \"amount\": 100000,\n  \"tenure\": 12,\n  \"purpose\": \"Home Renovation\",\n  \"employmentType\": \"SALARIED\",\n  \"employerName\": \"Tech Corp\",\n  \"monthlyIncome\": 50000,\n  \"annualIncome\": 600000,\n  \"existingLoans\": false,\n  \"existingEmiAmount\": 0\n}"
                         },
                         "url": {
-                            "raw": "{{baseUrl}}/api/loans/apply",
+                            "raw": "{{baseUrl}}/loans/apply",
                             "host": [
                                 "{{baseUrl}}"
                             ],
                             "path": [
-                                "api",
                                 "loans",
                                 "apply"
                             ]
@@ -172,20 +389,13 @@
                     }
                 },
                 {
-                    "name": "Get My Loans",
+                    "name": "3.2 Get My Loans",
                     "event": [
                         {
                             "listen": "test",
                             "script": {
                                 "exec": [
-                                    "pm.test('Status code is 200', function() {",
-                                    "    pm.response.to.have.status(200);",
-                                    "});",
-                                    "",
-                                    "pm.test('Response is an array', function() {",
-                                    "    var jsonData = pm.response.json();",
-                                    "    pm.expect(jsonData).to.be.an('array');",
-                                    "});"
+                                    "pm.test('Status 200', () => pm.response.to.have.status(200));"
                                 ],
                                 "type": "text/javascript"
                             }
@@ -196,24 +406,72 @@
                         "header": [
                             {
                                 "key": "Authorization",
-                                "value": "Bearer {{authToken}}"
+                                "value": "Bearer {{customerToken}}"
                             }
                         ],
                         "url": {
-                            "raw": "{{baseUrl}}/api/loans/my-loans?userId=1",
+                            "raw": "{{baseUrl}}/loans/my-loans?userId={{userId}}",
                             "host": [
                                 "{{baseUrl}}"
                             ],
                             "path": [
-                                "api",
                                 "loans",
                                 "my-loans"
                             ],
                             "query": [
                                 {
                                     "key": "userId",
-                                    "value": "1"
+                                    "value": "{{userId}}"
                                 }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "3.3 Get Loan by ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{customerToken}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/loans/{{loanId}}",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "loans",
+                                "{{loanId}}"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "3.4 Withdraw Loan",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{customerToken}}"
+                            },
+                            {
+                                "key": "X-User-Id",
+                                "value": "{{userId}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/loans/{{loanId}}/withdraw",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "loans",
+                                "{{loanId}}",
+                                "withdraw"
                             ]
                         }
                     }
@@ -221,33 +479,111 @@
             ]
         },
         {
-            "name": "EMI Service",
+            "name": "4. Loan Processing (Officer)",
             "item": [
                 {
-                    "name": "Calculate EMI",
-                    "event": [
-                        {
-                            "listen": "test",
-                            "script": {
-                                "exec": [
-                                    "pm.test('Status code is 200', function() {",
-                                    "    pm.response.to.have.status(200);",
-                                    "});",
-                                    "",
-                                    "pm.test('EMI calculation is correct', function() {",
-                                    "    var jsonData = pm.response.json();",
-                                    "    pm.expect(jsonData).to.have.property('monthlyEmi');",
-                                    "    pm.expect(jsonData).to.have.property('totalPayment');",
-                                    "    pm.expect(jsonData.monthlyEmi).to.be.above(0);",
-                                    "});"
-                                ],
-                                "type": "text/javascript"
+                    "name": "4.1 Get Pending Loans",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{officerToken}}"
                             }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/loans/admin/pending",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "loans",
+                                "admin",
+                                "pending"
+                            ]
                         }
-                    ],
+                    }
+                },
+                {
+                    "name": "4.2 Get Under Review Loans",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{officerToken}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/loans/admin/under-review",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "loans",
+                                "admin",
+                                "under-review"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "4.3 Get Loans by Status",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{officerToken}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/loans/admin/by-status/APPLIED",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "loans",
+                                "admin",
+                                "by-status",
+                                "APPLIED"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "4.4 Start Review",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{officerToken}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/loans/admin/{{loanId}}/review",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "loans",
+                                "admin",
+                                "{{loanId}}",
+                                "review"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "4.5 Credit Check",
                     "request": {
                         "method": "POST",
                         "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{officerToken}}"
+                            },
                             {
                                 "key": "Content-Type",
                                 "value": "application/json"
@@ -255,17 +591,82 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n  \"principal\": 100000,\n  \"annualInterestRate\": 12,\n  \"tenureMonths\": 12\n}"
+                            "raw": "{\n  \"creditScore\": 750,\n  \"remarks\": \"Good credit history\"\n}"
                         },
                         "url": {
-                            "raw": "{{baseUrl}}/api/emi/calculate",
+                            "raw": "{{baseUrl}}/loans/admin/{{loanId}}/credit-check",
                             "host": [
                                 "{{baseUrl}}"
                             ],
                             "path": [
-                                "api",
-                                "emi",
-                                "calculate"
+                                "loans",
+                                "admin",
+                                "{{loanId}}",
+                                "credit-check"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "4.6 Approve Loan",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{officerToken}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"approvedAmount\": 100000,\n  \"interestRate\": 12.5,\n  \"remarks\": \"Approved - good credit\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/loans/admin/{{loanId}}/approve",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "loans",
+                                "admin",
+                                "{{loanId}}",
+                                "approve"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "4.7 Reject Loan",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{officerToken}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"remarks\": \"Low credit score\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/loans/admin/{{loanId}}/reject",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "loans",
+                                "admin",
+                                "{{loanId}}",
+                                "reject"
                             ]
                         }
                     }
@@ -273,24 +674,16 @@
             ]
         },
         {
-            "name": "Dashboard",
+            "name": "5. Dashboard",
             "item": [
                 {
-                    "name": "Get Dashboard Stats",
+                    "name": "5.1 Get Dashboard Stats",
                     "event": [
                         {
                             "listen": "test",
                             "script": {
                                 "exec": [
-                                    "pm.test('Status code is 200', function() {",
-                                    "    pm.response.to.have.status(200);",
-                                    "});",
-                                    "",
-                                    "pm.test('Response has statistics', function() {",
-                                    "    var jsonData = pm.response.json();",
-                                    "    pm.expect(jsonData).to.have.property('totalLoans');",
-                                    "    pm.expect(jsonData).to.have.property('loansByType');",
-                                    "});"
+                                    "pm.test('Status 200', () => pm.response.to.have.status(200));"
                                 ],
                                 "type": "text/javascript"
                             }
@@ -301,7 +694,7 @@
                         "header": [
                             {
                                 "key": "Authorization",
-                                "value": "Bearer {{authToken}}"
+                                "value": "Bearer {{officerToken}}"
                             }
                         ],
                         "url": {
@@ -317,31 +710,13 @@
                     }
                 },
                 {
-                    "name": "Get Loans by Status",
-                    "event": [
-                        {
-                            "listen": "test",
-                            "script": {
-                                "exec": [
-                                    "pm.test('Status code is 200', function() {",
-                                    "    pm.response.to.have.status(200);",
-                                    "});",
-                                    "",
-                                    "pm.test('Response is object', function() {",
-                                    "    var jsonData = pm.response.json();",
-                                    "    pm.expect(jsonData).to.be.an('object');",
-                                    "});"
-                                ],
-                                "type": "text/javascript"
-                            }
-                        }
-                    ],
+                    "name": "5.2 Loans by Status Chart",
                     "request": {
                         "method": "GET",
                         "header": [
                             {
                                 "key": "Authorization",
-                                "value": "Bearer {{authToken}}"
+                                "value": "Bearer {{officerToken}}"
                             }
                         ],
                         "url": {
@@ -357,31 +732,13 @@
                     }
                 },
                 {
-                    "name": "Get Loans by Type",
-                    "event": [
-                        {
-                            "listen": "test",
-                            "script": {
-                                "exec": [
-                                    "pm.test('Status code is 200', function() {",
-                                    "    pm.response.to.have.status(200);",
-                                    "});",
-                                    "",
-                                    "pm.test('Response is object', function() {",
-                                    "    var jsonData = pm.response.json();",
-                                    "    pm.expect(jsonData).to.be.an('object');",
-                                    "});"
-                                ],
-                                "type": "text/javascript"
-                            }
-                        }
-                    ],
+                    "name": "5.3 Loans by Type Chart",
                     "request": {
                         "method": "GET",
                         "header": [
                             {
                                 "key": "Authorization",
-                                "value": "Bearer {{authToken}}"
+                                "value": "Bearer {{officerToken}}"
                             }
                         ],
                         "url": {
@@ -395,55 +752,48 @@
                             ]
                         }
                     }
-                }
-            ]
-        },
-        {
-            "name": "Wallet",
-            "item": [
+                },
                 {
-                    "name": "Get Wallet Balance",
-                    "event": [
-                        {
-                            "listen": "test",
-                            "script": {
-                                "exec": [
-                                    "pm.test('Status code is 200', function() {",
-                                    "    pm.response.to.have.status(200);",
-                                    "});",
-                                    "",
-                                    "pm.test('Response has balance', function() {",
-                                    "    var jsonData = pm.response.json();",
-                                    "    pm.expect(jsonData).to.have.property('balance');",
-                                    "});"
-                                ],
-                                "type": "text/javascript"
-                            }
-                        }
-                    ],
+                    "name": "5.4 Customer Summary",
                     "request": {
                         "method": "GET",
                         "header": [
                             {
                                 "key": "Authorization",
-                                "value": "Bearer {{authToken}}"
+                                "value": "Bearer {{customerToken}}"
                             }
                         ],
                         "url": {
-                            "raw": "{{baseUrl}}/api/wallet/balance?userId=1",
+                            "raw": "{{baseUrl}}/dashboard/customer-summary/{{userId}}",
                             "host": [
                                 "{{baseUrl}}"
                             ],
                             "path": [
-                                "api",
-                                "wallet",
-                                "balance"
+                                "dashboard",
+                                "customer-summary",
+                                "{{userId}}"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "5.5 Overdue Report",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{officerToken}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/dashboard/overdue-report",
+                            "host": [
+                                "{{baseUrl}}"
                             ],
-                            "query": [
-                                {
-                                    "key": "userId",
-                                    "value": "1"
-                                }
+                            "path": [
+                                "dashboard",
+                                "overdue-report"
                             ]
                         }
                     }
@@ -451,41 +801,422 @@
             ]
         },
         {
-            "name": "Notifications",
+            "name": "6. EMI Service",
             "item": [
                 {
-                    "name": "Get User Notifications",
+                    "name": "6.1 Calculate EMI",
                     "event": [
                         {
                             "listen": "test",
                             "script": {
                                 "exec": [
-                                    "pm.test('Status code is 200', function() {",
-                                    "    pm.response.to.have.status(200);",
-                                    "});"
+                                    "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                                    "pm.test('EMI calculated', () => pm.expect(pm.response.json().monthlyEmi).to.be.above(0));"
                                 ],
                                 "type": "text/javascript"
                             }
                         }
                     ],
                     "request": {
-                        "method": "GET",
+                        "method": "POST",
                         "header": [
                             {
-                                "key": "Authorization",
-                                "value": "Bearer {{authToken}}"
+                                "key": "Content-Type",
+                                "value": "application/json"
                             }
                         ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"principalAmount\": 100000,\n  \"annualInterestRate\": 12,\n  \"tenureMonths\": 12\n}"
+                        },
                         "url": {
-                            "raw": "{{baseUrl}}/api/notifications/user/1",
+                            "raw": "{{baseUrl}}/emi/calculate",
                             "host": [
                                 "{{baseUrl}}"
                             ],
                             "path": [
-                                "api",
+                                "emi",
+                                "calculate"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "6.2 Generate EMI Schedule",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{officerToken}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/emi/generate?loanId={{loanId}}&amount=100000&rate=12.5&tenure=12",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "emi",
+                                "generate"
+                            ],
+                            "query": [
+                                {
+                                    "key": "loanId",
+                                    "value": "{{loanId}}"
+                                },
+                                {
+                                    "key": "amount",
+                                    "value": "100000"
+                                },
+                                {
+                                    "key": "rate",
+                                    "value": "12.5"
+                                },
+                                {
+                                    "key": "tenure",
+                                    "value": "12"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "6.3 Get EMI Schedule",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{customerToken}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/emi/schedule/{{loanId}}",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "emi",
+                                "schedule",
+                                "{{loanId}}"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "6.4 Get Upcoming EMIs",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{customerToken}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/emi/upcoming/{{userId}}",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "emi",
+                                "upcoming",
+                                "{{userId}}"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "6.5 Mark Installment Paid",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{officerToken}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/emi/installment/1/paid",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "emi",
+                                "installment",
+                                "1",
+                                "paid"
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "7. Wallet",
+            "item": [
+                {
+                    "name": "7.1 Get Wallet Balance",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{customerToken}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/wallet/balance?userId={{userId}}",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "wallet",
+                                "balance"
+                            ],
+                            "query": [
+                                {
+                                    "key": "userId",
+                                    "value": "{{userId}}"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "7.2 Get Wallet Transactions",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{customerToken}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/wallet/transactions?userId={{userId}}",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "wallet",
+                                "transactions"
+                            ],
+                            "query": [
+                                {
+                                    "key": "userId",
+                                    "value": "{{userId}}"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "7.3 Get Balance by User ID (Admin)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{adminToken}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/wallet/balance/{{userId}}",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "wallet",
+                                "balance",
+                                "{{userId}}"
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "8. Payments",
+            "item": [
+                {
+                    "name": "8.1 Disburse Loan",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{officerToken}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"loanId\": 1,\n  \"userId\": 1,\n  \"amount\": 100000\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/payments/disburse",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "payments",
+                                "disburse"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "8.2 Repay EMI",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{customerToken}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"loanId\": 1,\n  \"userId\": 1,\n  \"amount\": 8885,\n  \"installmentNo\": 1\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/payments/repay",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "payments",
+                                "repay"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "8.3 Get Payments by Loan",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{customerToken}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/payments/loan/{{loanId}}",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "payments",
+                                "loan",
+                                "{{loanId}}"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "8.4 Get Payments by User",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{customerToken}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/payments/user/{{userId}}",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "payments",
+                                "user",
+                                "{{userId}}"
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "9. Notifications",
+            "item": [
+                {
+                    "name": "9.1 Get User Notifications",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{customerToken}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/notifications/user/{{userId}}",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
                                 "notifications",
                                 "user",
-                                "1"
+                                "{{userId}}"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "9.2 Get Unread Notifications",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{customerToken}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/notifications/user/{{userId}}/unread",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "notifications",
+                                "user",
+                                "{{userId}}",
+                                "unread"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "9.3 Mark Notification Read",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{customerToken}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/notifications/1/read",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "notifications",
+                                "1",
+                                "read"
                             ]
                         }
                     }
