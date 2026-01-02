@@ -6,3 +6,37 @@ spring:
     name: emi-service
   config:
     import: optional:configserver:http://localhost:8888
+  datasource:
+    url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/lms_emi?createDatabaseIfNotExist=true
+    username: ${MYSQL_USER:root}
+    password: ${MYSQL_PASSWORD:root}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://${EUREKA_HOST:localhost}:8761/eureka
+  instance:
+    prefer-ip-address: true
+
+# Feign Circuit Breaker Configuration
+spring.cloud.openfeign.circuitbreaker.enabled: true
+
+# Resilience4j Circuit Breaker Configuration
+resilience4j:
+  circuitbreaker:
+    instances:
+      notification-service:
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 30s
+        permittedNumberOfCallsInHalfOpenState: 5
+        registerHealthIndicator: true
+  timelimiter:
+    instances:
+      default:
+        timeoutDuration: 5s

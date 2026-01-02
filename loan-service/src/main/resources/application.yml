@@ -36,3 +36,26 @@ eureka:
 
 file:
   upload-dir: uploads
+
+# Feign Circuit Breaker Configuration
+spring.cloud.openfeign.circuitbreaker.enabled: true
+
+# Resilience4j Circuit Breaker Configuration
+resilience4j:
+  circuitbreaker:
+    instances:
+      emi-service:
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 30s
+        permittedNumberOfCallsInHalfOpenState: 5
+        registerHealthIndicator: true
+      notification-service:
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 30s
+        permittedNumberOfCallsInHalfOpenState: 5
+  timelimiter:
+    instances:
+      default:
+        timeoutDuration: 5s
