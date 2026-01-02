@@ -5,8 +5,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.server.reactive.ServerHttpRequest;
+import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.stereotype.Component;
+import reactor.core.publisher.Mono;
 
 @Component
 public class AuthenticationFilter extends AbstractGatewayFilterFactory<AuthenticationFilter.Config> {
@@ -21,18 +24,22 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
     @Override
     public GatewayFilter apply(Config config) {
         return ((exchange, chain) -> {
-            // Skip authentication for /auth endpoints
-            if (exchange.getRequest().getURI().getPath().contains("/auth")) {
+            String path = exchange.getRequest().getURI().getPath();
+            
+            // Skip authentication for public endpoints
+            if (isPublicEndpoint(path)) {
                 return chain.filter(exchange);
             }
 
             if (!exchange.getRequest().getHeaders().containsKey(HttpHeaders.AUTHORIZATION)) {
-                throw new RuntimeException("Missing Authorization Header");
+                return onError(exchange.getResponse(), "Missing Authorization Header", HttpStatus.UNAUTHORIZED);
             }
 
             String authHeader = exchange.getRequest().getHeaders().get(HttpHeaders.AUTHORIZATION).get(0);
             if (authHeader != null && authHeader.startsWith("Bearer ")) {
                 authHeader = authHeader.substring(7);
+            } else {
+                return onError(exchange.getResponse(), "Invalid Authorization Header format", HttpStatus.UNAUTHORIZED);
             }
 
             try {
@@ -50,9 +57,19 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
                 return chain.filter(exchange.mutate().request(modifiedRequest).build());
             } catch (Exception e) {
                 System.out.println("Invalid Access: " + e.getMessage());
-                throw new RuntimeException("Unauthorized Access");
+                return onError(exchange.getResponse(), "Unauthorized: Invalid token", HttpStatus.UNAUTHORIZED);
             }
         });
+    }
+    
+    private boolean isPublicEndpoint(String path) {
+        return path.contains("/auth") 
+            || path.equals("/emi/calculate");
+    }
+    
+    private Mono<Void> onError(ServerHttpResponse response, String message, HttpStatus status) {
+        response.setStatusCode(status);
+        return response.setComplete();
     }
 
     public static class Config {
