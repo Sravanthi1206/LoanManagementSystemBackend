@@ -87,7 +87,7 @@
                             "script": {
                                 "exec": [
                                     "pm.test('Status 200', () => pm.response.to.have.status(200));",
-                                    "let r=pm.response.json();pm.collectionVariables.set('customerToken',r.accessToken);pm.test('Token received', () => pm.expect(r.accessToken).to.exist);"
+                                    "let r=pm.response.json();pm.environment.set('customerToken',r.accessToken);pm.test('Token received', () => pm.expect(r.accessToken).to.exist);"
                                 ],
                                 "type": "text/javascript"
                             }
@@ -125,7 +125,7 @@
                             "script": {
                                 "exec": [
                                     "pm.test('Status 200', () => pm.response.to.have.status(200));",
-                                    "let r=pm.response.json();pm.collectionVariables.set('officerToken',r.accessToken);"
+                                    "let r=pm.response.json();pm.environment.set('officerToken',r.accessToken);"
                                 ],
                                 "type": "text/javascript"
                             }
@@ -694,7 +694,7 @@
                         "header": [
                             {
                                 "key": "Authorization",
-                                "value": "Bearer {{officerToken}}"
+                                "value": "Bearer {{customerToken}}"
                             }
                         ],
                         "url": {
@@ -716,7 +716,7 @@
                         "header": [
                             {
                                 "key": "Authorization",
-                                "value": "Bearer {{officerToken}}"
+                                "value": "Bearer {{customerToken}}"
                             }
                         ],
                         "url": {
@@ -738,7 +738,7 @@
                         "header": [
                             {
                                 "key": "Authorization",
-                                "value": "Bearer {{officerToken}}"
+                                "value": "Bearer {{customerToken}}"
                             }
                         ],
                         "url": {
@@ -783,7 +783,7 @@
                         "header": [
                             {
                                 "key": "Authorization",
-                                "value": "Bearer {{officerToken}}"
+                                "value": "Bearer {{customerToken}}"
                             }
                         ],
                         "url": {
