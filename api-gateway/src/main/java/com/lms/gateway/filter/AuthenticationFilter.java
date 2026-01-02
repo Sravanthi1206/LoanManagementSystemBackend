@@ -45,13 +45,15 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
             try {
                 jwtUtil.validateToken(authHeader);
                 
-                // Extract email and role from token and add them as headers for downstream services
+                // Extract email, role, and userId from token and add them as headers for downstream services
                 String email = jwtUtil.getEmailFromToken(authHeader);
                 String role = jwtUtil.getRoleFromToken(authHeader);
+                Long userId = jwtUtil.getUserIdFromToken(authHeader);
                 
                 ServerHttpRequest modifiedRequest = exchange.getRequest().mutate()
                         .header("X-User-Email", email)
                         .header("X-User-Role", role)
+                        .header("X-User-Id", userId != null ? String.valueOf(userId) : "")
                         .build();
                 
                 return chain.filter(exchange.mutate().request(modifiedRequest).build());

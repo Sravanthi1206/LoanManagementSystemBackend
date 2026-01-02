@@ -74,7 +74,7 @@ class AuthServiceTest {
         when(userRepository.existsByEmail(anyString())).thenReturn(false);
         when(passwordEncoder.encode(anyString())).thenReturn("encodedPassword");
         when(userRepository.save(any(User.class))).thenReturn(testUser);
-        when(jwtService.generateToken(anyString(), anyString())).thenReturn("jwt-token");
+        when(jwtService.generateToken(anyString(), anyString(), anyLong())).thenReturn("jwt-token");
 
         // Act
         LoginResponse result = authService.register(registerRequest);
@@ -104,7 +104,7 @@ class AuthServiceTest {
         // Arrange
         when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(testUser));
         when(passwordEncoder.matches(anyString(), anyString())).thenReturn(true);
-        when(jwtService.generateToken(anyString(), anyString())).thenReturn("jwt-token");
+        when(jwtService.generateToken(anyString(), anyString(), anyLong())).thenReturn("jwt-token");
 
         // Act
         LoginResponse response = authService.login(loginRequest);
@@ -112,7 +112,7 @@ class AuthServiceTest {
         // Assert
         assertNotNull(response);
         assertEquals("jwt-token", response.getAccessToken());
-        verify(jwtService).generateToken(testUser.getEmail(), testUser.getRole().name());
+        verify(jwtService).generateToken(testUser.getEmail(), testUser.getRole().name(), testUser.getId());
     }
 
     @Test
@@ -124,7 +124,7 @@ class AuthServiceTest {
 
         // Act & Assert
         assertThrows(RuntimeException.class, () -> authService.login(loginRequest));
-        verify(jwtService, never()).generateToken(anyString(), anyString());
+        verify(jwtService, never()).generateToken(anyString(), anyString(), anyLong());
     }
 
     @Test

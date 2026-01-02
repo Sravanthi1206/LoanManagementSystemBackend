@@ -43,7 +43,7 @@ public class AuthService {
 
         User savedUser = repository.save(user);
         
-        String accessToken = jwtService.generateToken(savedUser.getEmail(), savedUser.getRole().name());
+        String accessToken = jwtService.generateToken(savedUser.getEmail(), savedUser.getRole().name(), savedUser.getId());
         UserResponse userResponse = mapToUserResponse(savedUser);
         
         return LoginResponse.builder()
@@ -66,7 +66,7 @@ public class AuthService {
             throw new InvalidCredentialsException();
         }
 
-        String accessToken = jwtService.generateToken(user.getEmail(), user.getRole().name());
+        String accessToken = jwtService.generateToken(user.getEmail(), user.getRole().name(), user.getId());
         UserResponse userResponse = mapToUserResponse(user);
         
         return LoginResponse.builder()

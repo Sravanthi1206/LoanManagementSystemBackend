@@ -1,0 +1,1420 @@
+{
+  "_": {
+    "postman_id": "lms-api-collection-v2"
+  },
+  "item": [
+    {
+      "id": "3ff87fb7-5099-40a3-a95f-76988863cce7",
+      "name": "1. Authentication",
+      "item": [
+        {
+          "id": "169a15de-f876-42f1-a1f8-9ab1a6009cb3",
+          "name": "1.1 Register Customer",
+          "request": {
+            "url": {
+              "path": [
+                "auth",
+                "register"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"testcustomer@lms.com\",\n  \"password\": \"Password@123\",\n  \"firstName\": \"Test\",\n  \"lastName\": \"Customer\",\n  \"phone\": \"+919876543210\"\n}"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "0a17a139-fe89-4f68-a815-8d440b55774b",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201 or 409', () => pm.expect(pm.response.code).to.be.oneOf([201, 409]));",
+                  "if(pm.response.code===201){let r=pm.response.json();pm.collectionVariables.set('userId',r.user?.id||r.id);}"
+                ],
+                "_lastExecutionId": "dc4e0915-eb5b-437c-be74-ef352989aa66"
+              }
+            }
+          ]
+        },
+        {
+          "id": "6fb3ce5a-4fb3-4ed1-8e12-ec63d0ce8989",
+          "name": "1.2 Login Customer",
+          "request": {
+            "url": {
+              "path": [
+                "auth",
+                "login"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"customer@lms.com\",\n  \"password\": \"Password@123\"\n}"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "7ed16ceb-bacc-4f72-90c2-7f718c62a642",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "let r=pm.response.json();pm.collectionVariables.set('customerToken',r.accessToken);pm.test('Token received', () => pm.expect(r.accessToken).to.exist);"
+                ],
+                "_lastExecutionId": "2e2b5398-38fe-48cc-8e0d-f8579bda8109"
+              }
+            }
+          ]
+        },
+        {
+          "id": "20868585-5f5a-441e-abab-07bdca7788c7",
+          "name": "1.3 Login Officer",
+          "request": {
+            "url": {
+              "path": [
+                "auth",
+                "login"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"officer@lms.com\",\n  \"password\": \"Password@123\"\n}"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "912d9b68-9fdd-4c56-87a9-3cb5248bc509",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "let r=pm.response.json();pm.collectionVariables.set('officerToken',r.accessToken);"
+                ],
+                "_lastExecutionId": "9d68ed1a-6006-4d83-a6cf-3d4dd1824cc8"
+              }
+            }
+          ]
+        },
+        {
+          "id": "e2cca22e-28bd-4ad1-9844-e92ae0c76506",
+          "name": "1.4 Login Admin",
+          "request": {
+            "url": {
+              "path": [
+                "auth",
+                "login"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@lms.com\",\n  \"password\": \"Password@123\"\n}"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "91116569-a99e-4406-a1f1-5afa459471fd",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "let r=pm.response.json();pm.collectionVariables.set('adminToken',r.accessToken);"
+                ],
+                "_lastExecutionId": "185eef19-0450-43fa-8aad-966e7857d119"
+              }
+            }
+          ]
+        }
+      ],
+      "event": []
+    },
+    {
+      "id": "8b98396b-79c1-484a-8340-ab7dc88e1406",
+      "name": "2. User Management",
+      "item": [
+        {
+          "id": "29ba4625-cb8c-442e-b121-a515c3063b23",
+          "name": "2.1 Get User Profile",
+          "request": {
+            "url": {
+              "path": [
+                "users",
+                "profile"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customerToken}}"
+              }
+            ],
+            "method": "GET"
+          },
+          "response": [],
+          "event": []
+        },
+        {
+          "id": "66db7d92-60c1-4109-9b66-18e68401af46",
+          "name": "2.2 Get User by ID",
+          "request": {
+            "url": {
+              "path": [
+                "users",
+                "{{userId}}"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "method": "GET"
+          },
+          "response": [],
+          "event": []
+        },
+        {
+          "id": "8e0f5d11-5b06-4fcc-aecb-2d15ff35c528",
+          "name": "2.3 Get All Users (Admin)",
+          "request": {
+            "url": {
+              "path": [
+                "users"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "method": "GET"
+          },
+          "response": [],
+          "event": []
+        },
+        {
+          "id": "766220b5-e0c7-4107-bd25-ada244498092",
+          "name": "2.4 Create Staff User (Admin)",
+          "request": {
+            "url": {
+              "path": [
+                "admin",
+                "users"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"newofficer@lms.com\",\n  \"password\": \"Password@123\",\n  \"firstName\": \"New\",\n  \"lastName\": \"Officer\",\n  \"phone\": \"+919876543211\",\n  \"role\": \"LOAN_OFFICER\"\n}"
+            }
+          },
+          "response": [],
+          "event": []
+        },
+        {
+          "id": "ff04f0ea-bdb1-4da8-93e7-56ea58ce1789",
+          "name": "2.5 Deactivate User (Admin)",
+          "request": {
+            "url": {
+              "path": [
+                "admin",
+                "users",
+                "{{userId}}",
+                "deactivate"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "method": "PUT"
+          },
+          "response": [],
+          "event": []
+        },
+        {
+          "id": "b4aec0eb-fd4e-4594-b3e2-dcce7de45b22",
+          "name": "2.6 Activate User (Admin)",
+          "request": {
+            "url": {
+              "path": [
+                "admin",
+                "users",
+                "{{userId}}",
+                "activate"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "method": "PUT"
+          },
+          "response": [],
+          "event": []
+        }
+      ],
+      "event": []
+    },
+    {
+      "id": "af0dfb99-d5c5-401c-bb93-4ee7e0121695",
+      "name": "3. Loan Application (Customer)",
+      "item": [
+        {
+          "id": "5b05ad4b-2401-4a84-aa39-992a39194325",
+          "name": "3.1 Apply for Loan",
+          "request": {
+            "url": {
+              "path": [
+                "loans",
+                "apply"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customerToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": 1,\n  \"type\": \"PERSONAL\",\n  \"amount\": 100000,\n  \"tenure\": 12,\n  \"purpose\": \"Home Renovation\",\n  \"employmentType\": \"SALARIED\",\n  \"employerName\": \"Tech Corp\",\n  \"monthlyIncome\": 50000,\n  \"annualIncome\": 600000,\n  \"existingLoans\": false,\n  \"existingEmiAmount\": 0\n}"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "e46216aa-16ba-445c-ad5b-4583b1fcdb9d",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "let r=pm.response.json();if(r.loanId)pm.collectionVariables.set('loanId',r.loanId);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "954e9434-04cc-4a4c-bf0d-e64c90894e82",
+          "name": "3.2 Get My Loans",
+          "request": {
+            "url": {
+              "path": [
+                "loans",
+                "my-loans"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [
+                {
+                  "key": "userId",
+                  "value": "{{userId}}"
+                }
+              ],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customerToken}}"
+              }
+            ],
+            "method": "GET"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "1e8f62f1-bebf-4c49-85d0-092e03885b8b",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "f1781e88-6fd1-4135-93d1-8ef8e3f4fcbe",
+          "name": "3.3 Get Loan by ID",
+          "request": {
+            "url": {
+              "path": [
+                "loans",
+                "{{loanId}}"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customerToken}}"
+              }
+            ],
+            "method": "GET"
+          },
+          "response": [],
+          "event": []
+        },
+        {
+          "id": "29fc349d-0bd5-4fb2-b734-834f4e05adad",
+          "name": "3.4 Withdraw Loan",
+          "request": {
+            "url": {
+              "path": [
+                "loans",
+                "{{loanId}}",
+                "withdraw"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customerToken}}"
+              },
+              {
+                "key": "X-User-Id",
+                "value": "{{userId}}"
+              }
+            ],
+            "method": "PUT"
+          },
+          "response": [],
+          "event": []
+        }
+      ],
+      "event": []
+    },
+    {
+      "id": "6b037cf0-f368-4010-82ce-2f0afdfb058e",
+      "name": "4. Loan Processing (Officer)",
+      "item": [
+        {
+          "id": "a7cc24be-9e2e-46a8-a29e-8ab351a2a0e5",
+          "name": "4.1 Get Pending Loans",
+          "request": {
+            "url": {
+              "path": [
+                "loans",
+                "admin",
+                "pending"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{officerToken}}"
+              }
+            ],
+            "method": "GET"
+          },
+          "response": [],
+          "event": []
+        },
+        {
+          "id": "a7ebb7e0-7150-4b45-afc7-253673019e52",
+          "name": "4.2 Get Under Review Loans",
+          "request": {
+            "url": {
+              "path": [
+                "loans",
+                "admin",
+                "under-review"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{officerToken}}"
+              }
+            ],
+            "method": "GET"
+          },
+          "response": [],
+          "event": []
+        },
+        {
+          "id": "a55f9a07-5b55-4524-8e69-ced17912a739",
+          "name": "4.3 Get Loans by Status",
+          "request": {
+            "url": {
+              "path": [
+                "loans",
+                "admin",
+                "by-status",
+                "APPLIED"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{officerToken}}"
+              }
+            ],
+            "method": "GET"
+          },
+          "response": [],
+          "event": []
+        },
+        {
+          "id": "52029022-3044-4b68-b798-d6445784fa5f",
+          "name": "4.4 Start Review",
+          "request": {
+            "url": {
+              "path": [
+                "loans",
+                "admin",
+                "{{loanId}}",
+                "review"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{officerToken}}"
+              }
+            ],
+            "method": "PUT"
+          },
+          "response": [],
+          "event": []
+        },
+        {
+          "id": "1e333e47-16d6-4309-8958-f5166bea866e",
+          "name": "4.5 Credit Check",
+          "request": {
+            "url": {
+              "path": [
+                "loans",
+                "admin",
+                "{{loanId}}",
+                "credit-check"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{officerToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"creditScore\": 750,\n  \"remarks\": \"Good credit history\"\n}"
+            }
+          },
+          "response": [],
+          "event": []
+        },
+        {
+          "id": "f465ab7d-4cfa-4252-990d-9157e3f6a75f",
+          "name": "4.6 Approve Loan",
+          "request": {
+            "url": {
+              "path": [
+                "loans",
+                "admin",
+                "{{loanId}}",
+                "approve"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{officerToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PUT",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"approvedAmount\": 100000,\n  \"interestRate\": 12.5,\n  \"remarks\": \"Approved - good credit\"\n}"
+            }
+          },
+          "response": [],
+          "event": []
+        },
+        {
+          "id": "01ab10b9-f4cb-4cb6-bd79-1c63bb2bb919",
+          "name": "4.7 Reject Loan",
+          "request": {
+            "url": {
+              "path": [
+                "loans",
+                "admin",
+                "{{loanId}}",
+                "reject"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{officerToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PUT",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"remarks\": \"Low credit score\"\n}"
+            }
+          },
+          "response": [],
+          "event": []
+        }
+      ],
+      "event": []
+    },
+    {
+      "id": "5de60daa-aa5c-432f-bc07-40fddd5a2959",
+      "name": "5. Dashboard",
+      "item": [
+        {
+          "id": "8c4a1288-877a-4aa5-9ee5-a4b1669503db",
+          "name": "5.1 Get Dashboard Stats",
+          "request": {
+            "url": {
+              "path": [
+                "dashboard",
+                "stats"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customerToken}}"
+              }
+            ],
+            "method": "GET"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "65f126f1-653a-49bd-bb82-fea45b3904b8",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "6190d84e-3219-49a0-b5f9-f5504234eca8",
+          "name": "5.2 Loans by Status Chart",
+          "request": {
+            "url": {
+              "path": [
+                "dashboard",
+                "loans-by-status"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customerToken}}"
+              }
+            ],
+            "method": "GET"
+          },
+          "response": [],
+          "event": []
+        },
+        {
+          "id": "f1401712-651a-47e8-b3b5-5d4350669d7a",
+          "name": "5.3 Loans by Type Chart",
+          "request": {
+            "url": {
+              "path": [
+                "dashboard",
+                "loans-by-type"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customerToken}}"
+              }
+            ],
+            "method": "GET"
+          },
+          "response": [],
+          "event": []
+        },
+        {
+          "id": "c6d8ae51-1e2f-4015-af15-0058eae55ce9",
+          "name": "5.4 Customer Summary",
+          "request": {
+            "url": {
+              "path": [
+                "dashboard",
+                "customer-summary",
+                "{{userId}}"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customerToken}}"
+              }
+            ],
+            "method": "GET"
+          },
+          "response": [],
+          "event": []
+        },
+        {
+          "id": "f84d1f44-d4b3-4690-ba4e-2ca56986499c",
+          "name": "5.5 Overdue Report",
+          "request": {
+            "url": {
+              "path": [
+                "dashboard",
+                "overdue-report"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customerToken}}"
+              }
+            ],
+            "method": "GET"
+          },
+          "response": [],
+          "event": []
+        }
+      ],
+      "event": []
+    },
+    {
+      "id": "c3f14f22-080e-45d1-a22d-1eb9e042cda5",
+      "name": "6. EMI Service",
+      "item": [
+        {
+          "id": "fde3e83c-319b-44a0-9b31-6909fccec8ce",
+          "name": "6.1 Calculate EMI",
+          "request": {
+            "url": {
+              "path": [
+                "emi",
+                "calculate"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"principalAmount\": 100000,\n  \"annualInterestRate\": 12,\n  \"tenureMonths\": 12\n}"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "741d7d50-9b83-4c95-bb5f-168b4d2638f8",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('EMI calculated', () => pm.expect(pm.response.json().monthlyEmi).to.be.above(0));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "5e5994d2-07dd-4d18-9779-eeed17bbf848",
+          "name": "6.2 Generate EMI Schedule",
+          "request": {
+            "url": {
+              "path": [
+                "emi",
+                "generate"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [
+                {
+                  "key": "loanId",
+                  "value": "{{loanId}}"
+                },
+                {
+                  "key": "amount",
+                  "value": "100000"
+                },
+                {
+                  "key": "rate",
+                  "value": "12.5"
+                },
+                {
+                  "key": "tenure",
+                  "value": "12"
+                }
+              ],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{officerToken}}"
+              }
+            ],
+            "method": "POST"
+          },
+          "response": [],
+          "event": []
+        },
+        {
+          "id": "53e4689a-d46c-4487-a0d5-d528df5a2bff",
+          "name": "6.3 Get EMI Schedule",
+          "request": {
+            "url": {
+              "path": [
+                "emi",
+                "schedule",
+                "{{loanId}}"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customerToken}}"
+              }
+            ],
+            "method": "GET"
+          },
+          "response": [],
+          "event": []
+        },
+        {
+          "id": "afb5fefc-a814-4b1b-9a13-ebf728a4f94f",
+          "name": "6.4 Get Upcoming EMIs",
+          "request": {
+            "url": {
+              "path": [
+                "emi",
+                "upcoming",
+                "{{userId}}"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customerToken}}"
+              }
+            ],
+            "method": "GET"
+          },
+          "response": [],
+          "event": []
+        },
+        {
+          "id": "f31de728-30f0-46c9-a9db-db3d3a42108f",
+          "name": "6.5 Mark Installment Paid",
+          "request": {
+            "url": {
+              "path": [
+                "emi",
+                "installment",
+                "1",
+                "paid"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{officerToken}}"
+              }
+            ],
+            "method": "PUT"
+          },
+          "response": [],
+          "event": []
+        }
+      ],
+      "event": []
+    },
+    {
+      "id": "478387a9-510b-43dc-9087-18436df7e8e5",
+      "name": "7. Wallet",
+      "item": [
+        {
+          "id": "3292e261-98f2-43c6-9064-fe5baa93be98",
+          "name": "7.1 Get Wallet Balance",
+          "request": {
+            "url": {
+              "path": [
+                "wallet",
+                "balance"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [
+                {
+                  "key": "userId",
+                  "value": "{{userId}}"
+                }
+              ],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customerToken}}"
+              }
+            ],
+            "method": "GET"
+          },
+          "response": [],
+          "event": []
+        },
+        {
+          "id": "366e9703-cea8-44f5-bb11-28feaad1ee2e",
+          "name": "7.2 Get Wallet Transactions",
+          "request": {
+            "url": {
+              "path": [
+                "wallet",
+                "transactions"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [
+                {
+                  "key": "userId",
+                  "value": "{{userId}}"
+                }
+              ],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customerToken}}"
+              }
+            ],
+            "method": "GET"
+          },
+          "response": [],
+          "event": []
+        },
+        {
+          "id": "5f29fd26-4ae5-4731-a9ad-b40edd948c95",
+          "name": "7.3 Get Balance by User ID (Admin)",
+          "request": {
+            "url": {
+              "path": [
+                "wallet",
+                "balance",
+                "{{userId}}"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "method": "GET"
+          },
+          "response": [],
+          "event": []
+        }
+      ],
+      "event": []
+    },
+    {
+      "id": "4b9fcbf5-aef3-42cc-9ac4-70025204e5cc",
+      "name": "8. Payments",
+      "item": [
+        {
+          "id": "3c6fbb25-a457-483e-9f69-3b89615628c7",
+          "name": "8.1 Disburse Loan",
+          "request": {
+            "url": {
+              "path": [
+                "payments",
+                "disburse"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{officerToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"loanId\": 1,\n  \"userId\": 1,\n  \"amount\": 100000\n}"
+            }
+          },
+          "response": [],
+          "event": []
+        },
+        {
+          "id": "6e475604-4726-46f5-815f-ac158b97e156",
+          "name": "8.2 Repay EMI",
+          "request": {
+            "url": {
+              "path": [
+                "payments",
+                "repay"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customerToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"loanId\": 1,\n  \"userId\": 1,\n  \"amount\": 8885,\n  \"installmentNo\": 1\n}"
+            }
+          },
+          "response": [],
+          "event": []
+        },
+        {
+          "id": "80fe66eb-79b0-4f7c-a575-a5694a9426b7",
+          "name": "8.3 Get Payments by Loan",
+          "request": {
+            "url": {
+              "path": [
+                "payments",
+                "loan",
+                "{{loanId}}"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customerToken}}"
+              }
+            ],
+            "method": "GET"
+          },
+          "response": [],
+          "event": []
+        },
+        {
+          "id": "9d232b75-a894-4534-8e17-0eced8ae81ee",
+          "name": "8.4 Get Payments by User",
+          "request": {
+            "url": {
+              "path": [
+                "payments",
+                "user",
+                "{{userId}}"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customerToken}}"
+              }
+            ],
+            "method": "GET"
+          },
+          "response": [],
+          "event": []
+        }
+      ],
+      "event": []
+    },
+    {
+      "id": "d2e5a0c6-b0ac-4b98-8bd4-aa38128e3583",
+      "name": "9. Notifications",
+      "item": [
+        {
+          "id": "3d154c7c-a8c3-4e37-95ca-42ab3fef65c6",
+          "name": "9.1 Get User Notifications",
+          "request": {
+            "url": {
+              "path": [
+                "notifications",
+                "user",
+                "{{userId}}"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customerToken}}"
+              }
+            ],
+            "method": "GET"
+          },
+          "response": [],
+          "event": []
+        },
+        {
+          "id": "b4fa77d1-3809-4fc5-a57c-490392feac87",
+          "name": "9.2 Get Unread Notifications",
+          "request": {
+            "url": {
+              "path": [
+                "notifications",
+                "user",
+                "{{userId}}",
+                "unread"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customerToken}}"
+              }
+            ],
+            "method": "GET"
+          },
+          "response": [],
+          "event": []
+        },
+        {
+          "id": "e6f960fa-a099-4907-bccb-3fc0d1109912",
+          "name": "9.3 Mark Notification Read",
+          "request": {
+            "url": {
+              "path": [
+                "notifications",
+                "1",
+                "read"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customerToken}}"
+              }
+            ],
+            "method": "PUT"
+          },
+          "response": [],
+          "event": []
+        }
+      ],
+      "event": []
+    }
+  ],
+  "event": [],
+  "variable": [
+    {
+      "type": "string",
+      "value": "http://localhost:8080",
+      "key": "baseUrl"
+    },
+    {
+      "type": "string",
+      "value": "",
+      "key": "customerToken"
+    },
+    {
+      "type": "string",
+      "value": "",
+      "key": "officerToken"
+    },
+    {
+      "type": "string",
+      "value": "",
+      "key": "adminToken"
+    },
+    {
+      "type": "string",
+      "value": "1",
+      "key": "userId"
+    },
+    {
+      "type": "string",
+      "value": "1",
+      "key": "loanId"
+    }
+  ],
+  "info": {
+    "_postman_id": "lms-api-collection-v2",
+    "name": "LMS API Collection",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": {
+      "content": "Complete Loan Management System API Collection - All endpoints verified against actual backend implementation",
+      "type": "text/plain"
+    }
+  },
+  "name": "collection",
+  "_postman_variable_scope": "collection",
+  "_postman_exported_at": "2026-01-02T03:45:14.303Z",
+  "_postman_exported_using": "Newman/6.2.1"
+}
