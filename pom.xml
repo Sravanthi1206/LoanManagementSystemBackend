@@ -118,6 +118,19 @@
                         <goals>
                             <goal>report</goal>
                         </goals>
+                        <configuration>
+                            <excludes>
+                                <!-- DTOs and entities with Lombok -->
+                                <exclude>**/dto/**</exclude>
+                                <exclude>**/entity/**</exclude>
+                                <exclude>**/request/**</exclude>
+                                <exclude>**/response/**</exclude>
+                                <exclude>**/model/**</exclude>
+                                <exclude>**/event/**</exclude>
+                                <!-- Specific Lombok event classes -->
+                                <exclude>**/messaging/NotificationEvent.class</exclude>
+                            </excludes>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
