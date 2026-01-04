@@ -242,6 +242,7 @@ class LoanServiceTest {
         @DisplayName("Should approve loan")
         void approveLoan_Success() {
             testLoan.setStatus(Loan.LoanStatus.UNDER_REVIEW);
+            testLoan.setCreditScore(750); // Satisfy credit check requirement
             when(repository.findById(1L)).thenReturn(Optional.of(testLoan));
             when(repository.save(any(Loan.class))).thenReturn(testLoan);
 
