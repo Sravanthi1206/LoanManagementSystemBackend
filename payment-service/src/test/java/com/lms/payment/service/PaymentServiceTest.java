@@ -35,6 +35,12 @@ class PaymentServiceTest {
     @Mock
     private PaymentRepository repository;
 
+    @Mock
+    private com.lms.payment.client.LoanClient loanClient;
+
+    @Mock
+    private com.lms.payment.client.EmiClient emiClient;
+
     @InjectMocks
     private PaymentService paymentService;
 
@@ -66,7 +72,8 @@ class PaymentServiceTest {
                 .loanId(101L)
                 .userId(1L)
                 .amount(new BigDecimal("5000.00"))
-                .paymentMethod(Payment.PaymentMethod.ONLINE)
+                .paymentMethod(Payment.PaymentMethod.WALLET) // Changed to WALLET to test client call
+                .installmentId(5L) // Added installment ID
                 .build();
     }
 
@@ -95,6 +102,8 @@ class PaymentServiceTest {
         assertNotNull(response);
         assertEquals(Payment.PaymentType.EMI_REPAYMENT, response.getPaymentType());
         verify(repository, times(1)).save(any(Payment.class));
+        verify(loanClient).debitWallet(1L, new BigDecimal("5000.00")); // Verify wallet debit
+        verify(emiClient).markInstallmentAsPaid(5L); // Verify EMI status update
     }
 
     @Test
