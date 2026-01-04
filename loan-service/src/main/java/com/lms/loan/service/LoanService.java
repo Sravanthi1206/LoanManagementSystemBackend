@@ -96,6 +96,27 @@ public class LoanService {
         var loan = findLoan(id);
         requireStatus(loan, Loan.LoanStatus.UNDER_REVIEW, "credit check");
         
+        if (score == null) {
+            // Automated Credit Check Logic
+            int calculatedScore = 600; // Base Score
+
+            // Employment Bonus
+            if (loan.getEmploymentType() == Loan.EmploymentType.SALARIED) {
+                calculatedScore += 50;
+            } else if (loan.getEmploymentType() == Loan.EmploymentType.SELF_EMPLOYED) {
+                calculatedScore += 30;
+            }
+
+            // Income Bonus (10 points per 10k, max 150)
+            if (loan.getMonthlyIncome() != null) {
+                int incomePoints = (loan.getMonthlyIncome().intValue() / 10000) * 10;
+                calculatedScore += Math.min(150, incomePoints);
+            }
+
+            // Bounds Check (300 - 900)
+            score = Math.max(300, Math.min(900, calculatedScore));
+        }
+        
         loan.setCreditScore(score);
         loan.setRiskCategory(score >= 750 ? Loan.RiskCategory.LOW : 
                             score >= 650 ? Loan.RiskCategory.MEDIUM : Loan.RiskCategory.HIGH);
