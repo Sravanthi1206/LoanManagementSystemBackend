@@ -3,6 +3,8 @@ package com.lms.notification.service;
 import com.lms.notification.dto.NotificationRequest;
 import com.lms.notification.dto.NotificationResponse;
 import com.lms.notification.entity.Notification;
+import com.lms.notification.entity.Notification.NotificationStatus;
+import com.lms.notification.entity.Notification.NotificationType;
 import com.lms.notification.repository.NotificationRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,139 +14,107 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class NotificationService {
 
-    private final NotificationRepository repository;
-    private final EmailService emailService;
+    private final NotificationRepository repo;
+    private final EmailService emails;
 
-    public NotificationResponse sendNotification(NotificationRequest request) {
-        Notification notification = Notification.builder()
-                .userId(request.getUserId())
-                .loanId(request.getLoanId())
-                .type(request.getType())
-                .subject(request.getSubject())
-                .message(request.getMessage())
-                .recipient(request.getRecipient())
-                .status(Notification.NotificationStatus.PENDING)
+    public NotificationResponse sendNotification(NotificationRequest req) {
+        var n = Notification.builder()
+                .userId(req.getUserId())
+                .loanId(req.getLoanId())
+                .type(req.getType())
+                .subject(req.getSubject())
+                .message(req.getMessage())
+                .recipient(req.getRecipient())
+                .status(NotificationStatus.PENDING)
                 .createdAt(LocalDateTime.now())
                 .build();
-
-        Notification saved = repository.save(notification);
+        n = repo.save(n);
         
-        // Simulate sending notification
-        boolean success = simulateSendNotification(saved);
+        boolean sent = trySend(n);
+        n.setStatus(sent ? NotificationStatus.SENT : NotificationStatus.FAILED);
+        if (sent) n.setSentAt(LocalDateTime.now());
         
-        if (success) {
-            saved.setStatus(Notification.NotificationStatus.SENT);
-            saved.setSentAt(LocalDateTime.now());
-        } else {
-            saved.setStatus(Notification.NotificationStatus.FAILED);
-        }
-        
-        saved = repository.save(saved);
-        return mapToResponse(saved);
+        return toResponse(repo.save(n));
     }
 
-    public Page<NotificationResponse> getUserNotifications(Long userId, Pageable pageable) {
-        return repository.findByUserId(userId, pageable).map(this::mapToResponse);
+    public Page<NotificationResponse> getUserNotifications(Long userId, Pageable p) {
+        return repo.findByUserId(userId, p).map(this::toResponse);
     }
 
     public List<NotificationResponse> getUnreadNotifications(Long userId) {
-        return repository.findByUserIdAndStatus(userId, Notification.NotificationStatus.SENT)
-                .stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
+        return repo.findByUserIdAndStatus(userId, NotificationStatus.SENT)
+                .stream().map(this::toResponse).toList();
     }
 
     public NotificationResponse markAsRead(String id) {
-        Notification notification = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Notification not found with id: " + id));
-        
-        notification.setStatus(Notification.NotificationStatus.READ);
-        Notification saved = repository.save(notification);
-        return mapToResponse(saved);
+        var n = find(id);
+        n.setStatus(NotificationStatus.READ);
+        return toResponse(repo.save(n));
     }
 
     public NotificationResponse getNotificationById(String id) {
-        Notification notification = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Notification not found with id: " + id));
-        return mapToResponse(notification);
+        return toResponse(find(id));
     }
 
-    // Predefined notification templates
     public void sendLoanStatusNotification(Long userId, Long loanId, String status, String recipient) {
-        String subject = "Loan Application Status Update";
-        String message = String.format("Your loan application #%d status has been updated to: %s", loanId, status);
-        
-        NotificationRequest request = NotificationRequest.builder()
+        var req = NotificationRequest.builder()
                 .userId(userId)
                 .loanId(loanId)
-                .type(Notification.NotificationType.EMAIL)
-                .subject(subject)
-                .message(message)
+                .type(NotificationType.EMAIL)
+                .subject("Loan Status Update")
+                .message("Loan #" + loanId + " status: " + status)
                 .recipient(recipient)
                 .build();
-        
-        sendNotification(request);
+        sendNotification(req);
     }
 
     public void sendEmiReminderNotification(Long userId, Long loanId, String dueDate, String amount, String recipient) {
-        String subject = "EMI Payment Reminder";
-        String message = String.format("Reminder: Your EMI of ₹%s for loan #%d is due on %s. Please ensure timely payment.", 
-                amount, loanId, dueDate);
-        
-        NotificationRequest request = NotificationRequest.builder()
+        var req = NotificationRequest.builder()
                 .userId(userId)
                 .loanId(loanId)
-                .type(Notification.NotificationType.BOTH)
-                .subject(subject)
-                .message(message)
+                .type(NotificationType.BOTH)
+                .subject("EMI Reminder")
+                .message("EMI Rs." + amount + " for loan #" + loanId + " due " + dueDate)
                 .recipient(recipient)
                 .build();
-        
-        sendNotification(request);
+        sendNotification(req);
     }
 
-    private boolean simulateSendNotification(Notification notification) {
-        log.info("Sending {} notification to {}: Subject - {}", 
-                notification.getType(), 
-                notification.getRecipient(), 
-                notification.getSubject());
-        
+    private Notification find(String id) {
+        return repo.findById(id).orElseThrow(() -> new RuntimeException("Not found: " + id));
+    }
+
+    private boolean trySend(Notification n) {
+        log.info("Sending to {}: {}", n.getRecipient(), n.getSubject());
         try {
-            // Send actual email using EmailService
-            if (notification.getType() == Notification.NotificationType.EMAIL ||
-                notification.getType() == Notification.NotificationType.BOTH) {
-                emailService.sendSimpleEmail(
-                    notification.getRecipient(),
-                    notification.getSubject(),
-                    notification.getMessage()
-                );
+            if (n.getType() == NotificationType.EMAIL || n.getType() == NotificationType.BOTH) {
+                emails.sendSimpleEmail(n.getRecipient(), n.getSubject(), n.getMessage());
             }
             return true;
         } catch (Exception e) {
-            log.error("Failed to send notification: {}", e.getMessage());
+            log.error("Send failed: {}", e.getMessage());
             return false;
         }
     }
 
-    private NotificationResponse mapToResponse(Notification notification) {
+    private NotificationResponse toResponse(Notification n) {
         return NotificationResponse.builder()
-                .id(notification.getId())
-                .userId(notification.getUserId())
-                .loanId(notification.getLoanId())
-                .type(notification.getType())
-                .subject(notification.getSubject())
-                .message(notification.getMessage())
-                .status(notification.getStatus())
-                .recipient(notification.getRecipient())
-                .sentAt(notification.getSentAt())
-                .createdAt(notification.getCreatedAt())
+                .id(n.getId())
+                .userId(n.getUserId())
+                .loanId(n.getLoanId())
+                .type(n.getType())
+                .subject(n.getSubject())
+                .message(n.getMessage())
+                .status(n.getStatus())
+                .recipient(n.getRecipient())
+                .sentAt(n.getSentAt())
+                .createdAt(n.getCreatedAt())
                 .build();
     }
 }

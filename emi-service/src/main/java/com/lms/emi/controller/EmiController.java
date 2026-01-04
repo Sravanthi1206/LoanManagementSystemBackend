@@ -39,10 +39,11 @@ public class EmiController {
     @PostMapping("/generate")
     public ResponseEntity<Void> generateSchedule(
             @RequestParam("loanId") Long loanId,
+            @RequestParam("userId") Long userId,
             @RequestParam("amount") BigDecimal amount,
             @RequestParam("rate") BigDecimal rate,
             @RequestParam("tenure") Integer tenure) {
-        emiService.generateSchedule(loanId, amount, rate, tenure);
+        emiService.generateSchedule(loanId, userId, amount, rate, tenure);
         return ResponseEntity.ok().build();
     }
 

@@ -1,5 +1,6 @@
 package com.lms.payment.controller;
 
+import com.lms.payment.dto.CreatePaymentResponse;
 import com.lms.payment.dto.DisbursementRequest;
 import com.lms.payment.dto.PaymentResponse;
 import com.lms.payment.dto.RepaymentRequest;
@@ -23,17 +24,19 @@ public class PaymentController {
     private final PaymentService paymentService;
 
     @PostMapping("/disburse")
-    public ResponseEntity<PaymentResponse> recordDisbursement(
+    public ResponseEntity<CreatePaymentResponse> recordDisbursement(
             @Valid @RequestBody DisbursementRequest request) {
         PaymentResponse response = paymentService.recordDisbursement(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        return ResponseEntity.status(HttpStatus.CREATED).body(
+                CreatePaymentResponse.builder().id(response.getId()).transactionId(response.getTransactionId()).build());
     }
 
     @PostMapping("/repay")
-    public ResponseEntity<PaymentResponse> recordRepayment(
+    public ResponseEntity<CreatePaymentResponse> recordRepayment(
             @Valid @RequestBody RepaymentRequest request) {
         PaymentResponse response = paymentService.recordRepayment(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        return ResponseEntity.status(HttpStatus.CREATED).body(
+                CreatePaymentResponse.builder().id(response.getId()).transactionId(response.getTransactionId()).build());
     }
 
     @GetMapping("/loan/{loanId}")

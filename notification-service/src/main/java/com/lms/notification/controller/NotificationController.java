@@ -1,5 +1,6 @@
 package com.lms.notification.controller;
 
+import com.lms.notification.dto.CreateNotificationResponse;
 import com.lms.notification.dto.NotificationRequest;
 import com.lms.notification.dto.NotificationResponse;
 import com.lms.notification.service.NotificationService;
@@ -22,10 +23,10 @@ public class NotificationController {
     private final NotificationService notificationService;
 
     @PostMapping("/send")
-    public ResponseEntity<NotificationResponse> sendNotification(
+    public ResponseEntity<CreateNotificationResponse> sendNotification(
             @Valid @RequestBody NotificationRequest request) {
         NotificationResponse response = notificationService.sendNotification(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        return ResponseEntity.status(HttpStatus.CREATED).body(CreateNotificationResponse.builder().id(response.getId()).build());
     }
 
     @GetMapping("/user/{userId}")

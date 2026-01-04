@@ -20,10 +20,18 @@ public class EmailService {
     
     private static final String FROM_EMAIL = "sravanthigurram955@gmail.com";
     private static final String FROM_NAME = "LMS Notifications";
+    
+    private static final String EMAIL_CSS = """
+        body { font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 10px 10px 0 0; text-align: center; }
+        .content { padding: 20px; }
+        .status { display: inline-block; padding: 8px 16px; border-radius: 5px; font-weight: bold; margin: 10px 0; background: #10B981; color: white; }
+        .amount { font-size: 28px; color: #667eea; font-weight: bold; }
+        .due-date { background: #FEF3C7; padding: 10px 15px; border-radius: 5px; border-left: 4px solid #F59E0B; margin: 10px 0; }
+        .footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }
+        """;
 
-    /**
-     * Send a simple text email
-     */
     @Async
     public void sendSimpleEmail(String to, String subject, String body) {
         try {
@@ -32,102 +40,58 @@ public class EmailService {
             message.setTo(to);
             message.setSubject(subject);
             message.setText(body);
-            
             mailSender.send(message);
-            log.info("Email sent successfully to: {}", to);
+            log.info("Email sent to: {}", to);
         } catch (Exception e) {
             log.error("Failed to send email to {}: {}", to, e.getMessage());
         }
     }
 
-    /**
-     * Send HTML formatted email
-     */
     @Async
     public void sendHtmlEmail(String to, String subject, String htmlBody) {
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-            
             helper.setFrom(FROM_EMAIL, FROM_NAME);
             helper.setTo(to);
             helper.setSubject(subject);
-            helper.setText(htmlBody, true); // true = HTML
-            
+            helper.setText(htmlBody, true);
             mailSender.send(message);
-            log.info("HTML Email sent successfully to: {}", to);
-        } catch (MessagingException e) {
-            log.error("Failed to send HTML email to {}: {}", to, e.getMessage());
+            log.info("HTML email sent to: {}", to);
         } catch (Exception e) {
-            log.error("Unexpected error sending email to {}: {}", to, e.getMessage());
+            log.error("Failed to send HTML email to {}: {}", to, e.getMessage());
         }
     }
 
-    /**
-     * Send loan status notification email
-     */
-    public void sendLoanStatusEmail(String to, String loanNumber, String status, String message) {
-        String subject = "Loan Application Status Update - " + loanNumber;
-        String htmlBody = buildLoanStatusEmailHtml(loanNumber, status, message);
-        sendHtmlEmail(to, subject, htmlBody);
+    public void sendLoanStatusEmail(String to, String loanNumber, String status, String messageContent) {
+        String subject = "Loan Application Status - " + loanNumber;
+        String html = wrapHtml("LMS Notification", "Loan Application Update", String.format("""
+            <p><strong>Application:</strong> %s</p>
+            <p><strong>Status:</strong> <span class='status'>%s</span></p>
+            <p>%s</p>
+            """, loanNumber, status, messageContent));
+        sendHtmlEmail(to, subject, html);
     }
 
-    /**
-     * Send EMI reminder email
-     */
     public void sendEmiReminderEmail(String to, String loanNumber, String dueDate, String amount) {
         String subject = "EMI Payment Reminder - " + loanNumber;
-        String htmlBody = buildEmiReminderEmailHtml(loanNumber, dueDate, amount);
-        sendHtmlEmail(to, subject, htmlBody);
+        String html = wrapHtml("EMI Payment Reminder", "Payment Due", String.format("""
+            <p><strong>Loan:</strong> %s</p>
+            <p class='amount'>Rs. %s</p>
+            <div class='due-date'><strong>Due:</strong> %s</div>
+            <p>Please ensure timely payment.</p>
+            """, loanNumber, amount, dueDate));
+        sendHtmlEmail(to, subject, html);
     }
 
-    private String buildLoanStatusEmailHtml(String loanNumber, String status, String message) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("<!DOCTYPE html><html><head><style>");
-        sb.append("body { font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 20px; }");
-        sb.append(".container { max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; }");
-        sb.append(".header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 10px 10px 0 0; text-align: center; }");
-        sb.append(".content { padding: 20px; }");
-        sb.append(".status { display: inline-block; padding: 8px 16px; border-radius: 5px; font-weight: bold; margin: 10px 0; background: #10B981; color: white; }");
-        sb.append(".footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }");
-        sb.append("</style></head><body>");
-        sb.append("<div class='container'>");
-        sb.append("<div class='header'><h1>LMS Notification</h1></div>");
-        sb.append("<div class='content'>");
-        sb.append("<h2>Loan Application Update</h2>");
-        sb.append("<p><strong>Application Number:</strong> ").append(loanNumber).append("</p>");
-        sb.append("<p><strong>Status:</strong> <span class='status'>").append(status).append("</span></p>");
-        sb.append("<p>").append(message).append("</p>");
-        sb.append("</div>");
-        sb.append("<div class='footer'><p>This is an automated message from Loan Management System.</p>");
-        sb.append("<p>2026 LMS - All rights reserved</p></div>");
-        sb.append("</div></body></html>");
-        return sb.toString();
-    }
-
-    private String buildEmiReminderEmailHtml(String loanNumber, String dueDate, String amount) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("<!DOCTYPE html><html><head><style>");
-        sb.append("body { font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 20px; }");
-        sb.append(".container { max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; }");
-        sb.append(".header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 10px 10px 0 0; text-align: center; }");
-        sb.append(".content { padding: 20px; }");
-        sb.append(".amount { font-size: 28px; color: #667eea; font-weight: bold; }");
-        sb.append(".due-date { background: #FEF3C7; padding: 10px 15px; border-radius: 5px; border-left: 4px solid #F59E0B; margin: 10px 0; }");
-        sb.append(".footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }");
-        sb.append("</style></head><body>");
-        sb.append("<div class='container'>");
-        sb.append("<div class='header'><h1>EMI Payment Reminder</h1></div>");
-        sb.append("<div class='content'>");
-        sb.append("<h2>Payment Due</h2>");
-        sb.append("<p><strong>Loan Number:</strong> ").append(loanNumber).append("</p>");
-        sb.append("<p class='amount'>Rs. ").append(amount).append("</p>");
-        sb.append("<div class='due-date'><p><strong>Due Date:</strong> ").append(dueDate).append("</p></div>");
-        sb.append("<p style='margin-top: 20px;'>Please ensure timely payment to avoid late fees.</p>");
-        sb.append("</div>");
-        sb.append("<div class='footer'><p>This is an automated reminder from Loan Management System.</p>");
-        sb.append("<p>2026 LMS - All rights reserved</p></div>");
-        sb.append("</div></body></html>");
-        return sb.toString();
+    private String wrapHtml(String headerTitle, String sectionTitle, String content) {
+        return String.format("""
+            <!DOCTYPE html><html><head><style>%s</style></head><body>
+            <div class='container'>
+            <div class='header'><h1>%s</h1></div>
+            <div class='content'><h2>%s</h2>%s</div>
+            <div class='footer'><p>Automated message from LMS</p></div>
+            </div></body></html>
+            """, EMAIL_CSS, headerTitle, sectionTitle, content);
     }
 }

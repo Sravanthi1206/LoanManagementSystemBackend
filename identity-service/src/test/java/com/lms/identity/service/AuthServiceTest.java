@@ -1,13 +1,14 @@
 package com.lms.identity.service;
 
-import com.lms.identity.dto.LoginRequest;
-import com.lms.identity.dto.LoginResponse;
-import com.lms.identity.dto.UserRegisterRequest;
-import com.lms.identity.dto.UserResponse;
+import com.lms.identity.dto.*;
 import com.lms.identity.entity.User;
+import com.lms.identity.exception.DuplicateUserException;
+import com.lms.identity.exception.InvalidCredentialsException;
+import com.lms.identity.exception.UserNotFoundException;
 import com.lms.identity.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -15,15 +16,20 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.time.LocalDate;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+/**
+ * Comprehensive unit tests for AuthService to achieve high code coverage.
+ */
 @ExtendWith(MockitoExtension.class)
-@DisplayName("AuthService Unit Tests")
+@DisplayName("AuthService Tests")
 class AuthServiceTest {
 
     @Mock
@@ -47,10 +53,10 @@ class AuthServiceTest {
         testUser = User.builder()
                 .id(1L)
                 .email("test@example.com")
-                .passwordHash("hashedPassword")
+                .passwordHash("encodedPassword")
                 .firstName("John")
                 .lastName("Doe")
-                .phone("1234567890")
+                .phone("+919876543210")
                 .role(User.Role.CUSTOMER)
                 .active(true)
                 .build();
@@ -60,80 +66,125 @@ class AuthServiceTest {
         registerRequest.setPassword("Password@123");
         registerRequest.setFirstName("Jane");
         registerRequest.setLastName("Doe");
-        registerRequest.setPhone("9876543210");
+        registerRequest.setPhone("+919876543211");
 
         loginRequest = new LoginRequest();
         loginRequest.setEmail("test@example.com");
         loginRequest.setPassword("Password@123");
     }
 
-    @Test
-    @DisplayName("Should register new user successfully")
-    void registerUser_Success() {
-        // Arrange
-        when(userRepository.existsByEmail(anyString())).thenReturn(false);
-        when(passwordEncoder.encode(anyString())).thenReturn("encodedPassword");
-        when(userRepository.save(any(User.class))).thenReturn(testUser);
-        when(jwtService.generateToken(anyString(), anyString(), anyLong())).thenReturn("jwt-token");
+    @Nested
+    @DisplayName("Register Tests")
+    class RegisterTests {
+        
+        @Test
+        @DisplayName("Should register new user successfully")
+        void register_Success() {
+            when(userRepository.existsByEmail(anyString())).thenReturn(false);
+            when(passwordEncoder.encode(anyString())).thenReturn("encodedPassword");
+            when(userRepository.save(any(User.class))).thenReturn(testUser);
+            when(jwtService.generateToken(anyString(), anyString(), anyLong())).thenReturn("jwt-token");
 
-        // Act
-        LoginResponse result = authService.register(registerRequest);
+            LoginResponse result = authService.register(registerRequest);
 
-        // Assert
-        assertNotNull(result);
-        assertEquals("jwt-token", result.getAccessToken());
-        verify(userRepository).existsByEmail(registerRequest.getEmail());
-        verify(passwordEncoder).encode(registerRequest.getPassword());
-        verify(userRepository).save(any(User.class));
+            assertNotNull(result);
+            assertNotNull(result.getAccessToken());
+            assertEquals("Bearer", result.getTokenType());
+            verify(userRepository).existsByEmail(registerRequest.getEmail());
+            verify(passwordEncoder).encode(registerRequest.getPassword());
+            verify(userRepository).save(any(User.class));
+        }
+
+        @Test
+        @DisplayName("Should throw exception when email already exists")
+        void register_DuplicateEmail_ThrowsException() {
+            when(userRepository.existsByEmail(anyString())).thenReturn(true);
+
+            assertThrows(DuplicateUserException.class, () -> authService.register(registerRequest));
+            verify(userRepository, never()).save(any(User.class));
+        }
+
+        @Test
+        @DisplayName("Should throw exception when PAN card already exists")
+        void register_DuplicatePanCard_ThrowsException() {
+            registerRequest.setPanCard("ABCDE1234F");
+            when(userRepository.existsByEmail(anyString())).thenReturn(false);
+            when(userRepository.existsByPanCard(anyString())).thenReturn(true);
+
+            assertThrows(DuplicateUserException.class, () -> authService.register(registerRequest));
+            verify(userRepository, never()).save(any(User.class));
+        }
+
+        @Test
+        @DisplayName("Should register user with all optional fields")
+        void register_WithOptionalFields_Success() {
+            registerRequest.setPanCard("ABCDE1234F");
+            registerRequest.setDateOfBirth(LocalDate.of(1990, 1, 15));
+
+            when(userRepository.existsByEmail(anyString())).thenReturn(false);
+            when(userRepository.existsByPanCard(anyString())).thenReturn(false);
+            when(passwordEncoder.encode(anyString())).thenReturn("encodedPassword");
+            when(userRepository.save(any(User.class))).thenReturn(testUser);
+            when(jwtService.generateToken(anyString(), anyString(), anyLong())).thenReturn("jwt-token");
+
+            LoginResponse result = authService.register(registerRequest);
+
+            assertNotNull(result);
+            verify(userRepository).existsByPanCard("ABCDE1234F");
+        }
     }
 
-    @Test
-    @DisplayName("Should throw exception when email already exists")
-    void registerUser_EmailExists_ThrowsException() {
-        // Arrange
-        when(userRepository.existsByEmail(anyString())).thenReturn(true);
+    @Nested
+    @DisplayName("Login Tests")
+    class LoginTests {
+        
+        @Test
+        @DisplayName("Should authenticate user with valid credentials")
+        void login_ValidCredentials_ReturnsToken() {
+            when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(testUser));
+            when(passwordEncoder.matches(anyString(), anyString())).thenReturn(true);
+            when(jwtService.generateToken(anyString(), anyString(), anyLong())).thenReturn("jwt-token");
 
-        // Act & Assert
-        assertThrows(RuntimeException.class, () -> authService.register(registerRequest));
-        verify(userRepository, never()).save(any(User.class));
+            LoginResponse response = authService.login(loginRequest);
+
+            assertNotNull(response);
+            assertEquals("jwt-token", response.getAccessToken());
+            assertEquals("Bearer", response.getTokenType());
+            verify(jwtService).generateToken(testUser.getEmail(), testUser.getRole().name(), testUser.getId());
+        }
+
+        @Test
+        @DisplayName("Should throw exception when user not found")
+        void login_UserNotFound_ThrowsException() {
+            when(userRepository.findByEmail(anyString())).thenReturn(Optional.empty());
+
+            assertThrows(InvalidCredentialsException.class, () -> authService.login(loginRequest));
+            verify(jwtService, never()).generateToken(anyString(), anyString(), anyLong());
+        }
+
+        @Test
+        @DisplayName("Should throw exception when account is deactivated")
+        void login_InactiveAccount_ThrowsException() {
+            testUser.setActive(false);
+            when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(testUser));
+
+            InvalidCredentialsException exception = assertThrows(
+                InvalidCredentialsException.class, 
+                () -> authService.login(loginRequest)
+            );
+            assertEquals("Account is deactivated", exception.getMessage());
+        }
+
+        @Test
+        @DisplayName("Should throw exception when password is invalid")
+        void login_InvalidPassword_ThrowsException() {
+            when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(testUser));
+            when(passwordEncoder.matches(anyString(), anyString())).thenReturn(false);
+
+            assertThrows(InvalidCredentialsException.class, () -> authService.login(loginRequest));
+            verify(jwtService, never()).generateToken(anyString(), anyString(), anyLong());
+        }
     }
 
-    @Test
-    @DisplayName("Should authenticate user and return token")
-    void authenticate_ValidCredentials_ReturnsToken() {
-        // Arrange
-        when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(testUser));
-        when(passwordEncoder.matches(anyString(), anyString())).thenReturn(true);
-        when(jwtService.generateToken(anyString(), anyString(), anyLong())).thenReturn("jwt-token");
-
-        // Act
-        LoginResponse response = authService.login(loginRequest);
-
-        // Assert
-        assertNotNull(response);
-        assertEquals("jwt-token", response.getAccessToken());
-        verify(jwtService).generateToken(testUser.getEmail(), testUser.getRole().name(), testUser.getId());
-    }
-
-    @Test
-    @DisplayName("Should throw exception for invalid credentials")
-    void authenticate_InvalidPassword_ThrowsException() {
-        // Arrange
-        when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(testUser));
-        when(passwordEncoder.matches(anyString(), anyString())).thenReturn(false);
-
-        // Act & Assert
-        assertThrows(RuntimeException.class, () -> authService.login(loginRequest));
-        verify(jwtService, never()).generateToken(anyString(), anyString(), anyLong());
-    }
-
-    @Test
-    @DisplayName("Should throw exception when user not found")
-    void authenticate_UserNotFound_ThrowsException() {
-        // Arrange
-        when(userRepository.findByEmail(anyString())).thenReturn(Optional.empty());
-
-        // Act & Assert
-        assertThrows(RuntimeException.class, () -> authService.login(loginRequest));
-    }
 }
+

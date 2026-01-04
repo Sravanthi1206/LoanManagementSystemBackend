@@ -18,138 +18,90 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.UUID;
 
-/**
- * Service for virtual wallet operations (demo transactions).
- */
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class WalletService {
 
-    private final WalletRepository walletRepository;
-    private final WalletTransactionRepository transactionRepository;
+    private final WalletRepository wallets;
+    private final WalletTransactionRepository transactions;
 
-    private static final BigDecimal DEFAULT_BALANCE = new BigDecimal("100000.00");
-
-    /**
-     * Get wallet balance for a user. Creates wallet if not exists.
-     */
     public WalletResponse getBalance(Long userId) {
-        UserWallet wallet = getOrCreateWallet(userId);
-        return WalletResponse.builder()
-                .userId(wallet.getUserId())
-                .balance(wallet.getBalance())
-                .lastUpdated(wallet.getLastUpdated())
-                .build();
+        var wallet = findOrCreate(userId);
+        return new WalletResponse(wallet.getUserId(), wallet.getBalance(), wallet.getLastUpdated());
     }
 
-    /**
-     * Credit amount to wallet (e.g., loan disbursement).
-     */
     @Transactional
-    public TransactionResponse credit(Long userId, BigDecimal amount, 
-                                       TransactionType type, Long loanId, String description) {
-        UserWallet wallet = getOrCreateWallet(userId);
-        BigDecimal newBalance = wallet.getBalance().add(amount);
-        wallet.setBalance(newBalance);
-        walletRepository.save(wallet);
-
-        WalletTransaction transaction = createTransaction(
-                userId, loanId, type, amount, newBalance, description);
+    public TransactionResponse credit(Long userId, BigDecimal amount, TransactionType type, Long loanId, String desc) {
+        var wallet = findOrCreate(userId);
+        wallet.setBalance(wallet.getBalance().add(amount));
+        wallets.save(wallet);
         
-        log.info("Credited ₹{} to user {} wallet. New balance: ₹{}", amount, userId, newBalance);
-        return mapToResponse(transaction);
+        var txn = recordTransaction(userId, loanId, type, amount, wallet.getBalance(), desc);
+        log.info("Credited {} to user {}", amount, userId);
+        return toResponse(txn);
     }
 
-    /**
-     * Debit amount from wallet (e.g., EMI payment).
-     */
     @Transactional
-    public TransactionResponse debit(Long userId, BigDecimal amount,
-                                      TransactionType type, Long loanId, String description) {
-        UserWallet wallet = getOrCreateWallet(userId);
-        
+    public TransactionResponse debit(Long userId, BigDecimal amount, TransactionType type, Long loanId, String desc) {
+        var wallet = findOrCreate(userId);
         if (wallet.getBalance().compareTo(amount) < 0) {
             throw new InsufficientBalanceException(wallet.getBalance(), amount);
         }
-
-        BigDecimal newBalance = wallet.getBalance().subtract(amount);
-        wallet.setBalance(newBalance);
-        walletRepository.save(wallet);
-
-        WalletTransaction transaction = createTransaction(
-                userId, loanId, type, amount.negate(), newBalance, description);
+        wallet.setBalance(wallet.getBalance().subtract(amount));
+        wallets.save(wallet);
         
-        log.info("Debited ₹{} from user {} wallet. New balance: ₹{}", amount, userId, newBalance);
-        return mapToResponse(transaction);
+        var txn = recordTransaction(userId, loanId, type, amount.negate(), wallet.getBalance(), desc);
+        log.info("Debited {} from user {}", amount, userId);
+        return toResponse(txn);
     }
 
-    /**
-     * Disburse loan amount to user's wallet.
-     */
     @Transactional
-    public TransactionResponse disburseLoan(Long userId, Long loanId, 
-                                            BigDecimal amount, String applicationNumber) {
-        String description = String.format("Loan Disbursement - %s", applicationNumber);
-        return credit(userId, amount, TransactionType.DISBURSEMENT, loanId, description);
+    public TransactionResponse disburseLoan(Long userId, Long loanId, BigDecimal amount, String appNo) {
+        return credit(userId, amount, TransactionType.DISBURSEMENT, loanId, "Loan Disbursement - " + appNo);
     }
 
-    /**
-     * Process EMI payment from wallet.
-     */
     @Transactional
-    public TransactionResponse payEmi(Long userId, Long loanId, 
-                                       BigDecimal amount, int installmentNo) {
-        String description = String.format("EMI Payment - Installment %d", installmentNo);
-        return debit(userId, amount, TransactionType.EMI_PAYMENT, loanId, description);
+    public TransactionResponse payEmi(Long userId, Long loanId, BigDecimal amount, int installmentNo) {
+        return debit(userId, amount, TransactionType.EMI_PAYMENT, loanId, "EMI #" + installmentNo);
     }
 
-    /**
-     * Get transaction history for user.
-     */
     public Page<TransactionResponse> getTransactionHistory(Long userId, Pageable pageable) {
-        return transactionRepository.findByUserIdOrderByCreatedAtDesc(userId, pageable)
-                .map(this::mapToResponse);
+        return transactions.findByUserIdOrderByCreatedAtDesc(userId, pageable).map(this::toResponse);
     }
 
-    // --- Helper Methods ---
-
-    private UserWallet getOrCreateWallet(Long userId) {
-        return walletRepository.findByUserId(userId)
-                .orElseGet(() -> {
-                    UserWallet newWallet = UserWallet.builder()
-                            .userId(userId)
-                            .balance(DEFAULT_BALANCE)
-                            .build();
-                    log.info("Created new wallet for user {} with balance ₹{}", userId, DEFAULT_BALANCE);
-                    return walletRepository.save(newWallet);
-                });
+    private UserWallet findOrCreate(Long userId) {
+        return wallets.findByUserId(userId).orElseGet(() -> {
+            var w = new UserWallet();
+            w.setUserId(userId);
+            w.setBalance(new BigDecimal("100000"));
+            log.info("New wallet for user {}", userId);
+            return wallets.save(w);
+        });
     }
 
-    private WalletTransaction createTransaction(Long userId, Long loanId,
-                                                  TransactionType type, BigDecimal amount,
-                                                  BigDecimal balanceAfter, String description) {
-        WalletTransaction transaction = WalletTransaction.builder()
-                .transactionId("TXN-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase())
-                .userId(userId)
-                .loanId(loanId)
-                .type(type)
-                .amount(amount)
-                .balanceAfter(balanceAfter)
-                .description(description)
-                .build();
-        return transactionRepository.save(transaction);
+    private WalletTransaction recordTransaction(Long userId, Long loanId, TransactionType type, 
+                                                 BigDecimal amount, BigDecimal balance, String desc) {
+        var txn = new WalletTransaction();
+        txn.setTransactionId("TXN-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
+        txn.setUserId(userId);
+        txn.setLoanId(loanId);
+        txn.setType(type);
+        txn.setAmount(amount);
+        txn.setBalanceAfter(balance);
+        txn.setDescription(desc);
+        return transactions.save(txn);
     }
 
-    private TransactionResponse mapToResponse(WalletTransaction tx) {
-        return TransactionResponse.builder()
-                .transactionId(tx.getTransactionId())
-                .type(tx.getType())
-                .amount(tx.getAmount())
-                .balanceAfter(tx.getBalanceAfter())
-                .description(tx.getDescription())
-                .loanId(tx.getLoanId())
-                .createdAt(tx.getCreatedAt())
-                .build();
+    private TransactionResponse toResponse(WalletTransaction t) {
+        var r = new TransactionResponse();
+        r.setTransactionId(t.getTransactionId());
+        r.setType(t.getType());
+        r.setAmount(t.getAmount());
+        r.setBalanceAfter(t.getBalanceAfter());
+        r.setDescription(t.getDescription());
+        r.setLoanId(t.getLoanId());
+        r.setCreatedAt(t.getCreatedAt());
+        return r;
     }
 }

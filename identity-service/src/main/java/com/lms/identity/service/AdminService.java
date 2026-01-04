@@ -12,9 +12,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/**
- * Service for admin operations - managing staff accounts.
- */
+
 @Service
 @RequiredArgsConstructor
 public class AdminService {
@@ -22,18 +20,11 @@ public class AdminService {
     private final UserRepository repository;
     private final PasswordEncoder passwordEncoder;
 
-    /**
-     * Create a staff account (LOAN_OFFICER or ADMIN only).
-     * CUSTOMER accounts must use public registration.
-     */
     @Transactional
     public UserResponse createStaffAccount(CreateStaffRequest request) {
-        // Validate role - only staff roles allowed via this endpoint
         if (request.getRole() == User.Role.CUSTOMER) {
             throw new InvalidRoleException("Customer accounts must be created via public registration");
         }
-        
-        // Check for duplicate email
         if (repository.existsByEmail(request.getEmail())) {
             throw new DuplicateUserException("email", request.getEmail());
         }
@@ -48,34 +39,23 @@ public class AdminService {
                 .active(true)
                 .build();
 
-        User savedUser = repository.save(user);
-        return mapToUserResponse(savedUser);
+        return mapToUserResponse(repository.save(user));
     }
 
-    /**
-     * Deactivate a user account.
-     */
     @Transactional
     public UserResponse deactivateUser(Long userId) {
         User user = repository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
-        
         user.setActive(false);
-        User savedUser = repository.save(user);
-        return mapToUserResponse(savedUser);
+        return mapToUserResponse(repository.save(user));
     }
 
-    /**
-     * Activate a user account.
-     */
     @Transactional
     public UserResponse activateUser(Long userId) {
         User user = repository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
-        
         user.setActive(true);
-        User savedUser = repository.save(user);
-        return mapToUserResponse(savedUser);
+        return mapToUserResponse(repository.save(user));
     }
 
     private UserResponse mapToUserResponse(User user) {

@@ -32,36 +32,29 @@ public class DocumentService {
     private String uploadDir;
 
     @Transactional
-    public DocumentResponse uploadDocument(Long applicationId, ApplicationDocument.DocumentType documentType, 
+    public DocumentResponse uploadDocument(Long applicationId, ApplicationDocument.DocumentType documentType,
                                            MultipartFile file) throws IOException {
-        // Verify loan exists and is in valid state for document upload
         Loan loan = loanRepository.findById(applicationId)
                 .orElseThrow(() -> new LoanNotFoundException(applicationId));
         
-        // Can only upload documents when status is APPLIED or UNDER_REVIEW
-        if (loan.getStatus() != Loan.LoanStatus.APPLIED && 
+        if (loan.getStatus() != Loan.LoanStatus.APPLIED &&
             loan.getStatus() != Loan.LoanStatus.UNDER_REVIEW) {
             throw new InvalidLoanStatusException("Cannot upload documents. Loan status: " + loan.getStatus());
         }
 
-        // Create upload directory if not exists
         Path uploadPath = Paths.get(uploadDir, "loan_" + applicationId);
         if (!Files.exists(uploadPath)) {
             Files.createDirectories(uploadPath);
         }
 
-        // Generate unique filename
         String originalFilename = file.getOriginalFilename();
-        String extension = originalFilename != null && originalFilename.contains(".") 
+        String extension = originalFilename != null && originalFilename.contains(".")
                 ? originalFilename.substring(originalFilename.lastIndexOf("."))
                 : "";
         String uniqueFilename = UUID.randomUUID().toString() + extension;
         Path filePath = uploadPath.resolve(uniqueFilename);
-
-        // Save file
         Files.copy(file.getInputStream(), filePath);
 
-        // Save document metadata
         ApplicationDocument document = ApplicationDocument.builder()
                 .applicationId(applicationId)
                 .documentType(documentType)
@@ -71,8 +64,7 @@ public class DocumentService {
                 .contentType(file.getContentType())
                 .build();
 
-        ApplicationDocument saved = documentRepository.save(document);
-        return mapToResponse(saved);
+        return mapToResponse(documentRepository.save(document));
     }
 
     public List<DocumentResponse> getDocuments(Long applicationId) {
@@ -91,14 +83,12 @@ public class DocumentService {
     @Transactional
     public void deleteDocument(Long documentId) throws IOException {
         ApplicationDocument document = documentRepository.findById(documentId)
-                .orElseThrow(() -> new RuntimeException("Document not found with id: " + documentId));
+                .orElseThrow(() -> new RuntimeException("Document not found: " + documentId));
         
-        // Delete file from filesystem
         Path filePath = Paths.get(document.getFilePath());
         if (Files.exists(filePath)) {
             Files.delete(filePath);
         }
-        
         documentRepository.delete(document);
     }
 

@@ -1,133 +1,50 @@
 @echo off
-REM ============================================
-REM LMS Backend - Fully Local Startup Script
-REM ============================================
-REM This script:
-REM 1. Loads environment variables from .env
-REM 2. Builds all microservices (mvn clean package)
-REM 3. Starts them using java -jar
-REM ============================================
+setlocal enabledelayedexpansion
+echoLoading .env and starting LMS services...
 
-echo ========================================
-echo    LMS Backend - Build ^& Run
-echo ========================================
-echo.
-
-REM Navigate to script directory
-cd /d "%~dp0"
-
-REM Load environment variables from .env file if it exists
+REM Load .env file, ignoring comments
 if exist .env (
-    echo [Loading] Environment variables from .env...
-    for /f "usebackq tokens=1,2 delims==" %%a in (".env") do (
-        if not "%%a"=="" if not "%%a:~0,1%"=="#" (
+    for /f "usebackq tokens=1,* delims==" %%a in (".env") do (
+        set "key=%%a"
+        if "!key:~0,1!" neq "#" (
             set "%%a=%%b"
         )
     )
-    echo Environment loaded!
 ) else (
-    echo [Info] No .env file found, using default values.
-)
-echo.
-
-REM Check if MySQL is running
-echo [Checking] MySQL service...
-sc query MySQL >nul 2>&1
-if errorlevel 1 (
-    sc query MySQL80 >nul 2>&1
-    if errorlevel 1 (
-        echo WARNING: MySQL service not found.
-        echo Please ensure MySQL is installed and running.
-        echo.
-        choice /C YN /M "Continue anyway"
-        if errorlevel 2 exit /b 1
-    )
-)
-echo MySQL: OK
-
-REM Check if MongoDB is running
-echo [Checking] MongoDB service...
-sc query MongoDB >nul 2>&1
-if errorlevel 1 (
-    echo WARNING: MongoDB service not found.
-    echo Please ensure MongoDB is installed and running.
-    choice /C YN /M "Continue anyway"
-    if errorlevel 2 exit /b 1
-)
-echo MongoDB: OK
-
-echo.
-echo ========================================
-echo    Phase 1: Building Services
-echo ========================================
-echo.
-echo Running 'mvn clean package -DskipTests' in background...
-echo This may take a few minutes...
-call mvn clean package -DskipTests
-if errorlevel 1 (
-    echo BUILD FAILED! Aborting start.
-    pause
-    exit /b 1
+    echo WARNING: .env file not found.
 )
 
-echo.
-echo ========================================
-echo    Phase 2: Starting Services (JARs)
-echo ========================================
-echo.
+echo Starting Discovery (8761)...
+start "Discovery" cmd /k "java -jar discovery-server/target/discovery-server-0.0.1-SNAPSHOT.jar || (echo SERVER CRASHED! & pause)"
+timeout /t 20 /nobreak > nul
 
-echo [1/8] Starting Config Server (port 8888)...
-start "Config Server" java -jar config-server/target/config-server-0.0.1-SNAPSHOT.jar
-echo Waiting 30s for Config Server to fully initialize...
-timeout /t 30 /nobreak >nul
+echo Starting Config (8888)...
+start "Config" cmd /k "java -jar config-server/target/config-server-0.0.1-SNAPSHOT.jar || (echo SERVER CRASHED! & pause)"
+timeout /t 15 /nobreak > nul
 
-echo [2/8] Starting Discovery Server (port 8761)...
-start "Discovery Server" java -jar discovery-server/target/discovery-server-0.0.1-SNAPSHOT.jar
-echo Waiting 20s for Discovery Server to register...
-timeout /t 20 /nobreak >nul
+echo Starting Gateway (8080)...
+start "Gateway" cmd /k "java -jar api-gateway/target/api-gateway-0.0.1-SNAPSHOT.jar || (echo SERVER CRASHED! & pause)"
+timeout /t 10 /nobreak > nul
 
-echo [3/8] Starting API Gateway (port 8080)...
-start "API Gateway" java -jar api-gateway/target/api-gateway-0.0.1-SNAPSHOT.jar
-timeout /t 10 /nobreak >nul
+echo Starting Identity (8081)...
+start "Identity" cmd /k "java -jar identity-service/target/identity-service-0.0.1-SNAPSHOT.jar || (echo SERVER CRASHED! & pause)"
+timeout /t 5 /nobreak > nul
 
-echo [4/8] Starting Identity Service (port 8081)...
-start "Identity Service" java -jar identity-service/target/identity-service-0.0.1-SNAPSHOT.jar
-timeout /t 10 /nobreak >nul
+echo Starting Loan (8082)...
+start "Loan" cmd /k "java -jar loan-service/target/loan-service-0.0.1-SNAPSHOT.jar || (echo SERVER CRASHED! & pause)"
+timeout /t 5 /nobreak > nul
 
-echo [5/8] Starting Loan Service (port 8082)...
-start "Loan Service" java -jar loan-service/target/loan-service-0.0.1-SNAPSHOT.jar
-timeout /t 10 /nobreak >nul
+echo Starting EMI (8083)...
+start "EMI" cmd /k "java -jar emi-service/target/emi-service-0.0.1-SNAPSHOT.jar || (echo SERVER CRASHED! & pause)"
+timeout /t 5 /nobreak > nul
 
-echo [6/8] Starting EMI Service (port 8083)...
-start "EMI Service" java -jar emi-service/target/emi-service-0.0.1-SNAPSHOT.jar
-timeout /t 10 /nobreak >nul
+echo Starting Payment (8084)...
+start "Payment" cmd /k "java -jar payment-service/target/payment-service-0.0.1-SNAPSHOT.jar || (echo SERVER CRASHED! & pause)"
+timeout /t 5 /nobreak > nul
 
-echo [7/8] Starting Payment Service (port 8084)...
-start "Payment Service" java -jar payment-service/target/payment-service-0.0.1-SNAPSHOT.jar
-timeout /t 10 /nobreak >nul
-
-echo [8/8] Starting Notification Service (port 8085)...
-start "Notification Service" java -jar notification-service/target/notification-service-0.0.1-SNAPSHOT.jar
-timeout /t 10 /nobreak >nul
+echo Starting Notification (8085)...
+start "Notification" cmd /k "java -jar notification-service/target/notification-service-0.0.1-SNAPSHOT.jar || (echo SERVER CRASHED! & pause)"
 
 echo.
-echo ========================================
-echo    All services started!
-echo ========================================
-echo.
-echo Service URLs:
-echo   - Eureka Dashboard: http://localhost:8761
-echo   - API Gateway:      http://localhost:8080
-echo   - Config Server:    http://localhost:8888
-echo.
-echo Database Connections:
-echo   - MySQL:   %MYSQL_HOST%:%MYSQL_PORT%
-echo   - MongoDB: %MONGO_HOST%:%MONGO_PORT%
-echo.
-echo Test Credentials:
-echo   - Customer: customer@lms.com / Password@123
-echo   - Officer:  officer@lms.com  / Password@123
-echo   - Admin:    admin@lms.com    / Password@123
-echo.
-echo Press any key to exit this window (services will keep running)...
-pause >nul
+echo Done! Eureka: http://localhost:8761  API: http://localhost:8080
+pause

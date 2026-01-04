@@ -20,22 +20,10 @@ import java.util.stream.Collectors;
 public class EmiService {
 
     private final RepaymentRepository repository;
+    private static final MathContext MC = MathContext.DECIMAL128;
 
-    /**
-     * Calculate EMI preview without saving
-     * EMI Formula: P * r * (1+r)^n / ((1+r)^n - 1)
-     */
     public EmiCalculationResponse calculateEmi(BigDecimal principal, BigDecimal annualRate, Integer tenureMonths) {
-        MathContext mc = MathContext.DECIMAL128;
-        BigDecimal monthlyRate = annualRate.divide(BigDecimal.valueOf(1200), mc);
-        
-        BigDecimal onePlusR = monthlyRate.add(BigDecimal.ONE);
-        BigDecimal powerFactor = onePlusR.pow(tenureMonths, mc);
-        
-        BigDecimal numerator = principal.multiply(monthlyRate).multiply(powerFactor);
-        BigDecimal denominator = powerFactor.subtract(BigDecimal.ONE);
-        
-        BigDecimal monthlyEmi = numerator.divide(denominator, 2, RoundingMode.HALF_UP);
+        BigDecimal monthlyEmi = computeMonthlyEmi(principal, annualRate, tenureMonths);
         BigDecimal totalPayment = monthlyEmi.multiply(BigDecimal.valueOf(tenureMonths));
         BigDecimal totalInterest = totalPayment.subtract(principal);
         
@@ -49,47 +37,31 @@ public class EmiService {
                 .build();
     }
 
-    /**
-     * Generate and save EMI schedule when loan is approved
-     */
     @Transactional
-    public void generateSchedule(Long loanId, BigDecimal amount, BigDecimal annualInterestRate, Integer tenureMonths) {
-        MathContext mc = MathContext.DECIMAL128;
-        BigDecimal monthlyRate = annualInterestRate.divide(BigDecimal.valueOf(1200), mc);
-        
-        BigDecimal onePlusR = monthlyRate.add(BigDecimal.ONE);
-        BigDecimal powerFactor = onePlusR.pow(tenureMonths, mc);
-        
-        BigDecimal numerator = amount.multiply(monthlyRate).multiply(powerFactor);
-        BigDecimal denominator = powerFactor.subtract(BigDecimal.ONE);
-        
-        BigDecimal emi = numerator.divide(denominator, 2, RoundingMode.HALF_UP);
-
+    public void generateSchedule(Long loanId, Long userId, BigDecimal amount, BigDecimal annualInterestRate, Integer tenureMonths) {
+        BigDecimal monthlyRate = annualInterestRate.divide(BigDecimal.valueOf(1200), MC);
+        BigDecimal emi = computeMonthlyEmi(amount, annualInterestRate, tenureMonths);
         BigDecimal balance = amount;
-        LocalDate nextDueDate = LocalDate.now().plusMonths(1);
-
+        LocalDate dueDate = LocalDate.now().plusMonths(1);
         List<RepaymentSchedule> schedules = new ArrayList<>();
 
         for (int i = 1; i <= tenureMonths; i++) {
-            BigDecimal interestPart = balance.multiply(monthlyRate).setScale(2, RoundingMode.HALF_UP);
-            BigDecimal principalPart = emi.subtract(interestPart);
-            
-            balance = balance.subtract(principalPart);
+            BigDecimal interest = balance.multiply(monthlyRate).setScale(2, RoundingMode.HALF_UP);
+            BigDecimal principal = emi.subtract(interest);
+            balance = balance.subtract(principal);
 
-            RepaymentSchedule schedule = RepaymentSchedule.builder()
+            schedules.add(RepaymentSchedule.builder()
                     .loanId(loanId)
+                    .userId(userId)
                     .installmentNo(i)
-                    .dueDate(nextDueDate)
-                    .principalAmount(principalPart)
-                    .interestAmount(interestPart)
+                    .dueDate(dueDate)
+                    .principalAmount(principal)
+                    .interestAmount(interest)
                     .totalEmi(emi)
                     .status(RepaymentSchedule.PaymentStatus.PENDING)
-                    .build();
-            
-            schedules.add(schedule);
-            nextDueDate = nextDueDate.plusMonths(1);
+                    .build());
+            dueDate = dueDate.plusMonths(1);
         }
-        
         repository.saveAll(schedules);
     }
 
@@ -98,26 +70,27 @@ public class EmiService {
     }
 
     public List<RepaymentSchedule> getUpcomingEmis(Long userId) {
-        // In a real app, we'd query by userId through loan service
-        // For now, return pending EMIs with due date in next 30 days
         LocalDate today = LocalDate.now();
-        LocalDate thirtyDaysLater = today.plusDays(30);
-        
-        return repository.findByStatusAndDueDateBetween(
-                RepaymentSchedule.PaymentStatus.PENDING,
-                today,
-                thirtyDaysLater
-        );
+        // Use the new repository method to filter by userId
+        return repository.findByUserIdAndStatusAndDueDateBetween(
+                userId, RepaymentSchedule.PaymentStatus.PENDING, today, today.plusDays(30));
     }
 
     @Transactional
     public RepaymentSchedule markInstallmentAsPaid(Long installmentId) {
         RepaymentSchedule schedule = repository.findById(installmentId)
-                .orElseThrow(() -> new RuntimeException("Installment not found with id: " + installmentId));
-        
+                .orElseThrow(() -> new RuntimeException("Installment not found: " + installmentId));
         schedule.setStatus(RepaymentSchedule.PaymentStatus.PAID);
         schedule.setPaidDate(LocalDate.now());
-        
         return repository.save(schedule);
+    }
+
+    private BigDecimal computeMonthlyEmi(BigDecimal principal, BigDecimal annualRate, int months) {
+        BigDecimal monthlyRate = annualRate.divide(BigDecimal.valueOf(1200), MC);
+        BigDecimal onePlusR = monthlyRate.add(BigDecimal.ONE);
+        BigDecimal powerFactor = onePlusR.pow(months, MC);
+        BigDecimal numerator = principal.multiply(monthlyRate).multiply(powerFactor);
+        BigDecimal denominator = powerFactor.subtract(BigDecimal.ONE);
+        return numerator.divide(denominator, 2, RoundingMode.HALF_UP);
     }
 }

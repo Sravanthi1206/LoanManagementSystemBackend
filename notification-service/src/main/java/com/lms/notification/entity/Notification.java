@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 
 @Document(collection = "notifications")
 @Data
-@Builder
+@Builder(toBuilder = true)
 @NoArgsConstructor
 @AllArgsConstructor
 public class Notification {

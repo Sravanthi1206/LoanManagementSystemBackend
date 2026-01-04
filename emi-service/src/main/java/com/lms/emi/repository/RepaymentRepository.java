@@ -12,4 +12,5 @@ public interface RepaymentRepository extends JpaRepository<RepaymentSchedule, Lo
     // Find upcoming due payments for notification
     List<RepaymentSchedule> findByDueDateBetween(java.time.LocalDate start, java.time.LocalDate end);
     List<RepaymentSchedule> findByStatusAndDueDateBetween(RepaymentSchedule.PaymentStatus status, java.time.LocalDate start, java.time.LocalDate end);
+    List<RepaymentSchedule> findByUserIdAndStatusAndDueDateBetween(Long userId, RepaymentSchedule.PaymentStatus status, java.time.LocalDate start, java.time.LocalDate end);
 }

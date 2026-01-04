@@ -1,5 +1,4 @@
 -- LMS Database Initialization Script
--- This script runs when MySQL container starts for the first time
 
 -- Create databases
 CREATE DATABASE IF NOT EXISTS lms_users CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

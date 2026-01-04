@@ -1,5 +1,6 @@
 package com.lms.loan.controller;
 
+import com.lms.loan.dto.CreateLoanResponse;
 import com.lms.loan.dto.LoanApplicationRequest;
 import com.lms.loan.dto.LoanApplicationResponse;
 import com.lms.loan.service.LoanService;
@@ -19,7 +20,7 @@ public class LoanApplicationController {
     private final LoanService loanService;
 
     @PostMapping("/apply")
-    public ResponseEntity<LoanApplicationResponse> apply(
+    public ResponseEntity<CreateLoanResponse> apply(
             @Valid @RequestBody LoanApplicationRequest request,
             @RequestHeader(value = "X-User-Id", required = false) Long userId) {
         
@@ -29,7 +30,7 @@ public class LoanApplicationController {
         }
         
         LoanApplicationResponse response = loanService.applyLoan(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        return ResponseEntity.status(HttpStatus.CREATED).body(CreateLoanResponse.builder().loanId(response.getLoanId()).build());
     }
 
     @GetMapping("/my-loans")

@@ -55,9 +55,6 @@ public class PaymentService {
                 .build();
 
         Payment saved = repository.save(payment);
-        
-        // TODO: Call EMI Service to mark installment as paid
-        
         return mapToResponse(saved);
     }
 

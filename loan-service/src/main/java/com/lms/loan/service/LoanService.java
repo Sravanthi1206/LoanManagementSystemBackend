@@ -17,213 +17,187 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class LoanService {
 
-    private final LoanRepository repository;
-    private final NotificationPublisher notificationPublisher;
+    private final LoanRepository loans;
+    private final NotificationPublisher notifications;
+    private final com.lms.loan.client.EmiClient emiClient;
 
-    // --- Customer Features ---
+    // ... (existing code)
 
     @Transactional
-    public LoanApplicationResponse applyLoan(LoanApplicationRequest request) {
-        Loan loan = Loan.builder()
-                .userId(request.getUserId())
-                .type(request.getType())
-                .amountRequested(request.getAmount())
-                .tenureMonths(request.getTenure())
-                .purpose(request.getPurpose())
-                .employmentType(request.getEmploymentType())
-                .employerName(request.getEmployerName())
-                .monthlyIncome(request.getMonthlyIncome())
-                .annualIncome(request.getAnnualIncome())
-                .existingLoans(request.getExistingLoans())
-                .existingEmiAmount(request.getExistingEmiAmount())
+    public LoanApplicationResponse applyLoan(LoanApplicationRequest req) {
+        var loan = Loan.builder()
+                .userId(req.getUserId())
+                .type(req.getType())
+                .amountRequested(req.getAmount())
+                .tenureMonths(req.getTenure())
+                .purpose(req.getPurpose())
+                .employmentType(req.getEmploymentType())
+                .employerName(req.getEmployerName())
+                .monthlyIncome(req.getMonthlyIncome())
+                .annualIncome(req.getAnnualIncome())
+                .existingLoans(req.getExistingLoans())
+                .existingEmiAmount(req.getExistingEmiAmount())
                 .status(Loan.LoanStatus.APPLIED)
                 .build();
         
-        Loan savedLoan = repository.save(loan);
-        
-        // Send notification via RabbitMQ (async)
-        notificationPublisher.sendLoanNotification(
-                savedLoan.getUserId(),
-                savedLoan.getLoanId(),
-                "LOAN_APPLIED",
-                "Loan Application Received",
-                String.format("Your loan application #%d for ₹%.2f has been received and is under review.", 
-                        savedLoan.getLoanId(), savedLoan.getAmountRequested()),
-                "user" + savedLoan.getUserId() + "@lms.com"
-        );
-        
-        return mapToResponse(savedLoan);
+        loan = loans.save(loan);
+        notify(loan, "LOAN_APPLIED", "Application Received", 
+               "Your loan #" + loan.getLoanId() + " for Rs." + loan.getAmountRequested() + " is under review.");
+        return toResponse(loan);
     }
 
     public List<LoanApplicationResponse> getMyLoans(Long userId) {
-        return repository.findByUserId(userId).stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
+        return loans.findByUserId(userId).stream().map(this::toResponse).toList();
     }
 
     public LoanApplicationResponse getLoanById(Long id) {
-        Loan loan = repository.findById(id)
-                .orElseThrow(() -> new LoanNotFoundException(id));
-        return mapToResponse(loan);
+        return toResponse(findLoan(id));
     }
-    
+
     public Loan getLoan(Long id) {
-        return repository.findById(id)
-                .orElseThrow(() -> new LoanNotFoundException(id));
+        return findLoan(id);
     }
 
     @Transactional
     public LoanApplicationResponse withdrawLoan(Long loanId, Long userId) {
-        Loan loan = getLoan(loanId);
-        
+        var loan = findLoan(loanId);
         if (!loan.getUserId().equals(userId)) {
-            throw new UnauthorizedAccessException("You can only withdraw your own loan applications");
+            throw new UnauthorizedAccessException("You can only withdraw your own applications");
         }
-        
-        if (loan.getStatus() != Loan.LoanStatus.APPLIED) {
-            throw new InvalidLoanStatusException("Cannot withdraw loan. Current status: " + loan.getStatus());
-        }
-        
+        requireStatus(loan, Loan.LoanStatus.APPLIED, "withdraw");
         loan.setStatus(Loan.LoanStatus.WITHDRAWN);
-        Loan savedLoan = repository.save(loan);
-        return mapToResponse(savedLoan);
+        return toResponse(loans.save(loan));
     }
 
-    // --- Officer Features ---
-
-    public Page<LoanApplicationResponse> getLoansByStatus(Loan.LoanStatus status, Pageable pageable) {
-        return repository.findByStatus(status, pageable).map(this::mapToResponse);
+    public Page<LoanApplicationResponse> getLoansByStatus(Loan.LoanStatus status, Pageable p) {
+        return loans.findByStatus(status, p).map(this::toResponse);
     }
-    
-    public Page<LoanApplicationResponse> getAllLoans(Pageable pageable) {
-        return repository.findAll(pageable).map(this::mapToResponse);
+
+    public Page<LoanApplicationResponse> getAllLoans(Pageable p) {
+        return loans.findAll(p).map(this::toResponse);
     }
 
     @Transactional
     public LoanApplicationResponse reviewLoan(Long id, Long officerId) {
-        Loan loan = getLoan(id);
-        
-        if (loan.getStatus() != Loan.LoanStatus.APPLIED) {
-            throw new InvalidLoanStatusException("Loan must be in APPLIED status to start review. Current: " + loan.getStatus());
-        }
-        
+        var loan = findLoan(id);
+        requireStatus(loan, Loan.LoanStatus.APPLIED, "start review");
         loan.setStatus(Loan.LoanStatus.UNDER_REVIEW);
         loan.setAssignedOfficerId(officerId);
-        Loan savedLoan = repository.save(loan);
-        return mapToResponse(savedLoan);
+        return toResponse(loans.save(loan));
     }
 
     @Transactional
-    public LoanApplicationResponse performCreditCheck(Long id, Integer creditScore, String remarks) {
-        Loan loan = getLoan(id);
+    public LoanApplicationResponse performCreditCheck(Long id, Integer score, String remarks) {
+        var loan = findLoan(id);
+        requireStatus(loan, Loan.LoanStatus.UNDER_REVIEW, "credit check");
         
-        if (loan.getStatus() != Loan.LoanStatus.UNDER_REVIEW) {
-            throw new InvalidLoanStatusException("Loan must be UNDER_REVIEW for credit check. Current: " + loan.getStatus());
+        loan.setCreditScore(score);
+        loan.setRiskCategory(score >= 750 ? Loan.RiskCategory.LOW : 
+                            score >= 650 ? Loan.RiskCategory.MEDIUM : Loan.RiskCategory.HIGH);
+        
+        if (remarks != null && !remarks.isBlank()) {
+            var existing = loan.getOfficerRemarks() != null ? loan.getOfficerRemarks() + "\n" : "";
+            loan.setOfficerRemarks(existing + "Credit: " + remarks);
         }
-        
-        loan.setCreditScore(creditScore);
-        
-        if (creditScore >= 750) {
-            loan.setRiskCategory(Loan.RiskCategory.LOW);
-        } else if (creditScore >= 650) {
-            loan.setRiskCategory(Loan.RiskCategory.MEDIUM);
-        } else {
-            loan.setRiskCategory(Loan.RiskCategory.HIGH);
-        }
-        
-        if (remarks != null && !remarks.isEmpty()) {
-            String existingRemarks = loan.getOfficerRemarks() != null ? loan.getOfficerRemarks() + "\n" : "";
-            loan.setOfficerRemarks(existingRemarks + "Credit Check: " + remarks);
-        }
-        
-        Loan savedLoan = repository.save(loan);
-        return mapToResponse(savedLoan);
+        return toResponse(loans.save(loan));
     }
 
     @Transactional
-    public LoanApplicationResponse approveLoan(Long id, LoanApprovalRequest request) {
-        Loan loan = getLoan(id);
-        
-        if (loan.getStatus() != Loan.LoanStatus.UNDER_REVIEW) {
-            throw new InvalidLoanStatusException("Loan must be UNDER_REVIEW to approve. Current: " + loan.getStatus());
-        }
+    public LoanApplicationResponse approveLoan(Long id, LoanApprovalRequest req) {
+        var loan = findLoan(id);
+        requireStatus(loan, Loan.LoanStatus.UNDER_REVIEW, "approve");
         
         loan.setStatus(Loan.LoanStatus.APPROVED);
-        loan.setAmountApproved(request.getApprovedAmount());
-        loan.setInterestRate(request.getInterestRate());
-        loan.setOfficerRemarks(request.getRemarks());
+        loan.setAmountApproved(req.getApprovedAmount());
+        loan.setInterestRate(req.getInterestRate());
+        loan.setOfficerRemarks(req.getRemarks());
         loan.setApprovedOn(LocalDateTime.now());
         
-        Loan savedLoan = repository.save(loan);
-        
-        // Send approval notification via RabbitMQ (async)
-        notificationPublisher.sendLoanNotification(
-                savedLoan.getUserId(),
-                savedLoan.getLoanId(),
-                "LOAN_APPROVED",
-                "Loan Application Approved! 🎉",
-                String.format("Congratulations! Your loan #%d has been approved for ₹%.2f at %.2f%% interest rate.", 
-                        savedLoan.getLoanId(), savedLoan.getAmountApproved(), savedLoan.getInterestRate()),
-                "user" + savedLoan.getUserId() + "@lms.com"
-        );
-        
-        return mapToResponse(savedLoan);
+        loan = loans.save(loan);
+        notify(loan, "LOAN_APPROVED", "Approved!", 
+               "Loan #" + loan.getLoanId() + " approved for Rs." + loan.getAmountApproved());
+        return toResponse(loan);
     }
 
     @Transactional
     public LoanApplicationResponse rejectLoan(Long id, String remarks) {
-        Loan loan = getLoan(id);
-        
-        if (loan.getStatus() != Loan.LoanStatus.UNDER_REVIEW) {
-            throw new InvalidLoanStatusException("Loan must be UNDER_REVIEW to reject. Current: " + loan.getStatus());
-        }
+        var loan = findLoan(id);
+        requireStatus(loan, Loan.LoanStatus.UNDER_REVIEW, "reject");
         
         loan.setStatus(Loan.LoanStatus.REJECTED);
         loan.setOfficerRemarks(remarks);
-        
-        Loan savedLoan = repository.save(loan);
-        
-        // Send rejection notification via RabbitMQ (async)
-        notificationPublisher.sendLoanNotification(
-                savedLoan.getUserId(),
-                savedLoan.getLoanId(),
-                "LOAN_REJECTED",
-                "Loan Application Update",
-                String.format("Your loan application #%d has been reviewed. Status: Rejected. Remarks: %s", 
-                        savedLoan.getLoanId(), remarks != null ? remarks : "N/A"),
-                "user" + savedLoan.getUserId() + "@lms.com"
-        );
-        
-        return mapToResponse(savedLoan);
+        loan = loans.save(loan);
+        notify(loan, "LOAN_REJECTED", "Update", "Loan #" + loan.getLoanId() + " rejected");
+        return toResponse(loan);
     }
 
-    private LoanApplicationResponse mapToResponse(Loan loan) {
+    @Transactional
+    public LoanApplicationResponse disburseLoan(Long id) {
+        var loan = findLoan(id);
+        requireStatus(loan, Loan.LoanStatus.APPROVED, "disburse");
+        
+        loan.setStatus(Loan.LoanStatus.DISBURSED);
+        loan = loans.save(loan);
+        
+        // Generate EMI Schedule
+        try {
+            emiClient.generateSchedule(
+                    loan.getLoanId(),
+                    loan.getUserId(),
+                    loan.getAmountApproved(),
+                    loan.getInterestRate(),
+                    loan.getTenureMonths()
+            );
+        } catch (Exception e) {
+            // Log error (should be SLF4j but using exception wrapper for now)
+            throw new RuntimeException("Failed to generate EMI schedule: " + e.getMessage(), e);
+        }
+
+        notify(loan, "LOAN_DISBURSED", "Disbursed", 
+               "Loan #" + loan.getLoanId() + " disbursed: Rs." + loan.getAmountApproved());
+        return toResponse(loan);
+    }
+
+    private Loan findLoan(Long id) {
+        return loans.findById(id).orElseThrow(() -> new LoanNotFoundException(id));
+    }
+    
+    private void requireStatus(Loan loan, Loan.LoanStatus required, String action) {
+        if (loan.getStatus() != required) {
+            throw new InvalidLoanStatusException("Cannot " + action + ". Status: " + loan.getStatus());
+        }
+    }
+
+    private void notify(Loan l, String type, String subject, String msg) {
+        notifications.sendLoanNotification(l.getUserId(), l.getLoanId(), type, subject, msg,
+                "user" + l.getUserId() + "@lms.com");
+    }
+
+    private LoanApplicationResponse toResponse(Loan l) {
         return LoanApplicationResponse.builder()
-                .loanId(loan.getLoanId())
-                .userId(loan.getUserId())
-                .type(loan.getType())
-                .amountRequested(loan.getAmountRequested())
-                .tenureMonths(loan.getTenureMonths())
-                .purpose(loan.getPurpose())
-                .employmentType(loan.getEmploymentType())
-                .employerName(loan.getEmployerName())
-                .monthlyIncome(loan.getMonthlyIncome())
-                .annualIncome(loan.getAnnualIncome())
-                .existingLoans(loan.getExistingLoans())
-                .existingEmiAmount(loan.getExistingEmiAmount())
-                .interestRate(loan.getInterestRate())
-                .amountApproved(loan.getAmountApproved())
-                .status(loan.getStatus())
-                .officerRemarks(loan.getOfficerRemarks())
-                .appliedOn(loan.getAppliedOn())
-                .approvedOn(loan.getApprovedOn())
+                .loanId(l.getLoanId())
+                .userId(l.getUserId())
+                .type(l.getType())
+                .amountRequested(l.getAmountRequested())
+                .tenureMonths(l.getTenureMonths())
+                .purpose(l.getPurpose())
+                .employmentType(l.getEmploymentType())
+                .employerName(l.getEmployerName())
+                .monthlyIncome(l.getMonthlyIncome())
+                .annualIncome(l.getAnnualIncome())
+                .existingLoans(l.getExistingLoans())
+                .existingEmiAmount(l.getExistingEmiAmount())
+                .interestRate(l.getInterestRate())
+                .amountApproved(l.getAmountApproved())
+                .status(l.getStatus())
+                .officerRemarks(l.getOfficerRemarks())
+                .appliedOn(l.getAppliedOn())
+                .approvedOn(l.getApprovedOn())
                 .build();
     }
 }
-

@@ -1,13 +1,15 @@
 package com.lms.loan.service;
 
-import com.lms.loan.dto.LoanApplicationRequest;
-import com.lms.loan.dto.LoanApplicationResponse;
-import com.lms.loan.dto.LoanApprovalRequest;
+import com.lms.loan.dto.*;
 import com.lms.loan.entity.Loan;
-import com.lms.loan.repository.LoanRepository;
+import com.lms.loan.exception.InvalidLoanStatusException;
+import com.lms.loan.exception.LoanNotFoundException;
+import com.lms.loan.exception.UnauthorizedAccessException;
 import com.lms.loan.messaging.NotificationPublisher;
+import com.lms.loan.repository.LoanRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -21,23 +23,29 @@ import org.springframework.data.domain.Pageable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+/**
+ * Comprehensive unit tests for LoanService to achieve high code coverage.
+ */
 @ExtendWith(MockitoExtension.class)
-@DisplayName("LoanService Unit Tests")
+@DisplayName("LoanService Tests")
 class LoanServiceTest {
 
     @Mock
-    private LoanRepository loanRepository;
-    
+    private LoanRepository repository;
+
     @Mock
     private NotificationPublisher notificationPublisher;
+
+    @Mock
+    private com.lms.loan.client.EmiClient emiClient;
 
     @InjectMocks
     private LoanService loanService;
@@ -49,138 +57,289 @@ class LoanServiceTest {
     void setUp() {
         testLoan = Loan.builder()
                 .loanId(1L)
-                .userId(100L)
+                .userId(1L)
                 .type(Loan.LoanType.PERSONAL)
                 .amountRequested(new BigDecimal("100000"))
-                .tenureMonths(12)
-                .purpose("Home renovation")
+                .purpose("Home Renovation")
+                .tenureMonths(24)
+                .status(Loan.LoanStatus.APPLIED)
                 .employmentType(Loan.EmploymentType.SALARIED)
                 .monthlyIncome(new BigDecimal("50000"))
-                .status(Loan.LoanStatus.APPLIED)
+                .annualIncome(new BigDecimal("600000"))
                 .appliedOn(LocalDateTime.now())
                 .build();
 
         applicationRequest = new LoanApplicationRequest();
-        applicationRequest.setUserId(100L);
+        applicationRequest.setUserId(1L);
         applicationRequest.setType(Loan.LoanType.PERSONAL);
         applicationRequest.setAmount(new BigDecimal("100000"));
-        applicationRequest.setTenure(12);
-        applicationRequest.setPurpose("Home renovation");
+        applicationRequest.setPurpose("Home Renovation");
+        applicationRequest.setTenure(24);
         applicationRequest.setEmploymentType(Loan.EmploymentType.SALARIED);
         applicationRequest.setMonthlyIncome(new BigDecimal("50000"));
+        applicationRequest.setAnnualIncome(new BigDecimal("600000"));
     }
 
-    @Test
-    @DisplayName("Should apply for loan successfully")
-    void applyForLoan_Success() {
-        // Arrange
-        when(loanRepository.save(any(Loan.class))).thenReturn(testLoan);
+    @Nested
+    @DisplayName("Loan Application Tests")
+    class LoanApplicationTests {
 
-        // Act
-        LoanApplicationResponse response = loanService.applyLoan(applicationRequest);
+        @Test
+        @DisplayName("Should apply for loan successfully")
+        void applyLoan_Success() {
+            when(repository.save(any(Loan.class))).thenReturn(testLoan);
 
-        // Assert
-        assertNotNull(response);
-        assertEquals(Loan.LoanStatus.APPLIED, response.getStatus());
-        verify(loanRepository).save(any(Loan.class));
-        verify(notificationPublisher).sendLoanNotification(anyLong(), any(), any(), any(), any(), any());
+            LoanApplicationResponse result = loanService.applyLoan(applicationRequest);
+
+            assertNotNull(result);
+            assertEquals(testLoan.getLoanId(), result.getLoanId());
+            assertEquals(Loan.LoanStatus.APPLIED, result.getStatus());
+            verify(repository).save(any(Loan.class));
+            verify(notificationPublisher).sendLoanNotification(eq(1L), eq(1L), eq("LOAN_APPLIED"), anyString(), anyString(), anyString());
+        }
+
+        @Test
+        @DisplayName("Should apply for different loan types")
+        void applyLoan_DifferentTypes() {
+            for (Loan.LoanType type : Loan.LoanType.values()) {
+                applicationRequest.setType(type);
+                testLoan.setType(type);
+                when(repository.save(any(Loan.class))).thenReturn(testLoan);
+
+                LoanApplicationResponse result = loanService.applyLoan(applicationRequest);
+
+                assertNotNull(result);
+                assertEquals(type, result.getType());
+            }
+        }
     }
 
-    @Test
-    @DisplayName("Should get loans by user ID")
-    void getLoansByUserId_ReturnsLoans() {
-        // Arrange
-        List<Loan> loans = Arrays.asList(testLoan);
-        when(loanRepository.findByUserId(100L)).thenReturn(loans);
+    @Nested
+    @DisplayName("Get Loan Tests")
+    class GetLoanTests {
 
-        // Act
-        List<LoanApplicationResponse> result = loanService.getMyLoans(100L);
+        @Test
+        @DisplayName("Should get loan by ID entity")
+        void getLoan_Success() {
+            when(repository.findById(1L)).thenReturn(Optional.of(testLoan));
 
-        // Assert
-        assertNotNull(result);
-        assertEquals(1, result.size());
-        verify(loanRepository).findByUserId(100L);
+            Loan result = loanService.getLoan(1L);
+
+            assertNotNull(result);
+            assertEquals(testLoan.getLoanId(), result.getLoanId());
+        }
+
+        @Test
+        @DisplayName("Should throw exception when loan not found")
+        void getLoan_NotFound_ThrowsException() {
+            when(repository.findById(999L)).thenReturn(Optional.empty());
+
+            assertThrows(LoanNotFoundException.class, () -> loanService.getLoan(999L));
+        }
+
+        @Test
+        @DisplayName("Should get loan by ID with response")
+        void getLoanById_Success() {
+            when(repository.findById(1L)).thenReturn(Optional.of(testLoan));
+
+            LoanApplicationResponse result = loanService.getLoanById(1L);
+
+            assertNotNull(result);
+            assertEquals(testLoan.getLoanId(), result.getLoanId());
+        }
+
+        @Test
+        @DisplayName("Should get user's loans")
+        void getMyLoans_Success() {
+            List<Loan> loans = Collections.singletonList(testLoan);
+            when(repository.findByUserId(1L)).thenReturn(loans);
+
+            List<LoanApplicationResponse> result = loanService.getMyLoans(1L);
+
+            assertNotNull(result);
+            assertEquals(1, result.size());
+        }
+
+        @Test
+        @DisplayName("Should return empty list when no loans")
+        void getMyLoans_NoLoans() {
+            when(repository.findByUserId(999L)).thenReturn(Collections.emptyList());
+
+            List<LoanApplicationResponse> result = loanService.getMyLoans(999L);
+
+            assertNotNull(result);
+            assertTrue(result.isEmpty());
+        }
     }
 
-    @Test
-    @DisplayName("Should get loans by status with pagination")
-    void getLoansByStatus_WithPagination() {
-        // Arrange
-        Pageable pageable = PageRequest.of(0, 10);
-        Page<Loan> loanPage = new PageImpl<>(Arrays.asList(testLoan));
-        when(loanRepository.findByStatus(eq(Loan.LoanStatus.APPLIED), any(Pageable.class)))
-                .thenReturn(loanPage);
+    @Nested
+    @DisplayName("Withdraw Loan Tests")
+    class WithdrawLoanTests {
 
-        // Act
-        Page<LoanApplicationResponse> result = loanService.getLoansByStatus(Loan.LoanStatus.APPLIED, pageable);
+        @Test
+        @DisplayName("Should withdraw loan successfully")
+        void withdrawLoan_Success() {
+            when(repository.findById(1L)).thenReturn(Optional.of(testLoan));
+            when(repository.save(any(Loan.class))).thenReturn(testLoan);
 
-        // Assert
-        assertNotNull(result);
-        assertEquals(1, result.getTotalElements());
-        verify(loanRepository).findByStatus(Loan.LoanStatus.APPLIED, pageable);
+            LoanApplicationResponse result = loanService.withdrawLoan(1L, 1L);
+
+            assertNotNull(result);
+            verify(repository).save(argThat(loan -> loan.getStatus() == Loan.LoanStatus.WITHDRAWN));
+        }
+
+        @Test
+        @DisplayName("Should throw exception when withdrawing others loan")
+        void withdrawLoan_UnauthorizedAccess_ThrowsException() {
+            when(repository.findById(1L)).thenReturn(Optional.of(testLoan));
+
+            assertThrows(UnauthorizedAccessException.class, 
+                () -> loanService.withdrawLoan(1L, 999L));
+        }
+
+        @Test
+        @DisplayName("Should throw exception when loan not in APPLIED status")
+        void withdrawLoan_InvalidStatus_ThrowsException() {
+            testLoan.setStatus(Loan.LoanStatus.APPROVED);
+            when(repository.findById(1L)).thenReturn(Optional.of(testLoan));
+
+            assertThrows(InvalidLoanStatusException.class, 
+                () -> loanService.withdrawLoan(1L, 1L));
+        }
     }
 
-    @Test
-    @DisplayName("Should approve loan successfully")
-    void approveLoan_Success() {
-        // Arrange
-        testLoan.setStatus(Loan.LoanStatus.UNDER_REVIEW);
-        when(loanRepository.findById(1L)).thenReturn(Optional.of(testLoan));
-        when(loanRepository.save(any(Loan.class))).thenAnswer(i -> i.getArgument(0));
+    @Nested
+    @DisplayName("Officer Operations Tests")
+    class OfficerOperationsTests {
 
-        LoanApprovalRequest approvalRequest = new LoanApprovalRequest();
-        approvalRequest.setApprovedAmount(new BigDecimal("100000"));
-        approvalRequest.setInterestRate(new BigDecimal("12.5"));
-        approvalRequest.setRemarks("Good credit score");
+        @Test
+        @DisplayName("Should get loans by status")
+        void getLoansByStatus_Success() {
+            Page<Loan> page = new PageImpl<>(Collections.singletonList(testLoan));
+            when(repository.findByStatus(eq(Loan.LoanStatus.APPLIED), any(Pageable.class))).thenReturn(page);
 
-        // Act
-        LoanApplicationResponse response = loanService.approveLoan(1L, approvalRequest);
+            Page<LoanApplicationResponse> result = loanService.getLoansByStatus(
+                Loan.LoanStatus.APPLIED, PageRequest.of(0, 10));
 
-        // Assert
-        assertNotNull(response);
-        assertEquals(Loan.LoanStatus.APPROVED, response.getStatus());
-        verify(notificationPublisher).sendLoanNotification(anyLong(), any(), any(), any(), any(), any());
+            assertNotNull(result);
+            assertEquals(1, result.getTotalElements());
+        }
+
+        @Test
+        @DisplayName("Should start review")
+        void reviewLoan_Success() {
+            when(repository.findById(1L)).thenReturn(Optional.of(testLoan));
+            when(repository.save(any(Loan.class))).thenReturn(testLoan);
+
+            LoanApplicationResponse result = loanService.reviewLoan(1L, 100L);
+
+            assertNotNull(result);
+            verify(repository).save(argThat(loan -> loan.getStatus() == Loan.LoanStatus.UNDER_REVIEW));
+            verify(repository).save(argThat(loan -> loan.getAssignedOfficerId() == 100L));
+        }
+
+        @Test
+        @DisplayName("Should approve loan")
+        void approveLoan_Success() {
+            testLoan.setStatus(Loan.LoanStatus.UNDER_REVIEW);
+            when(repository.findById(1L)).thenReturn(Optional.of(testLoan));
+            when(repository.save(any(Loan.class))).thenReturn(testLoan);
+
+            LoanApprovalRequest request = new LoanApprovalRequest();
+            request.setApprovedAmount(new BigDecimal("90000"));
+            request.setInterestRate(new BigDecimal("12.5"));
+            request.setRemarks("Approved");
+
+            LoanApplicationResponse result = loanService.approveLoan(1L, request);
+
+            assertNotNull(result);
+            assertEquals(Loan.LoanStatus.APPROVED, result.getStatus());
+            verify(notificationPublisher).sendLoanNotification(anyLong(), anyLong(), eq("LOAN_APPROVED"), anyString(), anyString(), anyString());
+        }
+
+        @Test
+        @DisplayName("Should reject loan")
+        void rejectLoan_Success() {
+            testLoan.setStatus(Loan.LoanStatus.UNDER_REVIEW);
+            when(repository.findById(1L)).thenReturn(Optional.of(testLoan));
+            when(repository.save(any(Loan.class))).thenReturn(testLoan);
+
+            LoanApplicationResponse result = loanService.rejectLoan(1L, "Low credit score");
+
+            assertNotNull(result);
+            assertEquals(Loan.LoanStatus.REJECTED, result.getStatus());
+            verify(notificationPublisher).sendLoanNotification(anyLong(), anyLong(), eq("LOAN_REJECTED"), anyString(), anyString(), anyString());
+        }
+
+        @Test
+        @DisplayName("Should perform credit check")
+        void performCreditCheck_Success() {
+            testLoan.setStatus(Loan.LoanStatus.UNDER_REVIEW);
+            when(repository.findById(1L)).thenReturn(Optional.of(testLoan));
+            when(repository.save(any(Loan.class))).thenReturn(testLoan);
+
+            LoanApplicationResponse result = loanService.performCreditCheck(1L, 750, "Good");
+
+            assertNotNull(result);
+            verify(repository).save(any(Loan.class));
+        }
+
+        @Test
+        @DisplayName("Should disburse loan")
+        void disburseLoan_Success() {
+            testLoan.setStatus(Loan.LoanStatus.APPROVED);
+            testLoan.setAmountApproved(new BigDecimal("90000"));
+            testLoan.setInterestRate(new BigDecimal("12.5"));
+            testLoan.setTenureMonths(24);
+            when(repository.findById(1L)).thenReturn(Optional.of(testLoan));
+            when(repository.save(any(Loan.class))).thenReturn(testLoan);
+
+            LoanApplicationResponse result = loanService.disburseLoan(1L);
+
+            assertNotNull(result);
+            assertEquals(Loan.LoanStatus.DISBURSED, result.getStatus());
+            verify(notificationPublisher).sendLoanNotification(anyLong(), anyLong(), eq("LOAN_DISBURSED"), anyString(), anyString(), anyString());
+            verify(emiClient).generateSchedule(anyLong(), anyLong(), any(BigDecimal.class), any(BigDecimal.class), anyInt());
+        }
+
+        @Test
+        @DisplayName("Should throw exception when disbursing non-approved loan")
+        void disburseLoan_InvalidStatus_ThrowsException() {
+            when(repository.findById(1L)).thenReturn(Optional.of(testLoan));
+
+            assertThrows(InvalidLoanStatusException.class, 
+                () -> loanService.disburseLoan(1L));
+        }
     }
 
-    @Test
-    @DisplayName("Should reject loan with remarks")
-    void rejectLoan_Success() {
-        // Arrange
-        testLoan.setStatus(Loan.LoanStatus.UNDER_REVIEW);
-        when(loanRepository.findById(1L)).thenReturn(Optional.of(testLoan));
-        when(loanRepository.save(any(Loan.class))).thenAnswer(i -> i.getArgument(0));
+    @Nested
+    @DisplayName("Status Transition Tests")
+    class StatusTransitionTests {
 
-        // Act
-        LoanApplicationResponse response = loanService.rejectLoan(1L, "Insufficient income");
+        @Test
+        @DisplayName("Should transition from APPLIED to UNDER_REVIEW")
+        void statusTransition_AppliedToUnderReview() {
+            when(repository.findById(1L)).thenReturn(Optional.of(testLoan));
+            when(repository.save(any(Loan.class))).thenReturn(testLoan);
 
-        // Assert
-        assertNotNull(response);
-        assertEquals(Loan.LoanStatus.REJECTED, response.getStatus());
-        verify(notificationPublisher).sendLoanNotification(anyLong(), any(), any(), any(), any(), any());
-    }
+            loanService.reviewLoan(1L, 100L);
 
-    @Test
-    @DisplayName("Should throw exception when loan not found")
-    void getLoanById_NotFound_ThrowsException() {
-        // Arrange
-        when(loanRepository.findById(999L)).thenReturn(Optional.empty());
+            verify(repository).save(argThat(loan -> 
+                loan.getStatus() == Loan.LoanStatus.UNDER_REVIEW));
+        }
 
-        // Act & Assert
-        assertThrows(RuntimeException.class, () -> loanService.getLoanById(999L));
-    }
+        @Test
+        @DisplayName("Should transition from APPROVED to DISBURSED")
+        void statusTransition_ApprovedToDisbursed() {
+            testLoan.setStatus(Loan.LoanStatus.APPROVED);
+            testLoan.setAmountApproved(new BigDecimal("90000"));
+            when(repository.findById(1L)).thenReturn(Optional.of(testLoan));
+            when(repository.save(any(Loan.class))).thenReturn(testLoan);
 
-    @Test
-    @DisplayName("Should start loan review")
-    void reviewLoan_Success() {
-        // Arrange
-        when(loanRepository.findById(1L)).thenReturn(Optional.of(testLoan));
-        when(loanRepository.save(any(Loan.class))).thenAnswer(i -> i.getArgument(0));
+            loanService.disburseLoan(1L);
 
-        // Act
-        LoanApplicationResponse response = loanService.reviewLoan(1L, 50L);
-
-        // Assert
-        assertNotNull(response);
-        assertEquals(Loan.LoanStatus.UNDER_REVIEW, response.getStatus());
+            verify(repository).save(argThat(loan -> 
+                loan.getStatus() == Loan.LoanStatus.DISBURSED));
+        }
     }
 }

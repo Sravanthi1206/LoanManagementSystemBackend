@@ -1,0 +1,369 @@
+{
+    "info": {
+        "_postman_id": "d05d5e5b-1234-5678-9abc-def012345678",
+        "name": "Loan Management System",
+        "description": "Comprehensive API collection for LMS Microservices",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "0. Authentication (Identity)",
+            "item": [
+                {
+                    "name": "Register",
+                    "event": [
+                        {
+                            "listen": "prerequest",
+                            "script": {
+                                "exec": [
+                                    "const randomStr = Date.now();",
+                                    "pm.environment.set(\"email\", `user_${randomStr}@example.com`);",
+                                    "console.log(\"Generated random email: \" + pm.environment.get(\"email\"));"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        },
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if(pm.response.code === 201) {",
+                                    "    var jsonData = pm.response.json();",
+                                    "    if(jsonData.accessToken) {",
+                                    "        pm.environment.set(\"accessToken\", jsonData.accessToken);",
+                                    "        pm.environment.set(\"userId\", jsonData.user.id);",
+                                    "        console.log(\"Token and UserID set successfully\");",
+                                    "    }",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"email\": \"{{email}}\",\n    \"password\": \"password123\",\n    \"firstName\": \"John\",\n    \"lastName\": \"Doe\",\n    \"phone\": \"9876543210\",\n    \"panCard\": \"ABCDE1234F\",\n    \"dateOfBirth\": \"1990-01-01\",\n    \"role\": \"CUSTOMER\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{gatewayUrl}}/auth/register",
+                            "host": [
+                                "{{gatewayUrl}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "register"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Login",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if(pm.response.code === 200) {",
+                                    "    var jsonData = pm.response.json();",
+                                    "    if(jsonData.accessToken) {",
+                                    "        pm.environment.set(\"accessToken\", jsonData.accessToken);",
+                                    "        pm.environment.set(\"userId\", jsonData.user.id);",
+                                    "    }",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"email\": \"{{email}}\",\n    \"password\": \"password123\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{gatewayUrl}}/auth/login",
+                            "host": [
+                                "{{gatewayUrl}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "login"
+                            ]
+                        }
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "1. User Management (Identity)",
+            "item": [
+                {
+                    "name": "Get My Profile",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}",
+                                "type": "text"
+                            },
+                            {
+                                "key": "X-User-Email",
+                                "value": "{{email}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{gatewayUrl}}/users/profile",
+                            "host": [
+                                "{{gatewayUrl}}"
+                            ],
+                            "path": [
+                                "users",
+                                "profile"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Create Staff (Admin)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"email\": \"admin@lms.com\",\n    \"password\": \"admin123\",\n    \"firstName\": \"Super\",\n    \"lastName\": \"Admin\",\n    \"phone\": \"0000000000\",\n    \"role\": \"ADMIN\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{gatewayUrl}}/admin/users",
+                            "host": [
+                                "{{gatewayUrl}}"
+                            ],
+                            "path": [
+                                "admin",
+                                "users"
+                            ]
+                        }
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "2. Loan Service",
+            "item": [
+                {
+                    "name": "Apply for Loan",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"type\": \"PERSONAL\",\n    \"amount\": 50000,\n    \"purpose\": \"Medical\",\n    \"tenure\": 12,\n    \"employmentType\": \"SALARIED\",\n    \"monthlyIncome\": 60000,\n    \"annualIncome\": 720000\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{gatewayUrl}}/loans/apply",
+                            "host": [
+                                "{{gatewayUrl}}"
+                            ],
+                            "path": [
+                                "loans",
+                                "apply"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "My Loans",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{gatewayUrl}}/loans/my-loans",
+                            "host": [
+                                "{{gatewayUrl}}"
+                            ],
+                            "path": [
+                                "loans",
+                                "my-loans"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Admin - All Loans",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{gatewayUrl}}/loans/admin",
+                            "host": [
+                                "{{gatewayUrl}}"
+                            ],
+                            "path": [
+                                "loans",
+                                "admin"
+                            ]
+                        }
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "3. Wallet & Payments",
+            "item": [
+                {
+                    "name": "Get Wallet Balance",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{gatewayUrl}}/wallet/balance",
+                            "host": [
+                                "{{gatewayUrl}}"
+                            ],
+                            "path": [
+                                "wallet",
+                                "balance"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Disburse Loan (Payment)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"loanId\": 1,\n    \"userId\": {{userId}},\n    \"amount\": 50000,\n    \"method\": \"BANK_TRANSFER\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{gatewayUrl}}/payments/disburse",
+                            "host": [
+                                "{{gatewayUrl}}"
+                            ],
+                            "path": [
+                                "payments",
+                                "disburse"
+                            ]
+                        }
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "4. EMI",
+            "item": [
+                {
+                    "name": "Calculate EMI",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"principalAmount\": 50000,\n    \"annualInterestRate\": 10,\n    \"tenureMonths\": 12\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{gatewayUrl}}/emi/calculate",
+                            "host": [
+                                "{{gatewayUrl}}"
+                            ],
+                            "path": [
+                                "emi",
+                                "calculate"
+                            ]
+                        }
+                    },
+                    "response": []
+                }
+            ]
+        }
+    ],
+    "variable": [
+        {
+            "key": "gatewayUrl",
+            "value": "http://localhost:8080",
+            "type": "string"
+        }
+    ]
+}

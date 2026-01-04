@@ -23,6 +23,8 @@ public class RepaymentSchedule {
     @Column(nullable = false)
     private Long loanId; // Logical FK
 
+    private Long userId; // For efficient filtering
+
     private Integer installmentNo; // 1 to N
     private LocalDate dueDate;
 

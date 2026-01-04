@@ -19,6 +19,7 @@ public class UserResponse {
     private String lastName;
     private String phone;
     private LocalDate dateOfBirth;
+    private String panCard;
     private User.Role role;
     private Boolean active;
     private LocalDateTime createdAt;
