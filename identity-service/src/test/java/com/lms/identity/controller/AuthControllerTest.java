@@ -141,7 +141,7 @@ class AuthControllerTest {
     @Test
     @DisplayName("POST /auth/change-password - Success")
     void changePassword_ShouldReturnOk() throws Exception {
-        ChangePasswordRequest request = new ChangePasswordRequest("old", "new");
+        ChangePasswordRequest request = new ChangePasswordRequest("oldPassword", "newPassword123");
         
         doNothing().when(authService).changePassword(eq(1L), any(ChangePasswordRequest.class));
 
