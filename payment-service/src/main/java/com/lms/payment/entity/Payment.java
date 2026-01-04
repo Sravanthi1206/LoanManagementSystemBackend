@@ -68,7 +68,7 @@ public class Payment {
     }
 
     public enum PaymentMethod {
-        BANK_TRANSFER, ONLINE, UPI, DEBIT_CARD, CREDIT_CARD, CHEQUE
+        BANK_TRANSFER, ONLINE, UPI, DEBIT_CARD, CREDIT_CARD, CHEQUE, WALLET
     }
 
     public enum PaymentStatus {
