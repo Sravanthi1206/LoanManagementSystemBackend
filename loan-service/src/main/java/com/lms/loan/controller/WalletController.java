@@ -52,4 +52,15 @@ public class WalletController {
     public ResponseEntity<WalletResponse> getBalanceByUserId(@PathVariable Long userId) {
         return ResponseEntity.ok(walletService.getBalance(userId));
     }
+
+    /**
+     * Debit amount from wallet (for internal service calls).
+     */
+    @PostMapping("/debit")
+    public ResponseEntity<Void> debitWallet(
+            @RequestParam("userId") Long userId,
+            @RequestParam("amount") java.math.BigDecimal amount) {
+        walletService.debit(userId, amount, com.lms.loan.entity.WalletTransaction.TransactionType.EMI_PAYMENT, null, "Wallet Payment");
+        return ResponseEntity.ok().build();
+    }
 }

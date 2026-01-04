@@ -21,6 +21,8 @@ import java.util.stream.Collectors;
 public class PaymentService {
 
     private final PaymentRepository repository;
+    private final com.lms.payment.client.LoanClient loanClient;
+    private final com.lms.payment.client.EmiClient emiClient;
 
     @Transactional
     public PaymentResponse recordDisbursement(DisbursementRequest request) {
@@ -42,6 +44,16 @@ public class PaymentService {
 
     @Transactional
     public PaymentResponse recordRepayment(RepaymentRequest request) {
+        // 1. If Wallet payment, deduct balance
+        if (request.getPaymentMethod() == Payment.PaymentMethod.WALLET) {
+            loanClient.debitWallet(request.getUserId(), request.getAmount());
+        }
+
+        // 2. Mark EMI as paid if installment ID is provided
+        if (request.getInstallmentId() != null) {
+            emiClient.markInstallmentAsPaid(request.getInstallmentId());
+        }
+
         Payment payment = Payment.builder()
                 .loanId(request.getLoanId())
                 .userId(request.getUserId())
