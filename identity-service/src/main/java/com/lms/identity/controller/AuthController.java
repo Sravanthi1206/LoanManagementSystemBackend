@@ -26,4 +26,12 @@ public class AuthController {
         LoginResponse response = authService.login(request);
         return ResponseEntity.ok(response);
     }
+
+    @PostMapping("/change-password")
+    public ResponseEntity<Void> changePassword(
+            @RequestHeader("X-User-Id") Long userId,
+            @Valid @RequestBody ChangePasswordRequest request) {
+        authService.changePassword(userId, request);
+        return ResponseEntity.ok().build();
+    }
 }

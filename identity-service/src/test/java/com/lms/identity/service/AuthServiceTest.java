@@ -186,5 +186,40 @@ class AuthServiceTest {
         }
     }
 
+    @Nested
+    @DisplayName("Change Password Tests")
+    class ChangePasswordTests {
+
+        private ChangePasswordRequest changePasswordRequest;
+
+        @BeforeEach
+        void setUp() {
+            changePasswordRequest = new ChangePasswordRequest("oldPass", "newPass123");
+        }
+
+        @Test
+        @DisplayName("Should change password successfully")
+        void changePassword_Success() {
+            when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+            when(passwordEncoder.matches("oldPass", "encodedPassword")).thenReturn(true);
+            when(passwordEncoder.encode("newPass123")).thenReturn("newEncodedPassword");
+
+            authService.changePassword(1L, changePasswordRequest);
+
+            verify(userRepository).save(testUser);
+            assertFalse(testUser.getPasswordChangeRequired());
+        }
+
+        @Test
+        @DisplayName("Should throw exception when old password invalid")
+        void changePassword_InvalidOldPassword() {
+            when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+            when(passwordEncoder.matches("oldPass", "encodedPassword")).thenReturn(false);
+
+            assertThrows(InvalidCredentialsException.class, 
+                () -> authService.changePassword(1L, changePasswordRequest));
+            verify(userRepository, never()).save(any(User.class));
+        }
+    }
 }
 

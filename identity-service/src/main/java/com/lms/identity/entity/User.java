@@ -47,6 +47,9 @@ public class User {
     @Builder.Default
     private Boolean active = true;
 
+    @Builder.Default
+    private Boolean passwordChangeRequired = false;
+
     private LocalDateTime createdAt;
     
     private LocalDateTime updatedAt;
@@ -57,6 +60,9 @@ public class User {
         updatedAt = LocalDateTime.now();
         if (active == null) {
             active = true;
+        }
+        if (passwordChangeRequired == null) {
+            passwordChangeRequired = false;
         }
     }
     

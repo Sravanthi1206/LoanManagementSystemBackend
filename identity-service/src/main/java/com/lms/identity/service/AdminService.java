@@ -37,6 +37,7 @@ public class AdminService {
                 .phone(request.getPhone())
                 .role(request.getRole())
                 .active(true)
+                .passwordChangeRequired(true)
                 .build();
 
         return mapToUserResponse(repository.save(user));
@@ -68,6 +69,7 @@ public class AdminService {
                 .dateOfBirth(user.getDateOfBirth())
                 .role(user.getRole())
                 .active(user.getActive())
+                .passwordChangeRequired(user.getPasswordChangeRequired())
                 .createdAt(user.getCreatedAt())
                 .build();
     }

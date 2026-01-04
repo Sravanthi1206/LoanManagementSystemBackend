@@ -37,6 +37,20 @@ public class AuthService {
         return buildLoginResponse(user);
     }
     
+    @Transactional
+    public void changePassword(Long userId, ChangePasswordRequest request) {
+        User user = repository.findById(userId)
+                .orElseThrow(() -> new com.lms.identity.exception.UserNotFoundException(userId));
+                
+        if (!passwordEncoder.matches(request.getOldPassword(), user.getPasswordHash())) {
+            throw new InvalidCredentialsException("Invalid old password");
+        }
+        
+        user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
+        user.setPasswordChangeRequired(false);
+        repository.save(user);
+    }
+    
     private void validateUniqueFields(UserRegisterRequest request) {
         if (repository.existsByEmail(request.getEmail())) {
             throw new DuplicateUserException("email", request.getEmail());
@@ -91,6 +105,7 @@ public class AuthService {
                 .dateOfBirth(user.getDateOfBirth())
                 .role(user.getRole())
                 .active(user.getActive())
+                .passwordChangeRequired(user.getPasswordChangeRequired())
                 .createdAt(user.getCreatedAt())
                 .build();
     }

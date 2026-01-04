@@ -57,6 +57,7 @@ class AdminServiceTest {
         assertNotNull(response);
         assertEquals(1L, response.getId());
         assertEquals(User.Role.LOAN_OFFICER, response.getRole());
+        assertTrue(response.getPasswordChangeRequired());
         verify(userRepository).save(any(User.class));
     }
 

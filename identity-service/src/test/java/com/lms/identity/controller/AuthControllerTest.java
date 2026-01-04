@@ -21,6 +21,9 @@ import java.util.List;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.doNothing;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -66,6 +69,7 @@ class AuthControllerTest {
                 .firstName("John")
                 .lastName("Doe")
                 .role(User.Role.CUSTOMER)
+                .passwordChangeRequired(false)
                 .build();
 
         loginResponse = LoginResponse.builder()
@@ -132,5 +136,19 @@ class AuthControllerTest {
                             .content(objectMapper.writeValueAsString(invalidRequest)))
                     .andExpect(status().isBadRequest());
         }
+    }
+
+    @Test
+    @DisplayName("POST /auth/change-password - Success")
+    void changePassword_ShouldReturnOk() throws Exception {
+        ChangePasswordRequest request = new ChangePasswordRequest("old", "new");
+        
+        doNothing().when(authService).changePassword(eq(1L), any(ChangePasswordRequest.class));
+
+        mockMvc.perform(post("/auth/change-password")
+                .header("X-User-Id", "1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk());
     }
 }
