@@ -112,6 +112,10 @@ public class LoanService {
         var loan = findLoan(id);
         requireStatus(loan, Loan.LoanStatus.UNDER_REVIEW, "approve");
         
+        if (loan.getCreditScore() == null) {
+            throw new IllegalStateException("Cannot approve loan without performing a credit check first.");
+        }
+        
         loan.setStatus(Loan.LoanStatus.APPROVED);
         loan.setAmountApproved(req.getApprovedAmount());
         loan.setInterestRate(req.getInterestRate());
