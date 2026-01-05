@@ -164,5 +164,16 @@ class LoanProcessingControllerTest {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.status").value("REJECTED"));
         }
+
+        @Test
+        @DisplayName("PUT /loans/admin/{id}/disburse - Success")
+        void disburseLoan_Success() throws Exception {
+            loanResponse.setStatus(Loan.LoanStatus.DISBURSED);
+            when(loanService.disburseLoan(eq(1L))).thenReturn(loanResponse);
+
+            mockMvc.perform(put("/loans/admin/1/disburse"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.status").value("DISBURSED"));
+        }
     }
 }
