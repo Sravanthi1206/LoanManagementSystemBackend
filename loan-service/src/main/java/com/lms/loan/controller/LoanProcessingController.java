@@ -73,5 +73,10 @@ public class LoanProcessingController {
             @Valid @RequestBody RejectRequest request) {
         return ResponseEntity.ok(loanService.rejectLoan(id, request.getRemarks()));
     }
+
+    @PutMapping("/{id}/disburse")
+    public ResponseEntity<LoanApplicationResponse> disburse(@PathVariable Long id) {
+        return ResponseEntity.ok(loanService.disburseLoan(id));
+    }
 }
 
