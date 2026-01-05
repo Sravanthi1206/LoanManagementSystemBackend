@@ -109,7 +109,7 @@ class EmiServiceTest {
         @DisplayName("Should get upcoming EMIs")
         void getUpcomingEmis_Success() {
             List<RepaymentSchedule> schedules = Collections.singletonList(new RepaymentSchedule());
-            when(repository.findByUserIdAndStatusAndDueDateBetween(anyLong(), any(), any(), any())).thenReturn(schedules);
+            when(repository.findByUserIdAndStatusOrderByDueDateAsc(anyLong(), any())).thenReturn(schedules);
 
             List<RepaymentSchedule> result = emiService.getUpcomingEmis(1L);
 

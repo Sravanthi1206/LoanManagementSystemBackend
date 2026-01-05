@@ -13,4 +13,6 @@ public interface RepaymentRepository extends JpaRepository<RepaymentSchedule, Lo
     List<RepaymentSchedule> findByDueDateBetween(java.time.LocalDate start, java.time.LocalDate end);
     List<RepaymentSchedule> findByStatusAndDueDateBetween(RepaymentSchedule.PaymentStatus status, java.time.LocalDate start, java.time.LocalDate end);
     List<RepaymentSchedule> findByUserIdAndStatusAndDueDateBetween(Long userId, RepaymentSchedule.PaymentStatus status, java.time.LocalDate start, java.time.LocalDate end);
+    // Find all pending EMIs for a user (sorted by due date)
+    List<RepaymentSchedule> findByUserIdAndStatusOrderByDueDateAsc(Long userId, RepaymentSchedule.PaymentStatus status);
 }

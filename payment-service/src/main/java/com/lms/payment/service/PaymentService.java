@@ -6,6 +6,7 @@ import com.lms.payment.dto.RepaymentRequest;
 import com.lms.payment.entity.Payment;
 import com.lms.payment.repository.PaymentRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -18,6 +19,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class PaymentService {
 
     private final PaymentRepository repository;
@@ -44,14 +46,30 @@ public class PaymentService {
 
     @Transactional
     public PaymentResponse recordRepayment(RepaymentRequest request) {
+        log.info("Processing repayment for user {} on loan {}, amount: {}", 
+                 request.getUserId(), request.getLoanId(), request.getAmount());
+        
         // 1. If Wallet payment, deduct balance
         if (request.getPaymentMethod() == Payment.PaymentMethod.WALLET) {
-            loanClient.debitWallet(request.getUserId(), request.getAmount());
+            try {
+                log.info("Debiting wallet for user {}", request.getUserId());
+                loanClient.debitWallet(request.getUserId(), request.getAmount());
+            } catch (Exception e) {
+                log.error("Failed to debit wallet for user {}: {}", request.getUserId(), e.getMessage());
+                throw new RuntimeException("Failed to process wallet payment: " + e.getMessage(), e);
+            }
         }
 
         // 2. Mark EMI as paid if installment ID is provided
         if (request.getInstallmentId() != null) {
-            emiClient.markInstallmentAsPaid(request.getInstallmentId());
+            try {
+                log.info("Marking installment {} as paid", request.getInstallmentId());
+                emiClient.markInstallmentAsPaid(request.getInstallmentId());
+            } catch (Exception e) {
+                log.error("Failed to mark installment {} as paid: {}", request.getInstallmentId(), e.getMessage());
+                // Continue with payment record even if EMI marking fails - can be retried later
+                log.warn("Payment will be recorded but EMI status may need manual update");
+            }
         }
 
         Payment payment = Payment.builder()
@@ -67,6 +85,7 @@ public class PaymentService {
                 .build();
 
         Payment saved = repository.save(payment);
+        log.info("Payment recorded successfully with transaction ID: {}", saved.getTransactionId());
         return mapToResponse(saved);
     }
 

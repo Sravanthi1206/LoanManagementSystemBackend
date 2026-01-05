@@ -34,6 +34,7 @@ public class Payment {
     private BigDecimal amount;
 
     @Enumerated(EnumType.STRING)
+    @Column(length = 20)
     private PaymentMethod paymentMethod;
 
     @Enumerated(EnumType.STRING)

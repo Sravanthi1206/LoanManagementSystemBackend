@@ -5,7 +5,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import java.math.BigDecimal;
 
-@FeignClient(name = "loan-service")
+@FeignClient(name = "loan-service", fallback = LoanClientFallback.class)
 public interface LoanClient {
 
     @PostMapping("/wallet/debit")

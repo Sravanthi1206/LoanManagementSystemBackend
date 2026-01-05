@@ -70,10 +70,9 @@ public class EmiService {
     }
 
     public List<RepaymentSchedule> getUpcomingEmis(Long userId) {
-        LocalDate today = LocalDate.now();
-        // Use the new repository method to filter by userId
-        return repository.findByUserIdAndStatusAndDueDateBetween(
-                userId, RepaymentSchedule.PaymentStatus.PENDING, today, today.plusDays(30));
+        // Return all pending EMIs for the user, ordered by due date
+        return repository.findByUserIdAndStatusOrderByDueDateAsc(
+                userId, RepaymentSchedule.PaymentStatus.PENDING);
     }
 
     @Transactional
