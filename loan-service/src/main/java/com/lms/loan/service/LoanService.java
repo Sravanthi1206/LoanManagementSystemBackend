@@ -238,6 +238,7 @@ public class LoanService {
                 .approvedOn(l.getApprovedOn())
                 .creditScore(l.getCreditScore())
                 .riskCategory(l.getRiskCategory())
+                .assignedOfficerId(l.getAssignedOfficerId())
                 .build();
     }
 }
