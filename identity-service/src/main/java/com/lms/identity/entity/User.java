@@ -49,6 +49,15 @@ public class User {
 
     @Builder.Default
     private Boolean passwordChangeRequired = false;
+    
+    // Approval workflow fields - backward compatible with defaults
+    @Builder.Default
+    private Boolean approved = true;  // Default true for existing users
+    
+    @Builder.Default
+    private Boolean approvalPending = false;
+    
+    private Long createdByUserId;  // Who created this user (null for self-registered)
 
     private LocalDateTime createdAt;
     
@@ -64,6 +73,12 @@ public class User {
         if (passwordChangeRequired == null) {
             passwordChangeRequired = false;
         }
+        if (approved == null) {
+            approved = true;
+        }
+        if (approvalPending == null) {
+            approvalPending = false;
+        }
     }
     
     @PreUpdate
@@ -72,6 +87,7 @@ public class User {
     }
 
     public enum Role {
-        ADMIN, LOAN_OFFICER, CUSTOMER
+        ROOT_ADMIN, ADMIN, LOAN_OFFICER, CUSTOMER
     }
 }
+

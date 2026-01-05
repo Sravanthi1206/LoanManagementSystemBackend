@@ -22,6 +22,8 @@ public class UserResponse {
     private String panCard;
     private User.Role role;
     private Boolean active;
+    private Boolean approved;
+    private Boolean approvalPending;
     private Boolean passwordChangeRequired;
     private LocalDateTime createdAt;
 }
