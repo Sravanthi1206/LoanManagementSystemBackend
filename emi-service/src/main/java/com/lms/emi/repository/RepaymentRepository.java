@@ -9,6 +9,8 @@ import java.util.List;
 @Repository
 public interface RepaymentRepository extends JpaRepository<RepaymentSchedule, Long> {
     List<RepaymentSchedule> findByLoanId(Long loanId);
+    // For EMI schedule - sorted by installment number
+    List<RepaymentSchedule> findByLoanIdOrderByInstallmentNoAsc(Long loanId);
     // Find upcoming due payments for notification
     List<RepaymentSchedule> findByDueDateBetween(java.time.LocalDate start, java.time.LocalDate end);
     List<RepaymentSchedule> findByStatusAndDueDateBetween(RepaymentSchedule.PaymentStatus status, java.time.LocalDate start, java.time.LocalDate end);

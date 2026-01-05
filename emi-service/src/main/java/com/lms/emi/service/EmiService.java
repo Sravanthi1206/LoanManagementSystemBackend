@@ -66,7 +66,7 @@ public class EmiService {
     }
 
     public List<RepaymentSchedule> getSchedule(Long loanId) {
-        return repository.findByLoanId(loanId);
+        return repository.findByLoanIdOrderByInstallmentNoAsc(loanId);
     }
 
     public List<RepaymentSchedule> getUpcomingEmis(Long userId) {

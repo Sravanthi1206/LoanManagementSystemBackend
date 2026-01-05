@@ -34,6 +34,7 @@ public class LoanService {
     public LoanApplicationResponse applyLoan(LoanApplicationRequest req) {
         var loan = Loan.builder()
                 .userId(req.getUserId())
+                .userEmail(req.getUserEmail())
                 .type(req.getType())
                 .amountRequested(req.getAmount())
                 .tenureMonths(req.getTenure())
@@ -211,8 +212,8 @@ public class LoanService {
     }
 
     private void notify(Loan l, String type, String subject, String msg) {
-        notifications.sendLoanNotification(l.getUserId(), l.getLoanId(), type, subject, msg,
-                "user" + l.getUserId() + "@lms.com");
+        String recipient = l.getUserEmail() != null ? l.getUserEmail() : "user" + l.getUserId() + "@lms.com";
+        notifications.sendLoanNotification(l.getUserId(), l.getLoanId(), type, subject, msg, recipient);
     }
 
     private LoanApplicationResponse toResponse(Loan l) {

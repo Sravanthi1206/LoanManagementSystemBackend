@@ -58,7 +58,9 @@ public class DashboardController {
                 .totalLoans((long) allLoans.size())
                 .appliedLoans(statusCounts.getOrDefault(Loan.LoanStatus.APPLIED, 0L))
                 .underReviewLoans(statusCounts.getOrDefault(Loan.LoanStatus.UNDER_REVIEW, 0L))
-                .approvedLoans(statusCounts.getOrDefault(Loan.LoanStatus.APPROVED, 0L))
+                .approvedLoans(statusCounts.getOrDefault(Loan.LoanStatus.APPROVED, 0L) + 
+                               statusCounts.getOrDefault(Loan.LoanStatus.DISBURSED, 0L) + 
+                               statusCounts.getOrDefault(Loan.LoanStatus.CLOSED, 0L))
                 .rejectedLoans(statusCounts.getOrDefault(Loan.LoanStatus.REJECTED, 0L))
                 .disbursedLoans(statusCounts.getOrDefault(Loan.LoanStatus.DISBURSED, 0L))
                 .activeLoans(statusCounts.getOrDefault(Loan.LoanStatus.DISBURSED, 0L)) // DISBURSED = active loans

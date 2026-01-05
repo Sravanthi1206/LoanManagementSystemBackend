@@ -70,13 +70,13 @@ class NotificationServiceTest {
     @DisplayName("Send notification - Success")
     void sendNotification_Success() {
         when(repository.save(any(Notification.class))).thenReturn(notification);
-        doNothing().when(emailService).sendSimpleEmail(anyString(), anyString(), anyString());
+        doNothing().when(emailService).sendLoanStatusEmail(anyString(), anyString(), anyString(), anyString());
 
         NotificationResponse response = notificationService.sendNotification(request);
 
         assertNotNull(response);
         assertEquals("SENT", response.getStatus().toString());
-        verify(emailService, times(1)).sendSimpleEmail(anyString(), anyString(), anyString());
+        verify(emailService, times(1)).sendLoanStatusEmail(anyString(), anyString(), anyString(), anyString());
         verify(repository, times(2)).save(any(Notification.class)); // Initial save + status update
     }
 
@@ -121,7 +121,7 @@ class NotificationServiceTest {
     void sendNotification_EmailFailure() {
         // Mock email failure
         doThrow(new RuntimeException("Mail server down")).when(emailService)
-                .sendSimpleEmail(anyString(), anyString(), anyString());
+                .sendLoanStatusEmail(anyString(), anyString(), anyString(), anyString());
         
         // Initial save returns pending notification
         Notification pending = notification.toBuilder().status(Notification.NotificationStatus.PENDING).build();
@@ -137,7 +137,7 @@ class NotificationServiceTest {
 
         assertNotNull(response);
         assertEquals("FAILED", response.getStatus().toString());
-        verify(emailService).sendSimpleEmail(anyString(), anyString(), anyString());
+        verify(emailService).sendLoanStatusEmail(anyString(), anyString(), anyString(), anyString());
     }
 
     @Test
@@ -168,7 +168,7 @@ class NotificationServiceTest {
             notificationService.sendLoanStatusNotification(1L, 101L, "APPROVED", "test@example.com")
         );
         
-        verify(emailService, times(1)).sendSimpleEmail(anyString(), anyString(), anyString());
+        verify(emailService, times(1)).sendLoanStatusEmail(anyString(), anyString(), anyString(), anyString());
     }
 
     @Test
@@ -180,7 +180,7 @@ class NotificationServiceTest {
             notificationService.sendEmiReminderNotification(1L, 101L, "2026-01-01", "5000", "test@example.com")
         );
         
-        verify(emailService, times(1)).sendSimpleEmail(anyString(), anyString(), anyString());
+        verify(emailService, times(1)).sendLoanStatusEmail(anyString(), anyString(), anyString(), anyString());
     }
 
     @Test
@@ -201,13 +201,13 @@ class NotificationServiceTest {
                 .build();
         
         when(repository.save(any(Notification.class))).thenReturn(bothNotification);
-        doNothing().when(emailService).sendSimpleEmail(anyString(), anyString(), anyString());
+        doNothing().when(emailService).sendLoanStatusEmail(anyString(), anyString(), anyString(), anyString());
 
         NotificationResponse response = notificationService.sendNotification(bothRequest);
 
         assertNotNull(response);
         // Verify email was sent for BOTH type
-        verify(emailService, times(1)).sendSimpleEmail(anyString(), anyString(), anyString());
+        verify(emailService, times(1)).sendLoanStatusEmail(anyString(), anyString(), anyString(), anyString());
     }
 
     @Test
@@ -233,7 +233,7 @@ class NotificationServiceTest {
 
         assertNotNull(response);
         // Verify email was NOT sent for SMS type
-        verify(emailService, never()).sendSimpleEmail(anyString(), anyString(), anyString());
+        verify(emailService, never()).sendLoanStatusEmail(anyString(), anyString(), anyString(), anyString());
     }
 }
 

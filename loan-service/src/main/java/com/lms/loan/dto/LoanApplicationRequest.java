@@ -16,6 +16,8 @@ public class LoanApplicationRequest {
     
     private Long userId; // In real app, extracted from JWT via Gateway header
     
+    private String userEmail; // User's email for notifications
+    
     @NotNull(message = "Loan type is required")
     private Loan.LoanType type;
     

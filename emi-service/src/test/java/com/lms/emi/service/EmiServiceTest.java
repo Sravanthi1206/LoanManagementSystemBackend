@@ -97,7 +97,7 @@ class EmiServiceTest {
         @DisplayName("Should get schedule by loan ID")
         void getSchedule_Success() {
             List<RepaymentSchedule> schedules = Collections.singletonList(new RepaymentSchedule());
-            when(repository.findByLoanId(1L)).thenReturn(schedules);
+            when(repository.findByLoanIdOrderByInstallmentNoAsc(1L)).thenReturn(schedules);
 
             List<RepaymentSchedule> result = emiService.getSchedule(1L);
 

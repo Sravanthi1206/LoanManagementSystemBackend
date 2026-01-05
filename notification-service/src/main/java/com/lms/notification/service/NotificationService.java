@@ -94,7 +94,9 @@ public class NotificationService {
         log.info("Sending to {}: {}", n.getRecipient(), n.getSubject());
         try {
             if (n.getType() == NotificationType.EMAIL || n.getType() == NotificationType.BOTH) {
-                emails.sendSimpleEmail(n.getRecipient(), n.getSubject(), n.getMessage());
+                // Send styled HTML email for better presentation
+                String loanNumber = n.getLoanId() != null ? "#" + n.getLoanId() : "N/A";
+                emails.sendLoanStatusEmail(n.getRecipient(), loanNumber, n.getSubject(), n.getMessage());
             }
             return true;
         } catch (Exception e) {

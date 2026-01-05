@@ -139,6 +139,19 @@ services:
 
   # APPLICATION SERVICES
 
+  frontend:
+    build:
+      context: ../Frontend
+      dockerfile: Dockerfile
+    container_name: lms-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      api-gateway:
+        condition: service_started
+    networks:
+      - lms-network
+
   identity-service:
     build:
       context: ./identity-service
@@ -247,11 +260,30 @@ services:
     networks:
       - lms-network
 
+  jenkins:
+    build:
+      context: ./jenkins
+      dockerfile: Dockerfile
+    container_name: lms-jenkins
+    restart: unless-stopped
+    ports:
+      - "9090:8080"
+      - "50000:50000"
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      # Bind host docker socket to allow Jenkins to build/deploy containers
+      - /var/run/docker.sock:/var/run/docker.sock
+    # Run as root to access the bounded docker socket easily
+    user: root
+    networks:
+      - lms-network
+
 volumes:
   mysql_data:
   mongo_data:
   loan_uploads:
   rabbitmq_data:
+  jenkins_home:
 
 networks:
   lms-network:

@@ -22,6 +22,9 @@ public class Loan {
 
     @Column(nullable = false)
     private Long userId; // Logical FK to Identity Service
+    
+    @Column(length = 255)
+    private String userEmail; // User's email for notifications
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
