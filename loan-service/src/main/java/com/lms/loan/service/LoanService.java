@@ -46,8 +46,12 @@ public class LoanService {
                 .build();
         
         loan = loans.save(loan);
-        notify(loan, "LOAN_APPLIED", "Application Received", 
-               "Your loan #" + loan.getLoanId() + " for Rs." + loan.getAmountRequested() + " is under review.");
+        try {
+            notify(loan, "LOAN_APPLIED", "Application Received", 
+                   "Your loan #" + loan.getLoanId() + " for Rs." + loan.getAmountRequested() + " is under review.");
+        } catch (Exception e) {
+            System.err.println("WARN: Failed to send notification (ignored): " + e.getMessage());
+        }
         return toResponse(loan);
     }
 
@@ -96,24 +100,20 @@ public class LoanService {
         var loan = findLoan(id);
         requireStatus(loan, Loan.LoanStatus.UNDER_REVIEW, "credit check");
         
-        if (score == null) {
-            // Automated Credit Check Logic
-            int calculatedScore = 600; // Base Score
+        if (score == null || score == 0) {
+            int calculatedScore = 600;
 
-            // Employment Bonus
             if (loan.getEmploymentType() == Loan.EmploymentType.SALARIED) {
                 calculatedScore += 50;
             } else if (loan.getEmploymentType() == Loan.EmploymentType.SELF_EMPLOYED) {
                 calculatedScore += 30;
             }
 
-            // Income Bonus (10 points per 10k, max 150)
             if (loan.getMonthlyIncome() != null) {
                 int incomePoints = (loan.getMonthlyIncome().intValue() / 10000) * 10;
                 calculatedScore += Math.min(150, incomePoints);
             }
 
-            // Bounds Check (300 - 900)
             score = Math.max(300, Math.min(900, calculatedScore));
         }
         
@@ -144,8 +144,12 @@ public class LoanService {
         loan.setApprovedOn(LocalDateTime.now());
         
         loan = loans.save(loan);
-        notify(loan, "LOAN_APPROVED", "Approved!", 
-               "Loan #" + loan.getLoanId() + " approved for Rs." + loan.getAmountApproved());
+        try {
+            notify(loan, "LOAN_APPROVED", "Approved!", 
+                   "Loan #" + loan.getLoanId() + " approved for Rs." + loan.getAmountApproved());
+        } catch (Exception e) {
+            System.err.println("WARN: Failed to send notification (ignored): " + e.getMessage());
+        }
         return toResponse(loan);
     }
 
@@ -157,7 +161,11 @@ public class LoanService {
         loan.setStatus(Loan.LoanStatus.REJECTED);
         loan.setOfficerRemarks(remarks);
         loan = loans.save(loan);
-        notify(loan, "LOAN_REJECTED", "Update", "Loan #" + loan.getLoanId() + " rejected");
+        try {
+            notify(loan, "LOAN_REJECTED", "Update", "Loan #" + loan.getLoanId() + " rejected");
+        } catch (Exception e) {
+            System.err.println("WARN: Failed to send notification (ignored): " + e.getMessage());
+        }
         return toResponse(loan);
     }
 
@@ -169,7 +177,6 @@ public class LoanService {
         loan.setStatus(Loan.LoanStatus.DISBURSED);
         loan = loans.save(loan);
         
-        // Generate EMI Schedule
         try {
             emiClient.generateSchedule(
                     loan.getLoanId(),
@@ -179,12 +186,15 @@ public class LoanService {
                     loan.getTenureMonths()
             );
         } catch (Exception e) {
-            // Log error (should be SLF4j but using exception wrapper for now)
             throw new RuntimeException("Failed to generate EMI schedule: " + e.getMessage(), e);
         }
 
-        notify(loan, "LOAN_DISBURSED", "Disbursed", 
-               "Loan #" + loan.getLoanId() + " disbursed: Rs." + loan.getAmountApproved());
+        try {
+            notify(loan, "LOAN_DISBURSED", "Disbursed", 
+                   "Loan #" + loan.getLoanId() + " disbursed: Rs." + loan.getAmountApproved());
+        } catch (Exception e) {
+            System.err.println("WARN: Failed to send notification (ignored): " + e.getMessage());
+        }
         return toResponse(loan);
     }
 

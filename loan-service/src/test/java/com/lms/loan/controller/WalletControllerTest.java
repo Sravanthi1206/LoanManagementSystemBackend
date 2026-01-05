@@ -52,12 +52,7 @@ class WalletControllerTest {
     @Test
     @DisplayName("Get Balance - missing user id")
     void getBalance_MissingId() throws Exception {
-        // Expect 400 Bad Request or 500 Internal Server Error depending on exception handling
-        // Since GlobalExceptionHandler maps IllegalArgumentException to 400 (usually), we expect 4xx.
-        // Or if it throws ServletException/MissingServletRequestParameterException (no it's logic check).
-        // Let's assume it fails. If test fails, I'll adjust.
-        // Actually I don't know GlobalExceptionHandler mapping yet.
-        // Just expect 4xx or 5xx.
+        // Expect 4xx or 5xx depending on exception handling
         mockMvc.perform(get("/wallet/balance"))
                 .andExpect(status().is4xxClientError());
     }

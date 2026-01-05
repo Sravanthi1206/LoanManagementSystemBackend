@@ -10,7 +10,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
- * Virtual Wallet entity for demo purposes.
+ * Virtual Wallet entity.
  * Each customer has a wallet with a balance for simulating transactions.
  */
 @Entity

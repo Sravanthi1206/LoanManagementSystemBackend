@@ -12,6 +12,9 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -40,6 +43,8 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, Object>> handleLoanNotFoundException(
             LoanNotFoundException ex, WebRequest request) {
         
+        log.error("Loan Not Found Error: {}", ex.getMessage());
+
         Map<String, Object> body = new HashMap<>();
         body.put("timestamp", LocalDateTime.now());
         body.put("status", HttpStatus.NOT_FOUND.value());

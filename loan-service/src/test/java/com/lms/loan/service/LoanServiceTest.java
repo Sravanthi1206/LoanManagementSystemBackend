@@ -273,7 +273,7 @@ class LoanServiceTest {
         }
 
         @Test
-        @DisplayName("Should perform credit check")
+        @DisplayName("Should perform credit check with manual score")
         void performCreditCheck_Success() {
             testLoan.setStatus(Loan.LoanStatus.UNDER_REVIEW);
             when(repository.findById(1L)).thenReturn(Optional.of(testLoan));
@@ -283,6 +283,24 @@ class LoanServiceTest {
 
             assertNotNull(result);
             verify(repository).save(any(Loan.class));
+        }
+
+        @Test
+        @DisplayName("Should perform automated credit check when score is null")
+        void performCreditCheck_Automated_Success() {
+            testLoan.setStatus(Loan.LoanStatus.UNDER_REVIEW);
+            // Base 600 + Salaried 50 + Income 50 = 700
+            when(repository.findById(1L)).thenReturn(Optional.of(testLoan));
+            when(repository.save(any(Loan.class))).thenReturn(testLoan);
+
+            LoanApplicationResponse result = loanService.performCreditCheck(1L, null, "Auto Check");
+
+            assertNotNull(result);
+            verify(repository).save(argThat(loan -> 
+                loan.getCreditScore() != null && 
+                loan.getCreditScore() >= 300 && 
+                loan.getCreditScore() <= 900
+            ));
         }
 
         @Test
@@ -341,6 +359,93 @@ class LoanServiceTest {
 
             verify(repository).save(argThat(loan -> 
                 loan.getStatus() == Loan.LoanStatus.DISBURSED));
+        }
+    }
+    @Nested
+    @DisplayName("Robustness Tests")
+    class RobustnessTests {
+
+        @Test
+        @DisplayName("Should save loan even if notification fails during application")
+        void applyLoan_NotificationFail_ShouldStillSave() {
+            // Arrange
+            when(repository.save(any(Loan.class))).thenReturn(testLoan);
+            doThrow(new RuntimeException("RabbitMQ Down"))
+                .when(notificationPublisher).sendLoanNotification(anyLong(), anyLong(), anyString(), anyString(), anyString(), anyString());
+
+            // Act
+            LoanApplicationResponse result = loanService.applyLoan(applicationRequest);
+
+            // Assert
+            assertNotNull(result);
+            verify(repository).save(any(Loan.class)); // Verifies DB save persisted
+            verify(notificationPublisher).sendLoanNotification(anyLong(), anyLong(), anyString(), anyString(), anyString(), anyString());
+        }
+
+        @Test
+        @DisplayName("Should save approval even if notification fails")
+        void approveLoan_NotificationFail_ShouldStillSave() {
+            // Arrange
+            testLoan.setStatus(Loan.LoanStatus.UNDER_REVIEW);
+            testLoan.setCreditScore(750);
+            when(repository.findById(1L)).thenReturn(Optional.of(testLoan));
+            when(repository.save(any(Loan.class))).thenReturn(testLoan);
+            doThrow(new RuntimeException("RabbitMQ Down"))
+                .when(notificationPublisher).sendLoanNotification(anyLong(), anyLong(), anyString(), anyString(), anyString(), anyString());
+
+            LoanApprovalRequest request = new LoanApprovalRequest();
+            request.setApprovedAmount(new BigDecimal("90000"));
+            request.setInterestRate(new BigDecimal("12.5"));
+            request.setRemarks("Approved");
+
+            // Act
+            LoanApplicationResponse result = loanService.approveLoan(1L, request);
+
+            // Assert
+            assertNotNull(result);
+            assertEquals(Loan.LoanStatus.APPROVED, result.getStatus());
+            verify(repository).save(any(Loan.class));
+        }
+
+        @Test
+        @DisplayName("Should save rejection even if notification fails")
+        void rejectLoan_NotificationFail_ShouldStillSave() {
+            // Arrange
+            testLoan.setStatus(Loan.LoanStatus.UNDER_REVIEW);
+            when(repository.findById(1L)).thenReturn(Optional.of(testLoan));
+            when(repository.save(any(Loan.class))).thenReturn(testLoan);
+            doThrow(new RuntimeException("RabbitMQ Down"))
+                .when(notificationPublisher).sendLoanNotification(anyLong(), anyLong(), anyString(), anyString(), anyString(), anyString());
+
+            // Act
+            LoanApplicationResponse result = loanService.rejectLoan(1L, "Rejected");
+
+            // Assert
+            assertNotNull(result);
+            assertEquals(Loan.LoanStatus.REJECTED, result.getStatus());
+            verify(repository).save(any(Loan.class));
+        }
+
+        @Test
+        @DisplayName("Should save disbursement even if notification fails")
+        void disburseLoan_NotificationFail_ShouldStillSave() {
+            // Arrange
+            testLoan.setStatus(Loan.LoanStatus.APPROVED);
+            testLoan.setAmountApproved(new BigDecimal("90000"));
+            testLoan.setInterestRate(new BigDecimal("12.5"));
+            testLoan.setTenureMonths(24);
+            when(repository.findById(1L)).thenReturn(Optional.of(testLoan));
+            when(repository.save(any(Loan.class))).thenReturn(testLoan);
+            doThrow(new RuntimeException("RabbitMQ Down"))
+                .when(notificationPublisher).sendLoanNotification(anyLong(), anyLong(), anyString(), anyString(), anyString(), anyString());
+
+            // Act
+            LoanApplicationResponse result = loanService.disburseLoan(1L);
+
+            // Assert
+            assertNotNull(result);
+            assertEquals(Loan.LoanStatus.DISBURSED, result.getStatus());
+            verify(repository).save(any(Loan.class));
         }
     }
 }

@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 import java.math.BigDecimal;
 
 /**
- * Initializes demo wallets for test users.
+ * Initializes wallets for users.
  */
 @Component
 @RequiredArgsConstructor
@@ -28,14 +28,9 @@ public class WalletInitializer implements CommandLineRunner {
             if (walletRepository.findByUserId(userId).isEmpty()) {
                 UserWallet wallet = new UserWallet();
                 wallet.setUserId(userId);
-                wallet.setBalance(new BigDecimal("100000.00")); // ₹1,00,000 demo balance
+                wallet.setBalance(new BigDecimal("100000.00"));
                 walletRepository.save(wallet);
-                log.info("✅ Created demo wallet for user {} with ₹1,00,000 balance", userId);
             }
         }
-
-        log.info("===== DEMO WALLET INFO =====");
-        log.info("All users have ₹1,00,000 demo balance");
-        log.info("=============================");
     }
 }

@@ -11,7 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * REST Controller for virtual wallet operations (demo transactions).
+ * REST Controller for virtual wallet operations.
  */
 @RestController
 @RequestMapping("/wallet")

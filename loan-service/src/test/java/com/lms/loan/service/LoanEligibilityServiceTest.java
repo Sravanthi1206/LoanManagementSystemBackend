@@ -22,9 +22,7 @@ class LoanEligibilityServiceTest {
         eligibilityService = new LoanEligibilityService();
     }
 
-    // ========================================
     // Credit Score-Based Loan Limits Tests
-    // ========================================
     @Nested
     @DisplayName("Credit Score-Based Loan Limits")
     class CreditScoreLoanLimitsTests {
@@ -58,9 +56,7 @@ class LoanEligibilityServiceTest {
         }
     }
 
-    // ========================================
     // Interest Rate Calculation Tests
-    // ========================================
     @Nested
     @DisplayName("Dynamic Interest Rate Calculation")
     class InterestRateCalculationTests {
@@ -94,9 +90,7 @@ class LoanEligibilityServiceTest {
         }
     }
 
-    // ========================================
     // EMI Calculation Tests
-    // ========================================
     @Nested
     @DisplayName("EMI Calculation")
     class EmiCalculationTests {
@@ -116,9 +110,7 @@ class LoanEligibilityServiceTest {
         }
     }
 
-    // ========================================
     // Eligibility Validation Tests
-    // ========================================
     @Nested
     @DisplayName("Loan Eligibility Validation")
     class EligibilityValidationTests {

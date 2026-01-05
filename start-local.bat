@@ -1,6 +1,5 @@
 @echo off
 setlocal enabledelayedexpansion
-echoLoading .env and starting LMS services...
 
 REM Load .env file, ignoring comments
 if exist .env (

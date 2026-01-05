@@ -99,9 +99,7 @@ class WalletServiceTest {
 
         TransactionResponse response = walletService.debit(1L, new BigDecimal("400.00"), TransactionType.EMI_PAYMENT, 101L, "Test Debit");
 
-        assertEquals(new BigDecimal("600.00"), response.getBalanceAfter()); // 1000 - 400
-        // Debit amount in response is negative? Service logic: amount.negate() for transaction.
-        // Let's check service logic if I need to assert negative. Service saves negative, maps from tx.
+        assertEquals(new BigDecimal("600.00"), response.getBalanceAfter());
         assertEquals(new BigDecimal("-400.00"), response.getAmount());
         assertEquals(TransactionType.EMI_PAYMENT, response.getType());
     }
