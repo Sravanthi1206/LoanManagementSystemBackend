@@ -10,6 +10,7 @@ import com.lms.loan.exception.UnauthorizedAccessException;
 import com.lms.loan.messaging.NotificationPublisher;
 import com.lms.loan.repository.LoanRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -18,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class LoanService {
@@ -233,6 +235,8 @@ public class LoanService {
                 .officerRemarks(l.getOfficerRemarks())
                 .appliedOn(l.getAppliedOn())
                 .approvedOn(l.getApprovedOn())
+                .creditScore(l.getCreditScore())
+                .riskCategory(l.getRiskCategory())
                 .build();
     }
 }

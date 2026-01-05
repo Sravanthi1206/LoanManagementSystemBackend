@@ -31,4 +31,6 @@ public class LoanApplicationResponse {
     private String officerRemarks;
     private LocalDateTime appliedOn;
     private LocalDateTime approvedOn;
+    private Integer creditScore;
+    private Loan.RiskCategory riskCategory;
 }
