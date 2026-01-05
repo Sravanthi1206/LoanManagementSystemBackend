@@ -50,7 +50,7 @@ public class LoanService {
             notify(loan, "LOAN_APPLIED", "Application Received", 
                    "Your loan #" + loan.getLoanId() + " for Rs." + loan.getAmountRequested() + " is under review.");
         } catch (Exception e) {
-            System.err.println("WARN: Failed to send notification (ignored): " + e.getMessage());
+            log.warn("Failed to send notification (ignored): {}", e.getMessage());
         }
         return toResponse(loan);
     }
@@ -148,7 +148,7 @@ public class LoanService {
             notify(loan, "LOAN_APPROVED", "Approved!", 
                    "Loan #" + loan.getLoanId() + " approved for Rs." + loan.getAmountApproved());
         } catch (Exception e) {
-            System.err.println("WARN: Failed to send notification (ignored): " + e.getMessage());
+            log.warn("Failed to send notification (ignored): {}", e.getMessage());
         }
         return toResponse(loan);
     }
@@ -164,7 +164,7 @@ public class LoanService {
         try {
             notify(loan, "LOAN_REJECTED", "Update", "Loan #" + loan.getLoanId() + " rejected");
         } catch (Exception e) {
-            System.err.println("WARN: Failed to send notification (ignored): " + e.getMessage());
+            log.warn("Failed to send notification (ignored): {}", e.getMessage());
         }
         return toResponse(loan);
     }
@@ -193,7 +193,7 @@ public class LoanService {
             notify(loan, "LOAN_DISBURSED", "Disbursed", 
                    "Loan #" + loan.getLoanId() + " disbursed: Rs." + loan.getAmountApproved());
         } catch (Exception e) {
-            System.err.println("WARN: Failed to send notification (ignored): " + e.getMessage());
+            log.warn("Failed to send notification (ignored): {}", e.getMessage());
         }
         return toResponse(loan);
     }

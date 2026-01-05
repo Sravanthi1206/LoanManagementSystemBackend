@@ -11,7 +11,10 @@ import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
+import lombok.extern.slf4j.Slf4j;
+
 @Component
+@Slf4j
 public class AuthenticationFilter extends AbstractGatewayFilterFactory<AuthenticationFilter.Config> {
 
     @Autowired
@@ -26,41 +29,41 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
         return ((exchange, chain) -> {
             String path = exchange.getRequest().getURI().getPath();
             
-            System.out.println("[DEBUG] Processing request for path: " + path);
+            log.debug("Processing request for path: {}", path);
             
             // Skip authentication for public endpoints
             if (isPublicEndpoint(path)) {
-                System.out.println("[DEBUG] Skipping auth for public endpoint: " + path);
+                log.debug("Skipping auth for public endpoint: {}", path);
                 return chain.filter(exchange);
             }
 
             if (!exchange.getRequest().getHeaders().containsKey(HttpHeaders.AUTHORIZATION)) {
-                System.out.println("[DEBUG] Missing Authorization header for: " + path);
+                log.warn("Missing Authorization header for: {}", path);
                 return onError(exchange.getResponse(), "Missing Authorization Header", HttpStatus.UNAUTHORIZED);
             }
 
             String authHeader = exchange.getRequest().getHeaders().get(HttpHeaders.AUTHORIZATION).get(0);
-            System.out.println("[DEBUG] Auth header present, length: " + (authHeader != null ? authHeader.length() : 0));
+            log.debug("Auth header present, length: {}", (authHeader != null ? authHeader.length() : 0));
             
             if (authHeader != null && authHeader.startsWith("Bearer ")) {
                 authHeader = authHeader.substring(7);
-                System.out.println("[DEBUG] Token extracted, length: " + authHeader.length());
+                log.debug("Token extracted, length: {}", authHeader.length());
             } else {
-                System.out.println("[DEBUG] Invalid auth header format");
+                log.warn("Invalid auth header format");
                 return onError(exchange.getResponse(), "Invalid Authorization Header format", HttpStatus.UNAUTHORIZED);
             }
 
             try {
-                System.out.println("[DEBUG] Attempting to validate token...");
+                log.debug("Attempting to validate token...");
                 jwtUtil.validateToken(authHeader);
-                System.out.println("[DEBUG] Token validation successful!");
+                log.debug("Token validation successful!");
                 
                 // Extract email, role, and userId from token and add them as headers for downstream services
                 String email = jwtUtil.getEmailFromToken(authHeader);
                 String role = jwtUtil.getRoleFromToken(authHeader);
                 Long userId = jwtUtil.getUserIdFromToken(authHeader);
                 
-                System.out.println("[DEBUG] Extracted claims - email: " + email + ", role: " + role + ", userId: " + userId);
+                log.debug("Extracted claims - email: {}, role: {}, userId: {}", email, role, userId);
                 
                 ServerHttpRequest modifiedRequest = exchange.getRequest().mutate()
                         .header("X-User-Email", email)
@@ -70,9 +73,7 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
                 
                 return chain.filter(exchange.mutate().request(modifiedRequest).build());
             } catch (Exception e) {
-                System.out.println("[DEBUG] Token validation FAILED!");
-                System.out.println("[DEBUG] Exception type: " + e.getClass().getName());
-                System.out.println("[DEBUG] Exception message: " + e.getMessage());
+                log.error("Token validation FAILED! Exception: {}, Message: {}", e.getClass().getName(), e.getMessage());
                 e.printStackTrace();
                 return onError(exchange.getResponse(), "Unauthorized: Invalid token", HttpStatus.UNAUTHORIZED);
             }
