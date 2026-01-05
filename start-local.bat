@@ -13,6 +13,11 @@ if exist .env (
     echo WARNING: .env file not found.
 )
 
+
+echo starting RabbitMQ (5762)...
+start "RabbitMQ" cmd /k "rabbitmq-server start"
+timeout /t 10 /nobreak > nul
+
 echo Starting Discovery (8761)...
 start "Discovery" cmd /k "java -jar discovery-server/target/discovery-server-0.0.1-SNAPSHOT.jar || (echo SERVER CRASHED! & pause)"
 timeout /t 20 /nobreak > nul
