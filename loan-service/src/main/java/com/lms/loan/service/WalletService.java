@@ -21,16 +21,18 @@ import java.math.BigDecimal;
 import java.util.UUID;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class WalletService {
 
     private final WalletRepository wallets;
     private final WalletTransactionRepository transactions;
+    private final WalletService self;
 
-    @Autowired
-    @Lazy
-    private WalletService self;
+    public WalletService(WalletRepository wallets, WalletTransactionRepository transactions, @org.springframework.context.annotation.Lazy WalletService self) {
+        this.wallets = wallets;
+        this.transactions = transactions;
+        this.self = self;
+    }
 
     public WalletResponse getBalance(Long userId) {
         var wallet = findOrCreate(userId);

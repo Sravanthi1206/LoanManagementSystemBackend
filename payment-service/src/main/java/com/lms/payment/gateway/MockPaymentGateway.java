@@ -132,7 +132,7 @@ public class MockPaymentGateway implements PaymentGateway {
 
     private void simulateNetworkDelay() {
         try {
-            Thread.sleep(100 + random.nextInt(200)); // 100-300ms delay
+            Thread.sleep(100L + random.nextInt(200)); // 100-300ms delay
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
