@@ -24,7 +24,7 @@ public class NotificationConsumerTest {
     private NotificationConsumer notificationConsumer;
 
     @Test
-    public void testHandleNotificationEvent_Success() {
+    public void testHandleNotificationEventSuccess() {
         NotificationEvent event = NotificationEvent.builder()
                 .userId(1L)
                 .loanId(100L)
@@ -41,7 +41,7 @@ public class NotificationConsumerTest {
     }
 
     @Test
-    public void testHandleNotificationEvent_Exception() {
+    public void testHandleNotificationEventException() {
         NotificationEvent event = NotificationEvent.builder()
                 .userId(1L)
                 .loanId(100L)

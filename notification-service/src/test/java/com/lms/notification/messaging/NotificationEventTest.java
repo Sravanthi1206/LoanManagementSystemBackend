@@ -34,44 +34,7 @@ public class NotificationEventTest {
         assertNull(event.getUserId());
     }
 
-/*
-    @Test
-    public void testAllArgsConstructor() {
-        LocalDateTime now = LocalDateTime.now();
-        NotificationEvent event = new NotificationEvent(
-                1L, 100L, "TEST", "Subject", "Message", "test@example.com", now
-        );
-        assertEquals(1L, event.getUserId());
-    }
 
-    @Test
-    public void testEqualsAndHashCode() {
-        LocalDateTime now = LocalDateTime.now();
-        NotificationEvent event1 = NotificationEvent.builder()
-                .userId(1L)
-                .loanId(100L)
-                .eventType("TEST")
-                .timestamp(now)
-                .build();
-
-        NotificationEvent event2 = NotificationEvent.builder()
-                .userId(1L)
-                .loanId(100L)
-                .eventType("TEST")
-                .timestamp(now)
-                .build();
-
-        NotificationEvent event3 = NotificationEvent.builder()
-                .userId(2L)
-                .build();
-
-        assertEquals(event1, event2);
-        assertEquals(event1.hashCode(), event2.hashCode());
-        assertNotEquals(event1, event3);
-        assertNotEquals(event1, null);
-        assertNotEquals(event1, new Object());
-    }
-*/
 
     @Test
     public void testToString() {

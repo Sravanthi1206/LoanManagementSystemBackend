@@ -41,6 +41,8 @@ class NotificationControllerTest {
     @MockBean
     private NotificationService notificationService;
 
+    private static final String NOTIF_ID = "notif-1";
+
     private NotificationRequest request;
     private NotificationResponse response;
 
@@ -56,7 +58,8 @@ class NotificationControllerTest {
                 .build();
 
         response = NotificationResponse.builder()
-                .id("notif-1")
+        response = NotificationResponse.builder()
+                .id(NOTIF_ID)
                 .userId(1L)
                 .status(Notification.NotificationStatus.SENT)
                 .build();
@@ -64,45 +67,53 @@ class NotificationControllerTest {
 
     @Test
     @DisplayName("POST /notifications/send - Success")
-    void sendNotification_Success() throws Exception {
+    @Test
+    @DisplayName("POST /notifications/send - Success")
+    void sendNotificationSuccess() throws Exception {
         when(notificationService.sendNotification(any(NotificationRequest.class))).thenReturn(response);
 
         mockMvc.perform(post("/notifications/send")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.id").value("notif-1"));
+                .andExpect(jsonPath("$.id").value(NOTIF_ID));
     }
 
     @Test
     @DisplayName("GET /notifications/user/{userId} - Success")
-    void getUserNotifications_Success() throws Exception {
+    @Test
+    @DisplayName("GET /notifications/user/{userId} - Success")
+    void getUserNotificationsSuccess() throws Exception {
         Page<NotificationResponse> page = new PageImpl<>(Collections.singletonList(response));
         when(notificationService.getUserNotifications(eq(1L), any(Pageable.class))).thenReturn(page);
 
         mockMvc.perform(get("/notifications/user/1"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content[0].id").value("notif-1"));
+                .andExpect(jsonPath("$.content[0].id").value(NOTIF_ID));
     }
 
     @Test
     @DisplayName("GET /notifications/user/{userId}/unread - Success")
-    void getUnreadNotifications_Success() throws Exception {
+    @Test
+    @DisplayName("GET /notifications/user/{userId}/unread - Success")
+    void getUnreadNotificationsSuccess() throws Exception {
         List<NotificationResponse> list = Collections.singletonList(response);
         when(notificationService.getUnreadNotifications(1L)).thenReturn(list);
 
         mockMvc.perform(get("/notifications/user/1/unread"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].id").value("notif-1"));
+                .andExpect(jsonPath("$[0].id").value(NOTIF_ID));
     }
 
     @Test
     @DisplayName("PUT /notifications/{id}/read - Success")
-    void markAsRead_Success() throws Exception {
+    @Test
+    @DisplayName("PUT /notifications/{id}/read - Success")
+    void markAsReadSuccess() throws Exception {
         response.setStatus(Notification.NotificationStatus.READ);
-        when(notificationService.markAsRead("notif-1")).thenReturn(response);
+        when(notificationService.markAsRead(NOTIF_ID)).thenReturn(response);
 
-        mockMvc.perform(put("/notifications/notif-1/read"))
+        mockMvc.perform(put("/notifications/" + NOTIF_ID + "/read"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("READ"));
     }
