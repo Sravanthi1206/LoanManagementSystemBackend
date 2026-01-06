@@ -74,7 +74,6 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
                 return chain.filter(exchange.mutate().request(modifiedRequest).build());
             } catch (Exception e) {
                 log.error("Token validation FAILED! Exception: {}, Message: {}", e.getClass().getName(), e.getMessage());
-                e.printStackTrace();
                 return onError(exchange.getResponse(), HttpStatus.UNAUTHORIZED);
             }
         });

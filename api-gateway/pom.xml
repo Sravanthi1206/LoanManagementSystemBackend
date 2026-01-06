@@ -23,6 +23,10 @@
 			<groupId>org.springframework.cloud</groupId>
 			<artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-config</artifactId>
+		</dependency>
         <!-- Security for Gateway (JWT Validation) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
