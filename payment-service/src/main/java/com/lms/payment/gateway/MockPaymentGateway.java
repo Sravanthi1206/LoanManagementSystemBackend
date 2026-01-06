@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Map;
-import java.util.Random;
+import java.security.SecureRandom;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -21,7 +21,7 @@ public class MockPaymentGateway implements PaymentGateway {
     private static final String GATEWAY_NAME = "MockPaymentGateway";
     private static final double SUCCESS_RATE = 0.95; // 95% success rate
     
-    private final Random random = new Random();
+    private final SecureRandom random = new SecureRandom();
     private final Map<String, PaymentResult> transactionStore = new ConcurrentHashMap<>();
 
     @Override
