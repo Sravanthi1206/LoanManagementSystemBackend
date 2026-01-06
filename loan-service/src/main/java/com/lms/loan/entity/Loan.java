@@ -73,6 +73,8 @@ public class Loan {
     
     private Long assignedOfficerId;
     
+    private LocalDateTime assignedAt;
+    
     private Integer creditScore;
     
     @Enumerated(EnumType.STRING)

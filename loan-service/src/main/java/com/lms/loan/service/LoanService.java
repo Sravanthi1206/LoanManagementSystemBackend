@@ -114,6 +114,7 @@ public class LoanService {
         
         loan.setStatus(Loan.LoanStatus.UNDER_REVIEW);
         loan.setAssignedOfficerId(officerId);
+        loan.setAssignedAt(LocalDateTime.now());
         return toResponse(loans.save(loan));
     }
 
@@ -259,5 +260,59 @@ public class LoanService {
                 .riskCategory(l.getRiskCategory())
                 .assignedOfficerId(l.getAssignedOfficerId())
                 .build();
+    }
+
+    // ============ Admin Methods ============
+
+    @Transactional
+    public LoanApplicationResponse reassignLoan(Long loanId, Long newOfficerId) {
+        var loan = findLoan(loanId);
+        
+        if (loan.getStatus() != Loan.LoanStatus.UNDER_REVIEW && loan.getStatus() != Loan.LoanStatus.APPLIED) {
+            throw new InvalidLoanStatusException("Can only reassign loans in APPLIED or UNDER_REVIEW status");
+        }
+        
+        loan.setAssignedOfficerId(newOfficerId);
+        loan.setAssignedAt(LocalDateTime.now());
+        loan.setStatus(Loan.LoanStatus.UNDER_REVIEW);
+        
+        log.info("Loan {} reassigned to officer {}", loanId, newOfficerId);
+        return toResponse(loans.save(loan));
+    }
+
+    @Transactional
+    public LoanApplicationResponse releaseLoan(Long loanId) {
+        var loan = findLoan(loanId);
+        
+        if (loan.getStatus() != Loan.LoanStatus.UNDER_REVIEW) {
+            throw new InvalidLoanStatusException("Can only release loans in UNDER_REVIEW status");
+        }
+        
+        loan.setAssignedOfficerId(null);
+        loan.setAssignedAt(null);
+        loan.setStatus(Loan.LoanStatus.APPLIED);
+        
+        log.info("Loan {} released back to pool", loanId);
+        return toResponse(loans.save(loan));
+    }
+
+    public long getOfficerPendingCount(Long officerId) {
+        return loans.countByAssignedOfficerIdAndStatus(officerId, Loan.LoanStatus.UNDER_REVIEW);
+    }
+
+    @Transactional
+    public int releaseStaleLoans(int timeoutHours) {
+        LocalDateTime cutoff = LocalDateTime.now().minusHours(timeoutHours);
+        List<Loan> staleLoans = loans.findStaleAssignedLoans(Loan.LoanStatus.UNDER_REVIEW, cutoff);
+        
+        for (Loan loan : staleLoans) {
+            loan.setAssignedOfficerId(null);
+            loan.setAssignedAt(null);
+            loan.setStatus(Loan.LoanStatus.APPLIED);
+            loans.save(loan);
+            log.info("Released stale loan {} (assigned > {}h ago)", loan.getLoanId(), timeoutHours);
+        }
+        
+        return staleLoans.size();
     }
 }

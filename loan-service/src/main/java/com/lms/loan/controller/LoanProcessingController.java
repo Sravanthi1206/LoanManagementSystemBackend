@@ -100,5 +100,24 @@ public class LoanProcessingController {
     public ResponseEntity<LoanApplicationResponse> disburse(@PathVariable Long id) {
         return ResponseEntity.ok(loanService.disburseLoan(id));
     }
+
+    // ============ Admin-specific endpoints ============
+
+    @PutMapping("/{id}/reassign/{officerId}")
+    public ResponseEntity<LoanApplicationResponse> reassignLoan(
+            @PathVariable Long id,
+            @PathVariable Long officerId) {
+        return ResponseEntity.ok(loanService.reassignLoan(id, officerId));
+    }
+
+    @PutMapping("/{id}/release")
+    public ResponseEntity<LoanApplicationResponse> releaseLoan(@PathVariable Long id) {
+        return ResponseEntity.ok(loanService.releaseLoan(id));
+    }
+
+    @GetMapping("/officer/{officerId}/pending-count")
+    public ResponseEntity<Long> getOfficerPendingCount(@PathVariable Long officerId) {
+        return ResponseEntity.ok(loanService.getOfficerPendingCount(officerId));
+    }
 }
 
