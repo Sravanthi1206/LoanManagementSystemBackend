@@ -10,4 +10,7 @@ public interface LoanClient {
 
     @PostMapping("/wallet/debit")
     void debitWallet(@RequestParam("userId") Long userId, @RequestParam("amount") BigDecimal amount);
+
+    @PostMapping("/wallet/credit")
+    void creditWallet(@RequestParam("userId") Long userId, @RequestParam("amount") BigDecimal amount, @RequestParam("description") String description);
 }

@@ -60,6 +60,7 @@ public class WalletTransaction {
         DISBURSEMENT,
         EMI_PAYMENT,
         PENALTY,
-        REFUND
+        REFUND,
+        TOP_UP
     }
 }

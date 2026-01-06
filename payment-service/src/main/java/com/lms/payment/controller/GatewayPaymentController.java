@@ -1,11 +1,12 @@
 package com.lms.payment.controller;
 
 import com.lms.payment.dto.GatewayPaymentRequest;
-import com.lms.payment.dto.PaymentResponse;
+import com.lms.payment.dto.WalletTopupRequest;
 import com.lms.payment.entity.Payment;
 import com.lms.payment.gateway.MockPaymentGateway;
 import com.lms.payment.gateway.PaymentResult;
 import com.lms.payment.repository.PaymentRepository;
+import com.lms.payment.client.LoanClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -26,6 +27,7 @@ public class GatewayPaymentController {
 
     private final MockPaymentGateway paymentGateway;
     private final PaymentRepository paymentRepository;
+    private final LoanClient loanClient;
 
     @PostMapping("/pay")
     public ResponseEntity<?> processPayment(@RequestBody GatewayPaymentRequest request) {
@@ -62,6 +64,52 @@ public class GatewayPaymentController {
                     "message", result.getMessage(),
                     "amount", result.getAmount()
             ));
+        } else {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "errorCode", result.getErrorCode(),
+                    "errorMessage", result.getErrorMessage()
+            ));
+        }
+    }
+
+    @PostMapping("/wallet/topup")
+    public ResponseEntity<?> topupWallet(@RequestBody WalletTopupRequest request) {
+        log.info("Processing wallet top-up for user {} amount {}", request.getUserId(), request.getAmount());
+        
+        // Process payment through gateway
+        PaymentResult result = paymentGateway.processPayment(
+                request.getAmount(),
+                request.getCurrency(),
+                "Wallet Top-up",
+                request.getUserId().toString()
+        );
+        
+        if (result.isSuccess()) {
+            // Credit wallet in loan-service
+            try {
+                loanClient.creditWallet(request.getUserId(), request.getAmount(), 
+                    "Top-up via " + request.getPaymentMethod() + " - " + result.getGatewayTransactionId());
+                
+                log.info("Wallet credited successfully for user {}", request.getUserId());
+                
+                return ResponseEntity.ok(Map.of(
+                        "success", true,
+                        "transactionId", result.getTransactionId(),
+                        "gatewayTransactionId", result.getGatewayTransactionId(),
+                        "message", "Wallet topped up successfully",
+                        "amount", result.getAmount()
+                ));
+            } catch (Exception e) {
+                log.error("Failed to credit wallet after successful payment: {}", e.getMessage());
+                // Payment succeeded but wallet credit failed - needs manual intervention
+                return ResponseEntity.status(500).body(Map.of(
+                        "success", false,
+                        "transactionId", result.getTransactionId(),
+                        "errorCode", "WALLET_CREDIT_FAILED",
+                        "errorMessage", "Payment succeeded but wallet credit failed. Contact support with transaction ID."
+                ));
+            }
         } else {
             return ResponseEntity.badRequest().body(Map.of(
                     "success", false,
@@ -112,3 +160,4 @@ public class GatewayPaymentController {
         ));
     }
 }
+

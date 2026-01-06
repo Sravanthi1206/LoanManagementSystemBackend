@@ -63,4 +63,17 @@ public class WalletController {
         walletService.debit(userId, amount, com.lms.loan.entity.WalletTransaction.TransactionType.EMI_PAYMENT, null, "Wallet Payment");
         return ResponseEntity.ok().build();
     }
+
+    /**
+     * Credit amount to wallet (for payment gateway top-ups).
+     */
+    @PostMapping("/credit")
+    public ResponseEntity<TransactionResponse> creditWallet(
+            @RequestParam("userId") Long userId,
+            @RequestParam("amount") java.math.BigDecimal amount,
+            @RequestParam(value = "description", defaultValue = "Wallet Top-up") String description) {
+        TransactionResponse response = walletService.credit(userId, amount, 
+            com.lms.loan.entity.WalletTransaction.TransactionType.TOP_UP, null, description);
+        return ResponseEntity.ok(response);
+    }
 }

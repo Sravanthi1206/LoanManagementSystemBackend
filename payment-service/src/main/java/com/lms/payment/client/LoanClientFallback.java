@@ -16,4 +16,10 @@ public class LoanClientFallback implements LoanClient {
         log.error("Circuit Breaker: Loan Service unavailable. Failed to debit wallet for user {}, amount {}", userId, amount);
         throw new RuntimeException("Wallet service temporarily unavailable. Please try again later.");
     }
+
+    @Override
+    public void creditWallet(Long userId, BigDecimal amount, String description) {
+        log.error("Circuit Breaker: Loan Service unavailable. Failed to credit wallet for user {}, amount {}", userId, amount);
+        throw new RuntimeException("Wallet service temporarily unavailable. Please try again later.");
+    }
 }
