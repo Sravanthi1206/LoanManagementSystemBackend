@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # Databases
   mysql:
@@ -87,7 +85,9 @@ services:
     ports:
       - "8888:8888"
     environment:
-      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_PROFILES_ACTIVE=docker,native
+    volumes:
+      - ../config-repo:/config-repo:ro
     networks:
       - lms-network
     healthcheck:
@@ -135,19 +135,6 @@ services:
       - lms-network
 
   # Application Services
-  frontend:
-    build:
-      context: ../Frontend
-      dockerfile: Dockerfile
-    container_name: lms-frontend
-    ports:
-      - "80:80"
-    depends_on:
-      api-gateway:
-        condition: service_started
-    networks:
-      - lms-network
-
   identity-service:
     build:
       context: ./identity-service
@@ -254,28 +241,11 @@ services:
     networks:
       - lms-network
 
-  jenkins:
-    build:
-      context: ./jenkins
-      dockerfile: Dockerfile
-    container_name: lms-jenkins
-    restart: unless-stopped
-    ports:
-      - "9090:8080"
-      - "50000:50000"
-    volumes:
-      - jenkins_home:/var/jenkins_home
-      - /var/run/docker.sock:/var/run/docker.sock
-    user: root
-    networks:
-      - lms-network
-
 volumes:
   mysql_data:
   mongo_data:
   loan_uploads:
   rabbitmq_data:
-  jenkins_home:
 
 networks:
   lms-network:

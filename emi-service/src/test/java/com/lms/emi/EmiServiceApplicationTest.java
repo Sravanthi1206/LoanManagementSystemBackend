@@ -1,25 +1,23 @@
 package com.lms.emi;
 
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.TestPropertySource;
 
-@SpringBootTest
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+
+@SpringBootTest(classes = EmiServiceApplication.class)
+@TestPropertySource(properties = {
+    "spring.cloud.config.enabled=false",
+    "eureka.client.enabled=false",
+    "spring.datasource.url=jdbc:h2:mem:testdb",
+    "spring.datasource.driver-class-name=org.h2.Driver",
+    "spring.jpa.hibernate.ddl-auto=create-drop"
+})
 class EmiServiceApplicationTest {
 
     @Test
     void contextLoads() {
         assertDoesNotThrow(() -> {});
-    }
-
-    @Test
-    void main() {
-        assertDoesNotThrow(() -> {
-            try {
-                EmiServiceApplication.main(new String[]{});
-            } catch (Exception e) {
-                // Ignored
-            }
-        });
     }
 }

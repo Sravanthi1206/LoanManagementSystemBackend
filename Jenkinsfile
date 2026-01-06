@@ -1,69 +1,49 @@
 pipeline {
     agent any
-    
+
     tools {
-        maven 'Maven-3.9'
-        jdk 'JDK-17'
+        maven 'Maven'
     }
-    
+
+    environment {
+        SONAR_TOKEN = credentials('SONAR_TOKEN')
+    }
+
     stages {
+
         stage('Checkout') {
             steps {
-                checkout scm
+                git branch: 'main',
+                    url: 'https://github.com/Sravanthi1206/LoanManagementSystemBackend.git'
             }
         }
-        
-        stage('Build') {
+
+        stage('Build, Test & SonarCloud') {
             steps {
-                sh 'mvn clean compile -B'
+                bat """
+                mvn clean verify ^
+                org.sonarsource.scanner.maven:sonar-maven-plugin:sonar ^
+                -Dsonar.token=%SONAR_TOKEN% ^
+                -Dsonar.host.url=https://sonarcloud.io ^
+                -Dsonar.coverage.jacoco.xmlReportPaths=**/target/site/jacoco/jacoco.xml ^
+                -Dsonar.qualitygate.wait=true
+                """
             }
         }
-        
-        stage('Test') {
+
+        stage('Build Docker Images') {
             steps {
-                sh 'mvn test -B'
-            }
-            post {
-                always {
-                    junit '**/target/surefire-reports/*.xml'
-                }
-            }
-        }
-        
-        stage('Package') {
-            steps {
-                sh 'mvn package -DskipTests -B'
-            }
-        }
-        
-        stage('Docker Build') {
-            when {
-                branch 'main'
-            }
-            steps {
-                sh 'docker-compose build'
-            }
-        }
-        
-        stage('Docker Deploy') {
-            when {
-                branch 'main'
-            }
-            steps {
-                sh 'docker-compose up -d'
+                bat 'docker-compose build'
             }
         }
     }
-    
+
     post {
         success {
             echo 'Pipeline completed successfully!'
         }
         failure {
-            echo 'Pipeline failed!'
-        }
-        always {
-            cleanWs()
+            echo 'Pipeline failed.'
         }
     }
 }

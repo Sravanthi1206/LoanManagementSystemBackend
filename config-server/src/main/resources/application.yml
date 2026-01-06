@@ -10,3 +10,22 @@ spring:
         git:
           uri: https://github.com/Sravanthi1206/LoanManagementSystemConfigServer
           default-label: main
+
+---
+spring:
+  config:
+    activate:
+      on-profile: docker
+  cloud:
+    config:
+      server:
+        native:
+          search-locations: file:/config-repo
+        git:
+          uri: ""
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
