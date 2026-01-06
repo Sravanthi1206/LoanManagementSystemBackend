@@ -1,0 +1,114 @@
+package com.lms.payment.controller;
+
+import com.lms.payment.dto.GatewayPaymentRequest;
+import com.lms.payment.dto.PaymentResponse;
+import com.lms.payment.entity.Payment;
+import com.lms.payment.gateway.MockPaymentGateway;
+import com.lms.payment.gateway.PaymentResult;
+import com.lms.payment.repository.PaymentRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDateTime;
+import java.util.Map;
+
+/**
+ * Controller for payment gateway operations.
+ * Uses mock gateway for demo/testing purposes.
+ */
+@RestController
+@RequestMapping("/payments/gateway")
+@RequiredArgsConstructor
+@Slf4j
+public class GatewayPaymentController {
+
+    private final MockPaymentGateway paymentGateway;
+    private final PaymentRepository paymentRepository;
+
+    @PostMapping("/pay")
+    public ResponseEntity<?> processPayment(@RequestBody GatewayPaymentRequest request) {
+        log.info("Processing gateway payment for loan {} amount {}", request.getLoanId(), request.getAmount());
+        
+        // Process through mock gateway
+        PaymentResult result = paymentGateway.processPayment(
+                request.getAmount(),
+                request.getCurrency(),
+                request.getDescription(),
+                request.getUserId().toString()
+        );
+        
+        if (result.isSuccess()) {
+            // Record successful payment 
+            Payment payment = Payment.builder()
+                    .loanId(request.getLoanId())
+                    .userId(request.getUserId())
+                    .paymentType(Payment.PaymentType.EMI_REPAYMENT)
+                    .amount(request.getAmount())
+                    .paymentMethod(Payment.PaymentMethod.DEBIT_CARD)
+                    .transactionId(result.getTransactionId())
+                    .referenceNumber(result.getGatewayTransactionId())
+                    .status(Payment.PaymentStatus.SUCCESS)
+                    .paymentDate(LocalDateTime.now())
+                    .build();
+            
+            paymentRepository.save(payment);
+            
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "transactionId", result.getTransactionId(),
+                    "gatewayTransactionId", result.getGatewayTransactionId(),
+                    "message", result.getMessage(),
+                    "amount", result.getAmount()
+            ));
+        } else {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "errorCode", result.getErrorCode(),
+                    "errorMessage", result.getErrorMessage()
+            ));
+        }
+    }
+
+    @PostMapping("/refund/{transactionId}")
+    public ResponseEntity<?> processRefund(
+            @PathVariable String transactionId,
+            @RequestBody Map<String, Object> body) {
+        
+        var amount = new java.math.BigDecimal(body.get("amount").toString());
+        log.info("Processing refund for transaction {} amount {}", transactionId, amount);
+        
+        PaymentResult result = paymentGateway.initiateRefund(transactionId, amount);
+        
+        if (result.isSuccess()) {
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "refundTransactionId", result.getTransactionId(),
+                    "message", result.getMessage(),
+                    "amount", result.getAmount()
+            ));
+        } else {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "errorCode", result.getErrorCode(),
+                    "errorMessage", result.getErrorMessage()
+            ));
+        }
+    }
+
+    @GetMapping("/status/{transactionId}")
+    public ResponseEntity<PaymentResult> getTransactionStatus(@PathVariable String transactionId) {
+        return ResponseEntity.ok(paymentGateway.getTransactionStatus(transactionId));
+    }
+
+    @GetMapping("/info")
+    public ResponseEntity<?> getGatewayInfo() {
+        return ResponseEntity.ok(Map.of(
+                "gateway", paymentGateway.getGatewayName(),
+                "supportedMethods", new String[]{"CARD", "UPI", "NET_BANKING"},
+                "currencies", new String[]{"INR"},
+                "mode", "MOCK"
+        ));
+    }
+}
