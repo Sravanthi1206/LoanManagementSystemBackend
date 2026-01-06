@@ -61,9 +61,10 @@ class AdminControllerTest {
     @DisplayName("Deactivate User")
     void deactivateUser() throws Exception {
         UserResponse response = UserResponse.builder().id(1L).active(false).build();
-        when(adminService.deactivateUser(1L)).thenReturn(response);
+        when(adminService.deactivateUser(any(Long.class), any())).thenReturn(response);
 
         mockMvc.perform(put("/admin/users/1/deactivate")
+                        .header("X-User-Id", "99")
                         .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.active").value(false));
@@ -73,9 +74,10 @@ class AdminControllerTest {
     @DisplayName("Activate User")
     void activateUser() throws Exception {
         UserResponse response = UserResponse.builder().id(1L).active(true).build();
-        when(adminService.activateUser(1L)).thenReturn(response);
+        when(adminService.activateUser(any(Long.class), any())).thenReturn(response);
 
         mockMvc.perform(put("/admin/users/1/activate")
+                        .header("X-User-Id", "99")
                         .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.active").value(true));

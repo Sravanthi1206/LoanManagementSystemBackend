@@ -32,13 +32,17 @@ public class AdminController {
     }
 
     @PutMapping("/users/{userId}/deactivate")
-    public ResponseEntity<UserResponse> deactivateUser(@PathVariable Long userId) {
-        return ResponseEntity.ok(adminService.deactivateUser(userId));
+    public ResponseEntity<UserResponse> deactivateUser(
+            @PathVariable Long userId,
+            @RequestHeader(value = "X-User-Id", required = false) Long requestorId) {
+        return ResponseEntity.ok(adminService.deactivateUser(userId, requestorId));
     }
 
     @PutMapping("/users/{userId}/activate")
-    public ResponseEntity<UserResponse> activateUser(@PathVariable Long userId) {
-        return ResponseEntity.ok(adminService.activateUser(userId));
+    public ResponseEntity<UserResponse> activateUser(
+            @PathVariable Long userId,
+            @RequestHeader(value = "X-User-Id", required = false) Long requestorId) {
+        return ResponseEntity.ok(adminService.activateUser(userId, requestorId));
     }
     
     // ROOT_ADMIN only endpoints

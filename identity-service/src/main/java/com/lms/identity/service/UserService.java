@@ -104,6 +104,7 @@ public class UserService {
                 .dateOfBirth(user.getDateOfBirth())
                 .role(user.getRole())
                 .active(user.getActive())
+                .passwordChangeRequired(user.getPasswordChangeRequired())
                 .createdAt(user.getCreatedAt())
                 .build();
     }

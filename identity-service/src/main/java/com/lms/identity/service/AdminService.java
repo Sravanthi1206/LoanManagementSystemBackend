@@ -68,7 +68,7 @@ public class AdminService {
     }
 
     @Transactional
-    public UserResponse deactivateUser(Long userId) {
+    public UserResponse deactivateUser(Long userId, Long requestorId) {
         User user = repository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
         
@@ -77,16 +77,45 @@ public class AdminService {
             throw new InvalidRoleException("ROOT_ADMIN cannot be deactivated");
         }
         
+        // Only ROOT_ADMIN can deactivate other ADMINs
+        if (user.getRole() == User.Role.ADMIN && requestorId != null) {
+            User requestor = repository.findById(requestorId).orElse(null);
+            if (requestor != null && requestor.getRole() != User.Role.ROOT_ADMIN) {
+                throw new InvalidRoleException("Only ROOT_ADMIN can deactivate ADMIN accounts");
+            }
+        }
+        
         user.setActive(false);
         return mapToUserResponse(repository.save(user));
     }
+    
+    // Overload for backward compatibility
+    @Transactional
+    public UserResponse deactivateUser(Long userId) {
+        return deactivateUser(userId, null);
+    }
 
     @Transactional
-    public UserResponse activateUser(Long userId) {
+    public UserResponse activateUser(Long userId, Long requestorId) {
         User user = repository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
+        
+        // Only ROOT_ADMIN can activate other ADMINs
+        if (user.getRole() == User.Role.ADMIN && requestorId != null) {
+            User requestor = repository.findById(requestorId).orElse(null);
+            if (requestor != null && requestor.getRole() != User.Role.ROOT_ADMIN) {
+                throw new InvalidRoleException("Only ROOT_ADMIN can activate ADMIN accounts");
+            }
+        }
+        
         user.setActive(true);
         return mapToUserResponse(repository.save(user));
+    }
+    
+    // Overload for backward compatibility
+    @Transactional
+    public UserResponse activateUser(Long userId) {
+        return activateUser(userId, null);
     }
     
     // Get pending admin approvals
