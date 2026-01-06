@@ -7,6 +7,7 @@ pipeline {
 
     environment {
         SONAR_TOKEN = credentials('SONAR_TOKEN')
+        ENV_FILE = credentials('ENV_FILE')
     }
 
     stages {
@@ -25,15 +26,23 @@ pipeline {
                 org.sonarsource.scanner.maven:sonar-maven-plugin:sonar ^
                 -Dsonar.token=%SONAR_TOKEN% ^
                 -Dsonar.host.url=https://sonarcloud.io ^
+                -Dsonar.organization=sravanthi1206 ^
+                -Dsonar.projectKey=Sravanthi1206_LoanManagementSystemBackend ^
                 -Dsonar.coverage.jacoco.xmlReportPaths=**/target/site/jacoco/jacoco.xml ^
                 -Dsonar.qualitygate.wait=true
                 """
             }
         }
 
-        stage('Build Docker Images') {
+        stage('Setup Environment') {
             steps {
-                bat 'docker-compose build'
+                bat 'copy %ENV_FILE% .env'
+            }
+        }
+
+        stage('Docker Compose Up') {
+            steps {
+                bat 'docker compose up -d --build'
             }
         }
     }
@@ -44,6 +53,9 @@ pipeline {
         }
         failure {
             echo 'Pipeline failed.'
+        }
+        always {
+            bat 'if exist .env del .env'
         }
     }
 }
