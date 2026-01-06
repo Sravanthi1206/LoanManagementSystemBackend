@@ -29,6 +29,13 @@ public class GatewayPaymentController {
     private final PaymentRepository paymentRepository;
     private final LoanClient loanClient;
 
+    private static final String KEY_SUCCESS = "success";
+    private static final String KEY_TRANSACTION_ID = "transactionId";
+    private static final String KEY_MESSAGE = "message";
+    private static final String KEY_AMOUNT = "amount";
+    private static final String KEY_ERROR_CODE = "errorCode";
+    private static final String KEY_ERROR_MESSAGE = "errorMessage";
+
     @PostMapping("/pay")
     public ResponseEntity<?> processPayment(@RequestBody GatewayPaymentRequest request) {
         log.info("Processing gateway payment for loan {} amount {}", request.getLoanId(), request.getAmount());
@@ -58,17 +65,17 @@ public class GatewayPaymentController {
             paymentRepository.save(payment);
             
             return ResponseEntity.ok(Map.of(
-                    "success", true,
-                    "transactionId", result.getTransactionId(),
+                    KEY_SUCCESS, true,
+                    KEY_TRANSACTION_ID, result.getTransactionId(),
                     "gatewayTransactionId", result.getGatewayTransactionId(),
-                    "message", result.getMessage(),
-                    "amount", result.getAmount()
+                    KEY_MESSAGE, result.getMessage(),
+                    KEY_AMOUNT, result.getAmount()
             ));
         } else {
             return ResponseEntity.badRequest().body(Map.of(
-                    "success", false,
-                    "errorCode", result.getErrorCode(),
-                    "errorMessage", result.getErrorMessage()
+                    KEY_SUCCESS, false,
+                    KEY_ERROR_CODE, result.getErrorCode(),
+                    KEY_ERROR_MESSAGE, result.getErrorMessage()
             ));
         }
     }
@@ -94,27 +101,27 @@ public class GatewayPaymentController {
                 log.info("Wallet credited successfully for user {}", request.getUserId());
                 
                 return ResponseEntity.ok(Map.of(
-                        "success", true,
-                        "transactionId", result.getTransactionId(),
+                        KEY_SUCCESS, true,
+                        KEY_TRANSACTION_ID, result.getTransactionId(),
                         "gatewayTransactionId", result.getGatewayTransactionId(),
-                        "message", "Wallet topped up successfully",
-                        "amount", result.getAmount()
+                        KEY_MESSAGE, "Wallet topped up successfully",
+                        KEY_AMOUNT, result.getAmount()
                 ));
             } catch (Exception e) {
                 log.error("Failed to credit wallet after successful payment: {}", e.getMessage());
                 // Payment succeeded but wallet credit failed - needs manual intervention
                 return ResponseEntity.status(500).body(Map.of(
-                        "success", false,
-                        "transactionId", result.getTransactionId(),
-                        "errorCode", "WALLET_CREDIT_FAILED",
-                        "errorMessage", "Payment succeeded but wallet credit failed. Contact support with transaction ID."
+                        KEY_SUCCESS, false,
+                        KEY_TRANSACTION_ID, result.getTransactionId(),
+                        KEY_ERROR_CODE, "WALLET_CREDIT_FAILED",
+                        KEY_ERROR_MESSAGE, "Payment succeeded but wallet credit failed. Contact support with transaction ID."
                 ));
             }
         } else {
             return ResponseEntity.badRequest().body(Map.of(
-                    "success", false,
-                    "errorCode", result.getErrorCode(),
-                    "errorMessage", result.getErrorMessage()
+                    KEY_SUCCESS, false,
+                    KEY_ERROR_CODE, result.getErrorCode(),
+                    KEY_ERROR_MESSAGE, result.getErrorMessage()
             ));
         }
     }
@@ -124,23 +131,23 @@ public class GatewayPaymentController {
             @PathVariable String transactionId,
             @RequestBody Map<String, Object> body) {
         
-        var amount = new java.math.BigDecimal(body.get("amount").toString());
+        var amount = new java.math.BigDecimal(body.get(KEY_AMOUNT).toString());
         log.info("Processing refund for transaction {} amount {}", transactionId, amount);
         
         PaymentResult result = paymentGateway.initiateRefund(transactionId, amount);
         
         if (result.isSuccess()) {
             return ResponseEntity.ok(Map.of(
-                    "success", true,
+                    KEY_SUCCESS, true,
                     "refundTransactionId", result.getTransactionId(),
-                    "message", result.getMessage(),
-                    "amount", result.getAmount()
+                    KEY_MESSAGE, result.getMessage(),
+                    KEY_AMOUNT, result.getAmount()
             ));
         } else {
             return ResponseEntity.badRequest().body(Map.of(
-                    "success", false,
-                    "errorCode", result.getErrorCode(),
-                    "errorMessage", result.getErrorMessage()
+                    KEY_SUCCESS, false,
+                    KEY_ERROR_CODE, result.getErrorCode(),
+                    KEY_ERROR_MESSAGE, result.getErrorMessage()
             ));
         }
     }
