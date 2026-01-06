@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loan Management System - Presentation</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.5.0/reveal.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.5.0/theme/white.min.css">
+    <style>
+        :root {
+            --primary: #1a1a2e;
+            --accent: #4CAF50;
+            --pink: #FFEBEE;
+            --green: #E8F5E9;
+            --blue: #E3F2FD;
+            --yellow: #FFF9C4;
+            --purple: #EDE7F6;
+        }
+
+        .reveal h1,
+        .reveal h2 {
+            color: var(--primary);
+            font-family: 'Segoe UI', Arial, sans-serif;
+        }
+
+        .reveal h3 {
+            color: #333;
+        }
+
+        .reveal {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            font-size: 28px;
+        }
+
+        .reveal table {
+            font-size: 0.7em;
+            margin: 0 auto;
+        }
+
+        .reveal table th {
+            background: var(--primary);
+            color: white;
+            padding: 10px;
+        }
+
+        .reveal table td {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+        }
+
+        .reveal table tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+
+        .reveal .slides section {
+            padding: 20px;
+        }
+
+        .title-slide h1 {
+            font-size: 2.5em !important;
+            margin-bottom: 20px;
+        }
+
+        .title-slide h3 {
+            color: #666;
+            font-weight: normal;
+        }
+
+        .highlight {
+            background: var(--yellow);
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            margin: 5px;
+            font-size: 0.8em;
+        }
+
+        .badge-green {
+            background: var(--green);
+            color: #2E7D32;
+        }
+
+        .badge-blue {
+            background: var(--blue);
+            color: #1565C0;
+        }
+
+        .badge-purple {
+            background: var(--purple);
+            color: #6A1B9A;
+        }
+
+        .badge-pink {
+            background: var(--pink);
+            color: #C62828;
+        }
+
+        .architecture-box {
+            background: #f5f5f5;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px 0;
+            text-align: center;
+        }
+
+        .flow-diagram {
+            font-family: monospace;
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 10px;
+            font-size: 0.8em;
+        }
+
+        .two-column {
+            display: flex;
+            gap: 30px;
+        }
+
+        .two-column>div {
+            flex: 1;
+        }
+
+        ul {
+            text-align: left;
+        }
+
+        .small {
+            font-size: 0.7em;
+        }
+
+        .reveal pre {
+            font-size: 0.6em;
+        }
+
+        .icon {
+            font-size: 1.5em;
+            margin-right: 10px;
+        }
+
+        .diagram-link {
+            display: inline-block;
+            margin-top: 15px;
+            padding: 8px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white !important;
+            text-decoration: none;
+            border-radius: 25px;
+            font-size: 0.7em;
+            transition: transform 0.2s;
+        }
+
+        .diagram-link:hover {
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="reveal">
+        <div class="slides">
+
+            <!-- Slide 1: Title -->
+            <section class="title-slide" data-background-gradient="linear-gradient(135deg, #667eea 0%, #764ba2 100%)">
+                <h1 style="color: white;">🏦 LOAN MANAGEMENT SYSTEM</h1>
+                <h3 style="color: rgba(255,255,255,0.9);">A Secure Full-Stack Microservices Application</h3>
+                <br>
+                <p style="color: rgba(255,255,255,0.8);">
+                    <strong>Sravanthi Gurram</strong><br>
+                    January 2026
+                </p>
+            </section>
+
+            <!-- Slide 2: Problem Statement -->
+            <section>
+                <h2>📋 Problem Statement</h2>
+                <div class="two-column">
+                    <div>
+                        <h3 style="color: #C62828;">The Challenge</h3>
+                        <ul>
+                            <li>Manual, paper-heavy loan processing</li>
+                            <li>Lack of real-time tracking</li>
+                            <li>Fragmented systems</li>
+                            <li>Security vulnerabilities</li>
+                            <li>Poor customer experience</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 style="color: #2E7D32;">Our Solution</h3>
+                        <p>A modern, secure, <span class="highlight">microservices-based</span> Loan Management System
+                            that automates the complete loan lifecycle.</p>
+                        <br>
+                        <span class="badge badge-green">Automated</span>
+                        <span class="badge badge-blue">Secure</span>
+                        <span class="badge badge-purple">Scalable</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Slide 3: Key Features -->
+            <section>
+                <h2>✨ Key Features</h2>
+                <table>
+                    <tr>
+                        <th>Feature</th>
+                        <th>Description</th>
+                    </tr>
+                    <tr>
+                        <td>🔐 Secure Authentication</td>
+                        <td>JWT-based login with role-based access control</td>
+                    </tr>
+                    <tr>
+                        <td>📝 Loan Application</td>
+                        <td>Apply for various loan types with validation</td>
+                    </tr>
+                    <tr>
+                        <td>⚡ EMI Calculator</td>
+                        <td>Real-time EMI calculation and schedule generation</td>
+                    </tr>
+                    <tr>
+                        <td>💳 Virtual Wallet</td>
+                        <td>Simulated disbursement & payment system</td>
+                    </tr>
+                    <tr>
+                        <td>📧 Notifications</td>
+                        <td>Email alerts for all loan status changes</td>
+                    </tr>
+                    <tr>
+                        <td>👥 Multi-Role Support</td>
+                        <td>Customer, Loan Officer, Admin, ROOT_ADMIN</td>
+                    </tr>
+                </table>
+            </section>
+
+            <!-- Slide 4: Architecture -->
+            <section>
+                <h2>🏗 System Architecture</h2>
+                <div class="flow-diagram">
+                    <pre style="text-align: center; line-height: 1.4;">
+                         ┌─────────────────┐
+                         │  Angular Client │
+                         └────────┬────────┘
+                                  │
+                         ┌────────▼────────┐
+                         │   API Gateway   │
+                         │     :8080       │
+                         └────────┬────────┘
+                                  │
+    ┌──────────┬──────────┬───────┴───────┬──────────┐
+    ▼          ▼          ▼               ▼          ▼
+┌────────┐ ┌────────┐ ┌────────┐ ┌──────────┐ ┌────────────┐
+│Identity│ │  Loan  │ │  EMI   │ │ Payment  │ │Notification│
+│ :8081  │ │ :8082  │ │ :8083  │ │  :8084   │ │   :8085    │
+└────────┘ └────────┘ └────────┘ └──────────┘ └────────────┘
+    │          │          │           │            │
+    └──────────┴──────────┼───────────┴────────────┘
+                          │
+              ┌───────────┴───────────┐
+              │   MySQL    │  MongoDB │
+              │ (4 DBs)    │ (1 DB)   │
+              └───────────────────────┘
+</pre>
+                </div>
+                <a href="diagrams/ArchitectureDiagram.png" target="_blank" class="diagram-link">�️ View Full Diagram</a>
+            </section>
+            <section>
+                <h2>🔑 Architecture Highlights</h2>
+                <table>
+                    <tr>
+                        <th>Component</th>
+                        <th>Purpose</th>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-green">API Gateway</span></td>
+                        <td>Single entry point, JWT validation, routing</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-blue">Eureka Server</span></td>
+                        <td>Service discovery & registration</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-purple">Config Server</span></td>
+                        <td>Centralized configuration from Git</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-pink">RabbitMQ</span></td>
+                        <td>Async event-driven notifications</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-green">Polyglot DB</span></td>
+                        <td>MySQL for transactions, MongoDB for notifications</td>
+                    </tr>
+                </table>
+            </section>
+
+            <!-- Slide 6: Technology Stack -->
+            <section>
+                <h2>🛠 Technology Stack</h2>
+                <div class="two-column">
+                    <div>
+                        <h3>Backend</h3>
+                        <ul>
+                            <li>Spring Boot 3.3</li>
+                            <li>Spring Cloud (Gateway, Eureka, Config)</li>
+                            <li>Spring Security + JWT</li>
+                            <li>Spring Data JPA / MongoDB</li>
+                            <li>RabbitMQ</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3>Frontend & DevOps</h3>
+                        <ul>
+                            <li>Angular 17 + TypeScript</li>
+                            <li>Docker & Docker Compose</li>
+                            <li>Jenkins CI/CD</li>
+                            <li>SonarCloud + JaCoCo</li>
+                            <li>MySQL 8.0 + MongoDB 6.0</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Slide 7: Microservices -->
+            <section>
+                <h2>📦 Microservices Overview</h2>
+                <table style="font-size: 0.65em;">
+                    <tr>
+                        <th>Service</th>
+                        <th>Port</th>
+                        <th>Database</th>
+                        <th>Responsibilities</th>
+                    </tr>
+                    <tr>
+                        <td>Identity</td>
+                        <td>8081</td>
+                        <td>MySQL</td>
+                        <td>Authentication, JWT, RBAC</td>
+                    </tr>
+                    <tr>
+                        <td>Loan</td>
+                        <td>8082</td>
+                        <td>MySQL</td>
+                        <td>Applications, Wallet, Credit Check</td>
+                    </tr>
+                    <tr>
+                        <td>EMI</td>
+                        <td>8083</td>
+                        <td>MySQL</td>
+                        <td>Calculation, Schedule Generation</td>
+                    </tr>
+                    <tr>
+                        <td>Payment</td>
+                        <td>8084</td>
+                        <td>MySQL</td>
+                        <td>Transaction Recording</td>
+                    </tr>
+                    <tr>
+                        <td>Notification</td>
+                        <td>8085</td>
+                        <td>MongoDB</td>
+                        <td>Email Alerts, Event Consumption</td>
+                    </tr>
+                </table>
+                <br>
+                <h4>Infrastructure Services</h4>
+                <span class="badge badge-blue">Config Server :8888</span>
+                <span class="badge badge-green">Eureka :8761</span>
+                <span class="badge badge-purple">API Gateway :8080</span>
+            </section>
+
+            <!-- Slide 8: Database Design -->
+            <section>
+                <h2>🗄 Database Design</h2>
+                <div class="two-column">
+                    <div>
+                        <h3>MySQL (4 Databases)</h3>
+                        <ul class="small">
+                            <li><strong>lms_identity:</strong> users</li>
+                            <li><strong>lms_loans:</strong> loan_applications, user_wallet, wallet_transactions,
+                                documents</li>
+                            <li><strong>lms_emi:</strong> repayment_schedules</li>
+                            <li><strong>lms_payments:</strong> payments</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3>MongoDB (1 Database)</h3>
+                        <ul class="small">
+                            <li><strong>lms_notifications:</strong> notifications collection</li>
+                        </ul>
+                        <br>
+                        <h4>Key Relationships</h4>
+                        <pre style="font-size: 0.7em;">users (1) ─── (*) loans
+loans (1) ─── (*) repayment_schedules
+loans (1) ─── (*) payments</pre>
+                    </div>
+                </div>
+                <a href="diagrams/ERDiagram.png" target="_blank" class="diagram-link">�️ View ER Diagram</a>
+            </section>
+            <section>
+                <h2>📊 Loan Status Flow</h2>
+                <div class="flow-diagram">
+                    <pre style="text-align: center;">
+    ┌─────────┐      ┌──────────────┐      ┌──────────┐
+    │ APPLIED │ ───▶ │ UNDER_REVIEW │ ───▶ │ APPROVED │
+    └─────────┘      └──────┬───────┘      └────┬─────┘
+                           │                    │
+                           ▼                    ▼
+                     ┌──────────┐         ┌───────────┐
+                     │ REJECTED │         │ DISBURSED │
+                     └──────────┘         └─────┬─────┘
+                                                │
+                                                ▼
+                                          ┌──────────┐
+                                          │  CLOSED  │
+                                          └──────────┘
+</pre>
+                </div>
+                <br>
+                <span class="badge badge-green">Credit Check Required</span>
+                <span class="badge badge-blue">EMI Schedule Generated</span>
+                <span class="badge badge-purple">Notifications Sent</span>
+                <br>
+                <a href="diagrams/Complete_Application_Flow.png" target="_blank" class="diagram-link">�️ View Sequence
+                    Diagram</a>
+            </section>
+            <section>
+                <h2>🔐 Security Implementation</h2>
+                <div class="two-column">
+                    <div>
+                        <h3>JWT Authentication</h3>
+                        <ul>
+                            <li>BCrypt password hashing</li>
+                            <li>Stateless token-based auth</li>
+                            <li>Role-based access control</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3>Security Layers</h3>
+                        <ol>
+                            <li><strong>Gateway:</strong> JWT validation</li>
+                            <li><strong>Service:</strong> @PreAuthorize</li>
+                            <li><strong>Data:</strong> User-scoped queries</li>
+                        </ol>
+                    </div>
+                </div>
+                <br>
+                <table style="font-size: 0.6em;">
+                    <tr>
+                        <th>Role</th>
+                        <th>Apply Loan</th>
+                        <th>Approve</th>
+                        <th>Create Staff</th>
+                    </tr>
+                    <tr>
+                        <td>Customer</td>
+                        <td>✅</td>
+                        <td>❌</td>
+                        <td>❌</td>
+                    </tr>
+                    <tr>
+                        <td>Loan Officer</td>
+                        <td>❌</td>
+                        <td>✅</td>
+                        <td>❌</td>
+                    </tr>
+                    <tr>
+                        <td>Admin</td>
+                        <td>❌</td>
+                        <td>✅</td>
+                        <td>✅</td>
+                    </tr>
+                </table>
+            </section>
+
+            <!-- Slide 11: CI/CD -->
+            <section>
+                <h2>🔄 CI/CD Pipeline</h2>
+                <div class="flow-diagram">
+                    <pre style="text-align: center;">
+┌──────────┐    ┌─────────────┐    ┌────────────┐    ┌────────────┐    ┌────────┐
+│ Checkout │───▶│ Build/Test  │───▶│ SonarCloud │───▶│Docker Build│───▶│ Deploy │
+└──────────┘    └─────────────┘    └────────────┘    └────────────┘    └────────┘
+     │               │                   │                 │               │
+  GitHub         JUnit Tests       Quality Gates      Multi-image      Compose
+                 JaCoCo Reports    Security Scan      Build            Up
+</pre>
+                </div>
+                <br>
+                <h4>Quality Gates</h4>
+                <span class="badge badge-green">✅ Coverage > 80%</span>
+                <span class="badge badge-blue">✅ No Critical Bugs</span>
+                <span class="badge badge-purple">✅ No Vulnerabilities</span>
+                <br>
+                <a href="diagrams/ci-cd_pipeline flow.png" target="_blank" class="diagram-link">�️ View CI/CD
+                    Diagram</a>
+            </section>
+            <section>
+                <h2>📜 Business Rules</h2>
+                <table style="font-size: 0.6em;">
+                    <tr>
+                        <th>Rule</th>
+                        <th>Description</th>
+                    </tr>
+                    <tr>
+                        <td>Eligibility Age</td>
+                        <td>Applicant must be 21-60 years old</td>
+                    </tr>
+                    <tr>
+                        <td>Income Ratio</td>
+                        <td>EMI ≤ 50% of monthly income</td>
+                    </tr>
+                    <tr>
+                        <td>Credit Check</td>
+                        <td>Score based on employment type & income</td>
+                    </tr>
+                    <tr>
+                        <td>Risk Categories</td>
+                        <td>LOW (≥750) | MEDIUM (650-749) | HIGH (<650)< /td>
+                    </tr>
+                    <tr>
+                        <td>Approval Required</td>
+                        <td>Credit check must pass before approval</td>
+                    </tr>
+                </table>
+                <br>
+                <h4>Status Transition Rules</h4>
+                <ul class="small" style="display: flex; justify-content: center; gap: 20px; list-style: none;">
+                    <li>APPLIED → UNDER_REVIEW</li>
+                    <li>UNDER_REVIEW → APPROVED/REJECTED</li>
+                    <li>APPROVED → DISBURSED</li>
+                </ul>
+            </section>
+
+            <!-- Slide 13: Challenges -->
+            <section>
+                <h2>🎯 Challenges & Solutions</h2>
+                <table style="font-size: 0.6em;">
+                    <tr>
+                        <th>Challenge</th>
+                        <th>Solution</th>
+                    </tr>
+                    <tr>
+                        <td>Inter-service Communication</td>
+                        <td>Feign clients with Resilience4j circuit breakers</td>
+                    </tr>
+                    <tr>
+                        <td>Distributed Transactions</td>
+                        <td>Eventual consistency via RabbitMQ events</td>
+                    </tr>
+                    <tr>
+                        <td>Configuration Management</td>
+                        <td>Spring Cloud Config Server with Git backend</td>
+                    </tr>
+                    <tr>
+                        <td>Service Discovery</td>
+                        <td>Eureka for dynamic registration</td>
+                    </tr>
+                </table>
+                <br>
+                <h4>Key Learnings</h4>
+                <span class="badge badge-green">📌 API-first design</span>
+                <span class="badge badge-blue">📌 Event-driven architecture</span>
+                <span class="badge badge-purple">📌 Test early & often</span>
+            </section>
+
+            <!-- Slide 14: Future Scope -->
+            <section>
+                <h2>🚀 Future Scope</h2>
+                <div class="two-column">
+                    <div>
+                        <h3>Phase 2</h3>
+                        <ul class="small">
+                            <li>📱 Mobile App (Flutter)</li>
+                            <li>💳 Payment Gateway (Razorpay)</li>
+                            <li>📊 Analytics Dashboard</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3>Phase 3</h3>
+                        <ul class="small">
+                            <li>🤖 AI Credit Scoring</li>
+                            <li>☁️ Cloud Deployment (AWS/Azure)</li>
+                            <li>🔄 Kubernetes Auto-scaling</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+
+            <!-- Slide 15: Thank You -->
+            <section data-background-gradient="linear-gradient(135deg, #667eea 0%, #764ba2 100%)">
+                <h1 style="color: white;">Thank You! 🙏</h1>
+                <br>
+                <h3 style="color: rgba(255,255,255,0.9);">Questions?</h3>
+                <br>
+                <p style="color: rgba(255,255,255,0.8);">
+                    <strong>Sravanthi Gurram</strong><br><br>
+                    🔗 github.com/Sravanthi1206<br>
+                    📧 sravanthigurram955@gmail.com
+                </p>
+            </section>
+
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.5.0/reveal.min.js"></script>
+    <script>
+        Reveal.initialize({
+            hash: true,
+            slideNumber: true,
+            transition: 'slide',
+            backgroundTransition: 'fade'
+        });
+    </script>
+</body>
+
+</html>
