@@ -58,15 +58,12 @@ class NotificationControllerTest {
                 .build();
 
         response = NotificationResponse.builder()
-        response = NotificationResponse.builder()
                 .id(NOTIF_ID)
                 .userId(1L)
                 .status(Notification.NotificationStatus.SENT)
                 .build();
     }
 
-    @Test
-    @DisplayName("POST /notifications/send - Success")
     @Test
     @DisplayName("POST /notifications/send - Success")
     void sendNotificationSuccess() throws Exception {
@@ -81,8 +78,6 @@ class NotificationControllerTest {
 
     @Test
     @DisplayName("GET /notifications/user/{userId} - Success")
-    @Test
-    @DisplayName("GET /notifications/user/{userId} - Success")
     void getUserNotificationsSuccess() throws Exception {
         Page<NotificationResponse> page = new PageImpl<>(Collections.singletonList(response));
         when(notificationService.getUserNotifications(eq(1L), any(Pageable.class))).thenReturn(page);
@@ -94,8 +89,6 @@ class NotificationControllerTest {
 
     @Test
     @DisplayName("GET /notifications/user/{userId}/unread - Success")
-    @Test
-    @DisplayName("GET /notifications/user/{userId}/unread - Success")
     void getUnreadNotificationsSuccess() throws Exception {
         List<NotificationResponse> list = Collections.singletonList(response);
         when(notificationService.getUnreadNotifications(1L)).thenReturn(list);
@@ -105,8 +98,6 @@ class NotificationControllerTest {
                 .andExpect(jsonPath("$[0].id").value(NOTIF_ID));
     }
 
-    @Test
-    @DisplayName("PUT /notifications/{id}/read - Success")
     @Test
     @DisplayName("PUT /notifications/{id}/read - Success")
     void markAsReadSuccess() throws Exception {
