@@ -25,7 +25,7 @@ public class NotificationPublisherTest {
     private NotificationPublisher notificationPublisher;
 
     @Test
-    public void testPublishNotification_Success() {
+    public void testPublishNotificationSuccess() {
         NotificationEvent event = NotificationEvent.builder()
                 .userId(1L)
                 .loanId(100L)
@@ -45,7 +45,7 @@ public class NotificationPublisherTest {
     }
 
     @Test
-    public void testPublishNotification_Exception() {
+    public void testPublishNotificationException() {
         NotificationEvent event = NotificationEvent.builder()
                 .userId(1L)
                 .loanId(100L)

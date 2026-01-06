@@ -32,6 +32,9 @@ import static org.mockito.Mockito.*;
 @DisplayName("Wallet Service Tests")
 class WalletServiceTest {
 
+    private static final BigDecimal BALANCE_5000 = new BigDecimal("5000.00");
+    private static final BigDecimal AMOUNT_500 = new BigDecimal("500.00");
+
     @Mock
     private WalletRepository walletRepository;
 
@@ -43,10 +46,10 @@ class WalletServiceTest {
 
     @Test
     @DisplayName("Get Balance - existing wallet")
-    void getBalance_ExistingWallet() {
+    void getBalanceExistingWallet() {
         UserWallet wallet = UserWallet.builder()
                 .userId(1L)
-                .balance(new BigDecimal("5000.00"))
+                .balance(BALANCE_5000)
                 .lastUpdated(LocalDateTime.now())
                 .build();
 
@@ -55,13 +58,13 @@ class WalletServiceTest {
         WalletResponse response = walletService.getBalance(1L);
 
         assertEquals(1L, response.getUserId());
-        assertEquals(new BigDecimal("5000.00"), response.getBalance());
+        assertEquals(BALANCE_5000, response.getBalance());
         verify(walletRepository).findByUserId(1L);
     }
 
     @Test
     @DisplayName("Get Balance - create new wallet")
-    void getBalance_NewWallet() {
+    void getBalanceNewWallet() {
         when(walletRepository.findByUserId(1L)).thenReturn(Optional.empty());
         when(walletRepository.save(any(UserWallet.class))).thenAnswer(i -> i.getArguments()[0]);
 
@@ -75,23 +78,23 @@ class WalletServiceTest {
 
     @Test
     @DisplayName("Credit - success")
-    void credit_Success() {
+    void creditSuccess() {
         UserWallet wallet = UserWallet.builder().userId(1L).balance(new BigDecimal("1000.00")).build();
         when(walletRepository.findByUserId(1L)).thenReturn(Optional.of(wallet));
         when(walletRepository.save(any(UserWallet.class))).thenAnswer(i -> i.getArguments()[0]);
         when(transactionRepository.save(any(WalletTransaction.class))).thenAnswer(i -> i.getArguments()[0]);
 
-        TransactionResponse response = walletService.credit(1L, new BigDecimal("500.00"), TransactionType.DISBURSEMENT, 101L, "Test Credit");
+        TransactionResponse response = walletService.credit(1L, AMOUNT_500, TransactionType.DISBURSEMENT, 101L, "Test Credit");
 
         assertEquals(new BigDecimal("1500.00"), response.getBalanceAfter()); // 1000 + 500
-        assertEquals(new BigDecimal("500.00"), response.getAmount());
+        assertEquals(AMOUNT_500, response.getAmount());
         assertEquals(TransactionType.DISBURSEMENT, response.getType());
         verify(walletRepository).save(wallet);
     }
 
     @Test
     @DisplayName("Debit - success")
-    void debit_Success() {
+    void debitSuccess() {
         UserWallet wallet = UserWallet.builder().userId(1L).balance(new BigDecimal("1000.00")).build();
         when(walletRepository.findByUserId(1L)).thenReturn(Optional.of(wallet));
         when(walletRepository.save(any(UserWallet.class))).thenAnswer(i -> i.getArguments()[0]);
@@ -106,12 +109,12 @@ class WalletServiceTest {
 
     @Test
     @DisplayName("Debit - insufficient balance")
-    void debit_InsufficientBalance() {
+    void debitInsufficientBalance() {
         UserWallet wallet = UserWallet.builder().userId(1L).balance(new BigDecimal("100.00")).build();
         when(walletRepository.findByUserId(1L)).thenReturn(Optional.of(wallet));
 
         assertThrows(InsufficientBalanceException.class, () -> 
-            walletService.debit(1L, new BigDecimal("500.00"), TransactionType.EMI_PAYMENT, 101L, "Test Debit")
+            walletService.debit(1L, AMOUNT_500, TransactionType.EMI_PAYMENT, 101L, "Test Debit")
         );
         verify(walletRepository, never()).save(any());
     }
@@ -134,7 +137,7 @@ class WalletServiceTest {
     @Test
     @DisplayName("Pay EMI - calls debit")
     void payEmi() {
-         UserWallet wallet = UserWallet.builder().userId(1L).balance(new BigDecimal("5000.00")).build();
+         UserWallet wallet = UserWallet.builder().userId(1L).balance(BALANCE_5000).build();
         when(walletRepository.findByUserId(1L)).thenReturn(Optional.of(wallet));
         when(walletRepository.save(any(UserWallet.class))).thenAnswer(i -> i.getArguments()[0]);
         when(transactionRepository.save(any(WalletTransaction.class))).thenAnswer(i -> i.getArguments()[0]);

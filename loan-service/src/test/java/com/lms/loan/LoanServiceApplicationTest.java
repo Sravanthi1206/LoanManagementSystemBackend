@@ -8,6 +8,7 @@ class LoanServiceApplicationTest {
 
     @Test
     void contextLoads() {
+        // Context loads successfully
     }
 
     @Test

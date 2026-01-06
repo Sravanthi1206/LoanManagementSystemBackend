@@ -51,7 +51,7 @@ class WalletControllerTest {
     
     @Test
     @DisplayName("Get Balance - missing user id")
-    void getBalance_MissingId() throws Exception {
+    void getBalanceShouldFailOnMissingId() throws Exception {
         // Expect 4xx or 5xx depending on exception handling
         mockMvc.perform(get("/wallet/balance"))
                 .andExpect(status().is4xxClientError());

@@ -6,6 +6,11 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class NotificationEventTest {
 
+    private static final String TEST_EMAIL = "test@example.com";
+
+    private static final String TEST_SUBJECT = "Subject";
+    private static final String TEST_MESSAGE = "Message";
+
     @Test
     public void testNotificationEventBuilderAndAccessors() {
         LocalDateTime now = LocalDateTime.now();
@@ -13,18 +18,18 @@ public class NotificationEventTest {
                 .userId(1L)
                 .loanId(100L)
                 .eventType("TEST")
-                .subject("Subject")
-                .message("Message")
-                .recipient("test@example.com")
+                .subject(TEST_SUBJECT)
+                .message(TEST_MESSAGE)
+                .recipient(TEST_EMAIL)
                 .timestamp(now)
                 .build();
 
         assertEquals(1L, event.getUserId());
         assertEquals(100L, event.getLoanId());
         assertEquals("TEST", event.getEventType());
-        assertEquals("Subject", event.getSubject());
-        assertEquals("Message", event.getMessage());
-        assertEquals("test@example.com", event.getRecipient());
+        assertEquals(TEST_SUBJECT, event.getSubject());
+        assertEquals(TEST_MESSAGE, event.getMessage());
+        assertEquals(TEST_EMAIL, event.getRecipient());
         assertEquals(now, event.getTimestamp());
     }
 
@@ -38,7 +43,7 @@ public class NotificationEventTest {
     public void testAllArgsConstructor() {
         LocalDateTime now = LocalDateTime.now();
         NotificationEvent event = new NotificationEvent(
-                1L, 100L, "TEST", "Subject", "Message", "test@example.com", now
+                1L, 100L, "TEST", TEST_SUBJECT, TEST_MESSAGE, TEST_EMAIL, now
         );
         assertEquals(1L, event.getUserId());
     }

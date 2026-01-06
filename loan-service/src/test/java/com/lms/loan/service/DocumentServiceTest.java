@@ -32,6 +32,10 @@ import static org.mockito.Mockito.*;
 @DisplayName("Document Service Tests")
 class DocumentServiceTest {
 
+    private static final String TEST_PDF = "test.pdf";
+    private static final String APPLICATION_PDF = "application/pdf";
+    private static final String CONTENT = "content";
+
     @Mock
     private DocumentRepository documentRepository;
 
@@ -43,11 +47,11 @@ class DocumentServiceTest {
 
     @Test
     @DisplayName("Upload Document - success")
-    void uploadDocument_Success(@TempDir Path tempDir) throws IOException {
+    void uploadDocumentSuccess(@TempDir Path tempDir) throws IOException {
         ReflectionTestUtils.setField(documentService, "uploadDir", tempDir.toString());
 
         Loan loan = Loan.builder().loanId(1L).status(Loan.LoanStatus.APPLIED).build();
-        MockMultipartFile file = new MockMultipartFile("file", "test.pdf", "application/pdf", "content".getBytes());
+        MockMultipartFile file = new MockMultipartFile("file", TEST_PDF, APPLICATION_PDF, CONTENT.getBytes());
 
         when(loanRepository.findById(1L)).thenReturn(Optional.of(loan));
         when(documentRepository.save(any(ApplicationDocument.class))).thenAnswer(i -> {
@@ -59,17 +63,17 @@ class DocumentServiceTest {
         DocumentResponse response = documentService.uploadDocument(1L, ApplicationDocument.DocumentType.IDENTITY_PROOF, file);
 
         assertNotNull(response);
-        assertEquals("test.pdf", response.getDocumentName());
+        assertEquals(TEST_PDF, response.getDocumentName());
         assertTrue(Files.exists(tempDir.resolve("loan_1"))); // Folder created
         verify(documentRepository).save(any(ApplicationDocument.class));
     }
 
     @Test
     @DisplayName("Upload Document - invalid loan status")
-    void uploadDocument_InvalidStatus(@TempDir Path tempDir) {
+    void uploadDocumentInvalidStatus(@TempDir Path tempDir) {
         ReflectionTestUtils.setField(documentService, "uploadDir", tempDir.toString());
         Loan loan = Loan.builder().loanId(1L).status(Loan.LoanStatus.APPROVED).build();
-        MockMultipartFile file = new MockMultipartFile("file", "test.pdf", "application/pdf", "content".getBytes());
+        MockMultipartFile file = new MockMultipartFile("file", TEST_PDF, APPLICATION_PDF, CONTENT.getBytes());
 
         when(loanRepository.findById(1L)).thenReturn(Optional.of(loan));
 
@@ -81,8 +85,8 @@ class DocumentServiceTest {
     
     @Test
     @DisplayName("Upload Document - loan not found")
-    void uploadDocument_LoanNotFound() {
-        MockMultipartFile file = new MockMultipartFile("file", "test.pdf", "application/pdf", "content".getBytes());
+    void uploadDocumentLoanNotFound() {
+        MockMultipartFile file = new MockMultipartFile("file", TEST_PDF, APPLICATION_PDF, CONTENT.getBytes());
         when(loanRepository.findById(1L)).thenReturn(Optional.empty());
         
         assertThrows(LoanNotFoundException.class, () -> 
@@ -93,7 +97,7 @@ class DocumentServiceTest {
     @Test
     @DisplayName("Get Documents")
     void getDocuments() {
-        ApplicationDocument doc = ApplicationDocument.builder().id(101L).documentName("test.pdf").build();
+        ApplicationDocument doc = ApplicationDocument.builder().id(101L).documentName(TEST_PDF).build();
         when(documentRepository.findByApplicationId(1L)).thenReturn(Collections.singletonList(doc));
 
         List<DocumentResponse> responses = documentService.getDocuments(1L);
@@ -104,8 +108,8 @@ class DocumentServiceTest {
 
     @Test
     @DisplayName("Get Document - success")
-    void getDocument_Success() {
-        ApplicationDocument doc = ApplicationDocument.builder().id(101L).documentName("test.pdf").build();
+    void getDocumentSuccess() {
+        ApplicationDocument doc = ApplicationDocument.builder().id(101L).documentName(TEST_PDF).build();
         when(documentRepository.findById(101L)).thenReturn(Optional.of(doc));
 
         DocumentResponse response = documentService.getDocument(101L);
@@ -115,8 +119,8 @@ class DocumentServiceTest {
 
     @Test
     @DisplayName("Delete Document - success")
-    void deleteDocument_Success(@TempDir Path tempDir) throws IOException {
-        Path filePath = tempDir.resolve("test.pdf");
+    void deleteDocumentSuccess(@TempDir Path tempDir) throws IOException {
+        Path filePath = tempDir.resolve(TEST_PDF);
         Files.createFile(filePath);
 
         ApplicationDocument doc = ApplicationDocument.builder().id(101L).filePath(filePath.toString()).build();

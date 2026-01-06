@@ -26,6 +26,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @DisplayName("Document Controller Tests")
 class DocumentControllerTest {
 
+    private static final String TEST_PDF = "test.pdf";
+
     @Autowired
     private MockMvc mockMvc;
 
@@ -35,8 +37,8 @@ class DocumentControllerTest {
     @Test
     @DisplayName("Upload Document - success")
     void uploadDocument() throws Exception {
-        MockMultipartFile file = new MockMultipartFile("file", "test.pdf", "application/pdf", "content".getBytes());
-        DocumentResponse response = DocumentResponse.builder().id(101L).documentName("test.pdf").build();
+        MockMultipartFile file = new MockMultipartFile("file", TEST_PDF, "application/pdf", "content".getBytes());
+        DocumentResponse response = DocumentResponse.builder().id(101L).documentName(TEST_PDF).build();
 
         when(documentService.uploadDocument(eq(1L), any(ApplicationDocument.DocumentType.class), any())).thenReturn(response);
 
@@ -45,13 +47,13 @@ class DocumentControllerTest {
                         .param("documentType", "IDENTITY_PROOF"))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(101))
-                .andExpect(jsonPath("$.documentName").value("test.pdf"));
+                .andExpect(jsonPath("$.documentName").value(TEST_PDF));
     }
 
     @Test
     @DisplayName("Get Documents")
     void getDocuments() throws Exception {
-        DocumentResponse response = DocumentResponse.builder().id(101L).documentName("test.pdf").build();
+        DocumentResponse response = DocumentResponse.builder().id(101L).documentName(TEST_PDF).build();
         when(documentService.getDocuments(1L)).thenReturn(Collections.singletonList(response));
 
         mockMvc.perform(get("/loans/1/documents"))
@@ -62,7 +64,7 @@ class DocumentControllerTest {
     @Test
     @DisplayName("Get Document")
     void getDocument() throws Exception {
-        DocumentResponse response = DocumentResponse.builder().id(101L).documentName("test.pdf").build();
+        DocumentResponse response = DocumentResponse.builder().id(101L).documentName(TEST_PDF).build();
         when(documentService.getDocument(101L)).thenReturn(response);
 
         mockMvc.perform(get("/loans/1/documents/101"))

@@ -24,6 +24,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @DisplayName("DashboardController Tests")
 class DashboardControllerTest {
 
+    private static final String TOTAL_LOANS_PATH = "$.totalLoans";
+
     @Autowired
     private MockMvc mockMvc;
 
@@ -45,27 +47,27 @@ class DashboardControllerTest {
 
     @Test
     @DisplayName("GET /dashboard/stats - Success")
-    void getDashboardStats_Success() throws Exception {
+    void getDashboardStatsShouldSucceed() throws Exception {
         when(loanRepository.findAll()).thenReturn(Arrays.asList(testLoan));
 
         mockMvc.perform(get("/dashboard/stats"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.totalLoans").value(1));
+                .andExpect(jsonPath(TOTAL_LOANS_PATH).value(1));
     }
 
     @Test
     @DisplayName("GET /dashboard/stats - Empty")
-    void getDashboardStats_Empty() throws Exception {
+    void getDashboardStatsShouldReturnEmptyWhenNoLoans() throws Exception {
         when(loanRepository.findAll()).thenReturn(Collections.emptyList());
 
         mockMvc.perform(get("/dashboard/stats"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.totalLoans").value(0));
+                .andExpect(jsonPath(TOTAL_LOANS_PATH).value(0));
     }
 
     @Test
     @DisplayName("GET /dashboard/loans-by-status - Success")
-    void getLoansByStatus_Success() throws Exception {
+    void getLoansByStatusShouldSucceed() throws Exception {
         when(loanRepository.findAll()).thenReturn(Arrays.asList(testLoan));
 
         mockMvc.perform(get("/dashboard/loans-by-status"))
@@ -74,7 +76,7 @@ class DashboardControllerTest {
 
     @Test
     @DisplayName("GET /dashboard/loans-by-type - Success")
-    void getLoansByType_Success() throws Exception {
+    void getLoansByTypeShouldSucceed() throws Exception {
         when(loanRepository.findAll()).thenReturn(Arrays.asList(testLoan));
 
         mockMvc.perform(get("/dashboard/loans-by-type"))
@@ -83,11 +85,11 @@ class DashboardControllerTest {
 
     @Test
     @DisplayName("GET /dashboard/customer-summary/{userId} - Success")
-    void getCustomerSummary_Success() throws Exception {
+    void getCustomerSummaryShouldSucceed() throws Exception {
         when(loanRepository.findByUserId(1L)).thenReturn(Arrays.asList(testLoan));
 
         mockMvc.perform(get("/dashboard/customer-summary/1"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.totalLoans").value(1));
+                .andExpect(jsonPath(TOTAL_LOANS_PATH).value(1));
     }
 }

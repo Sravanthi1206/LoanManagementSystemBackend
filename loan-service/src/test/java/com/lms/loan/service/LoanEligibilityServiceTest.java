@@ -15,6 +15,9 @@ import static org.junit.jupiter.api.Assertions.*;
 @DisplayName("LoanEligibilityService - Complex Business Rules Tests")
 class LoanEligibilityServiceTest {
 
+    private static final BigDecimal MAX_LOAN_100000 = new BigDecimal("100000");
+    private static final BigDecimal INCOME_100000 = new BigDecimal("100000");
+
     private LoanEligibilityService eligibilityService;
 
     @BeforeEach
@@ -29,30 +32,30 @@ class LoanEligibilityServiceTest {
 
         @Test
         @DisplayName("Excellent credit (750+) gets max ₹25 Lakhs limit")
-        void excellentCredit_GetsMaxLoanLimit() {
+        void excellentCreditGetsMaxLoanLimit() {
             BigDecimal maxLoan = eligibilityService.getMaxLoanAmountByCredit(780);
             assertEquals(new BigDecimal("2500000"), maxLoan);
         }
 
         @Test
         @DisplayName("Good credit (700-749) gets max ₹15 Lakhs limit")
-        void goodCredit_GetsReducedLimit() {
+        void goodCreditGetsReducedLimit() {
             BigDecimal maxLoan = eligibilityService.getMaxLoanAmountByCredit(720);
             assertEquals(new BigDecimal("1500000"), maxLoan);
         }
 
         @Test
         @DisplayName("Fair credit (650-699) gets max ₹5 Lakhs limit")
-        void fairCredit_GetsLimitedAmount() {
+        void fairCreditGetsLimitedAmount() {
             BigDecimal maxLoan = eligibilityService.getMaxLoanAmountByCredit(670);
             assertEquals(new BigDecimal("500000"), maxLoan);
         }
 
         @Test
         @DisplayName("Minimum credit (600-649) gets max ₹1 Lakh limit")
-        void minimumCredit_GetsMinimumLimit() {
+        void minimumCreditGetsMinimumLimit() {
             BigDecimal maxLoan = eligibilityService.getMaxLoanAmountByCredit(620);
-            assertEquals(new BigDecimal("100000"), maxLoan);
+            assertEquals(MAX_LOAN_100000, maxLoan);
         }
     }
 
@@ -63,28 +66,28 @@ class LoanEligibilityServiceTest {
 
         @Test
         @DisplayName("Excellent credit gets 9% interest rate")
-        void excellentCredit_GetsLowestRate() {
+        void excellentCreditGetsLowestRate() {
             BigDecimal rate = eligibilityService.getInterestRateByCredit(780);
             assertEquals(new BigDecimal("9.0"), rate);
         }
 
         @Test
         @DisplayName("Good credit gets 10% interest rate")
-        void goodCredit_GetsReducedRate() {
+        void goodCreditGetsReducedRate() {
             BigDecimal rate = eligibilityService.getInterestRateByCredit(720);
             assertEquals(new BigDecimal("10.0"), rate);
         }
 
         @Test
         @DisplayName("Fair credit gets 11% interest rate")
-        void fairCredit_GetsMediumRate() {
+        void fairCreditGetsMediumRate() {
             BigDecimal rate = eligibilityService.getInterestRateByCredit(670);
             assertEquals(new BigDecimal("11.0"), rate);
         }
 
         @Test
         @DisplayName("Minimum credit gets 12% base rate")
-        void minimumCredit_GetsBaseRate() {
+        void minimumCreditGetsBaseRate() {
             BigDecimal rate = eligibilityService.getInterestRateByCredit(620);
             assertEquals(new BigDecimal("12.0"), rate);
         }
@@ -100,7 +103,7 @@ class LoanEligibilityServiceTest {
         void calculatesCorrectEmi() {
             // ₹100,000 at 12% for 12 months
             BigDecimal emi = eligibilityService.calculateEstimatedEmi(
-                    new BigDecimal("100000"), 
+                    MAX_LOAN_100000, 
                     new BigDecimal("12.0"), 
                     12);
             
@@ -120,7 +123,7 @@ class LoanEligibilityServiceTest {
             request.setUserId(1L);
             request.setAmount(new BigDecimal("500000"));
             request.setTenure(24);
-            request.setMonthlyIncome(new BigDecimal("100000"));
+            request.setMonthlyIncome(INCOME_100000);
             request.setAnnualIncome(new BigDecimal("1200000"));
             request.setExistingEmiAmount(BigDecimal.ZERO);
             request.setType(Loan.LoanType.PERSONAL);
@@ -129,14 +132,14 @@ class LoanEligibilityServiceTest {
 
         @Test
         @DisplayName("Valid application passes all checks")
-        void validApplication_PassesAllChecks() {
+        void validApplicationPassesAllChecks() {
             LoanApplicationRequest request = createValidRequest();
             assertDoesNotThrow(() -> eligibilityService.validateEligibility(request, 750));
         }
 
         @Test
         @DisplayName("Low credit score fails validation")
-        void lowCreditScore_FailsValidation() {
+        void lowCreditScoreFailsValidation() {
             LoanApplicationRequest request = createValidRequest();
             LoanEligibilityException ex = assertThrows(
                     LoanEligibilityException.class,
@@ -146,7 +149,7 @@ class LoanEligibilityServiceTest {
 
         @Test
         @DisplayName("Low income fails validation")
-        void lowIncome_FailsValidation() {
+        void lowIncomeFailsValidation() {
             LoanApplicationRequest request = createValidRequest();
             request.setMonthlyIncome(new BigDecimal("20000"));
             
@@ -158,7 +161,7 @@ class LoanEligibilityServiceTest {
 
         @Test
         @DisplayName("Loan exceeding credit limit fails validation")
-        void loanExceedingCreditLimit_FailsValidation() {
+        void loanExceedingCreditLimitFailsValidation() {
             LoanApplicationRequest request = createValidRequest();
             request.setAmount(new BigDecimal("3000000")); // 30 Lakhs
             
@@ -170,7 +173,7 @@ class LoanEligibilityServiceTest {
 
         @Test
         @DisplayName("High EMI-to-income ratio fails validation")
-        void highEmiToIncomeRatio_FailsValidation() {
+        void highEmiToIncomeRatioFailsValidation() {
             LoanApplicationRequest request = createValidRequest();
             request.setAmount(new BigDecimal("2000000"));
             request.setTenure(12); // Short tenure = high EMI
@@ -184,10 +187,10 @@ class LoanEligibilityServiceTest {
 
         @Test
         @DisplayName("High debt-to-income ratio fails validation")
-        void highDebtToIncomeRatio_FailsValidation() {
+        void highDebtToIncomeRatioFailsValidation() {
             LoanApplicationRequest request = createValidRequest();
             request.setExistingEmiAmount(new BigDecimal("40000")); // Already 40% of income
-            request.setMonthlyIncome(new BigDecimal("100000"));
+            request.setMonthlyIncome(INCOME_100000);
             
             LoanEligibilityException ex = assertThrows(
                     LoanEligibilityException.class,
@@ -205,7 +208,7 @@ class LoanEligibilityServiceTest {
 
         @Test
         @DisplayName("Returns correct summary for excellent credit")
-        void excellentCredit_ReturnsCorrectSummary() {
+        void excellentCreditReturnsCorrectSummary() {
             String summary = eligibilityService.getEligibilitySummary(780);
             assertTrue(summary.contains("EXCELLENT"));
             assertTrue(summary.contains("2500000"));
@@ -214,7 +217,7 @@ class LoanEligibilityServiceTest {
 
         @Test
         @DisplayName("Returns ineligible for very low credit")
-        void veryLowCredit_ReturnsIneligible() {
+        void veryLowCreditReturnsIneligible() {
             String summary = eligibilityService.getEligibilitySummary(500);
             assertTrue(summary.contains("INELIGIBLE"));
         }

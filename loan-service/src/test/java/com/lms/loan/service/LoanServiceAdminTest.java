@@ -63,7 +63,7 @@ class LoanServiceAdminTest {
 
         @Test
         @DisplayName("Should reassign loan to new officer")
-        void reassignLoan_Success() {
+        void reassignLoanSuccess() {
             when(loans.findById(1L)).thenReturn(Optional.of(testLoan));
             when(loans.save(any(Loan.class))).thenAnswer(i -> i.getArgument(0));
 
@@ -79,7 +79,7 @@ class LoanServiceAdminTest {
 
         @Test
         @DisplayName("Should throw when loan not found")
-        void reassignLoan_LoanNotFound() {
+        void reassignLoanLoanNotFound() {
             when(loans.findById(999L)).thenReturn(Optional.empty());
 
             assertThrows(LoanNotFoundException.class, () -> 
@@ -88,7 +88,7 @@ class LoanServiceAdminTest {
 
         @Test
         @DisplayName("Should throw when loan status is invalid for reassignment")
-        void reassignLoan_InvalidStatus() {
+        void reassignLoanInvalidStatus() {
             testLoan.setStatus(Loan.LoanStatus.DISBURSED);
             when(loans.findById(1L)).thenReturn(Optional.of(testLoan));
 
@@ -103,7 +103,7 @@ class LoanServiceAdminTest {
 
         @Test
         @DisplayName("Should release loan back to pool")
-        void releaseLoan_Success() {
+        void releaseLoanSuccess() {
             when(loans.findById(1L)).thenReturn(Optional.of(testLoan));
             when(loans.save(any(Loan.class))).thenAnswer(i -> i.getArgument(0));
 
@@ -119,7 +119,7 @@ class LoanServiceAdminTest {
 
         @Test
         @DisplayName("Should throw when loan is not UNDER_REVIEW")
-        void releaseLoan_InvalidStatus() {
+        void releaseLoanInvalidStatus() {
             testLoan.setStatus(Loan.LoanStatus.APPROVED);
             when(loans.findById(1L)).thenReturn(Optional.of(testLoan));
 
@@ -134,7 +134,7 @@ class LoanServiceAdminTest {
 
         @Test
         @DisplayName("Should return pending loan count for officer")
-        void getOfficerPendingCount_Success() {
+        void getOfficerPendingCountSuccess() {
             when(loans.countByAssignedOfficerIdAndStatus(200L, Loan.LoanStatus.UNDER_REVIEW))
                     .thenReturn(5L);
 
@@ -150,7 +150,7 @@ class LoanServiceAdminTest {
 
         @Test
         @DisplayName("Should release loans older than timeout")
-        void releaseStaleLoans_Success() {
+        void releaseStaleLoansSuccess() {
             Loan staleLoan1 = Loan.builder()
                     .loanId(1L)
                     .status(Loan.LoanStatus.UNDER_REVIEW)
@@ -176,7 +176,7 @@ class LoanServiceAdminTest {
 
         @Test
         @DisplayName("Should return 0 when no stale loans")
-        void releaseStaleLoans_NoStaleLoans() {
+        void releaseStaleLoansNoStaleLoans() {
             when(loans.findStaleAssignedLoans(eq(Loan.LoanStatus.UNDER_REVIEW), any(LocalDateTime.class)))
                     .thenReturn(List.of());
 

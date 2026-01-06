@@ -70,7 +70,7 @@ class LoanApplicationControllerTest {
 
         @Test
         @DisplayName("POST /loans/apply - Success")
-        void applyForLoan_Success() throws Exception {
+        void applyForLoanShouldSucceed() throws Exception {
             when(loanService.applyLoan(any(LoanApplicationRequest.class)))
                 .thenReturn(applicationResponse);
 
@@ -79,7 +79,6 @@ class LoanApplicationControllerTest {
                     .content(objectMapper.writeValueAsString(applicationRequest)))
                     .andExpect(status().isCreated())
                     .andExpect(jsonPath("$.loanId").value(1));
-//                    .andExpect(jsonPath("$.status").value("APPLIED"));
         }
     }
 
@@ -89,7 +88,7 @@ class LoanApplicationControllerTest {
 
         @Test
         @DisplayName("GET /loans/my-loans - Success")
-        void getMyLoans_Success() throws Exception {
+        void getMyLoansShouldSucceed() throws Exception {
             List<LoanApplicationResponse> loans = Arrays.asList(applicationResponse);
             when(loanService.getMyLoans(anyLong())).thenReturn(loans);
 
@@ -101,7 +100,7 @@ class LoanApplicationControllerTest {
 
         @Test
         @DisplayName("GET /loans/{id} - Success")
-        void getLoanById_Success() throws Exception {
+        void getLoanByIdShouldSucceed() throws Exception {
             when(loanService.getLoanById(1L)).thenReturn(applicationResponse);
 
             mockMvc.perform(get("/loans/1"))
@@ -116,7 +115,7 @@ class LoanApplicationControllerTest {
 
         @Test
         @DisplayName("PUT /loans/{id}/withdraw - Success")
-        void withdrawLoan_Success() throws Exception {
+        void withdrawLoanShouldSucceed() throws Exception {
             applicationResponse.setStatus(Loan.LoanStatus.WITHDRAWN);
             when(loanService.withdrawLoan(eq(1L), anyLong())).thenReturn(applicationResponse);
 

@@ -34,6 +34,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @DisplayName("LoanProcessingController Tests")
 class LoanProcessingControllerTest {
 
+    private static final String STATUS_PATH = "$.status";
+
     @Autowired
     private MockMvc mockMvc;
 
@@ -62,7 +64,7 @@ class LoanProcessingControllerTest {
 
         @Test
         @DisplayName("GET /loans/admin - Success")
-        void getAllLoans_Success() throws Exception {
+        void getAllLoansShouldSucceed() throws Exception {
             Page<LoanApplicationResponse> page = new PageImpl<>(Collections.singletonList(loanResponse));
             when(loanService.getAllLoans(any(Pageable.class))).thenReturn(page);
 
@@ -73,7 +75,7 @@ class LoanProcessingControllerTest {
 
         @Test
         @DisplayName("GET /loans/admin/pending - Success")
-        void getPendingLoans_Success() throws Exception {
+        void getPendingLoansShouldSucceed() throws Exception {
             Page<LoanApplicationResponse> page = new PageImpl<>(Collections.singletonList(loanResponse));
             when(loanService.getLoansByStatus(eq(Loan.LoanStatus.APPLIED), any(Pageable.class)))
                     .thenReturn(page);
@@ -85,7 +87,7 @@ class LoanProcessingControllerTest {
 
         @Test
         @DisplayName("GET /loans/admin/under-review - Success")
-        void getUnderReviewLoans_Success() throws Exception {
+        void getUnderReviewLoansShouldSucceed() throws Exception {
             loanResponse.setStatus(Loan.LoanStatus.UNDER_REVIEW);
             Page<LoanApplicationResponse> page = new PageImpl<>(Collections.singletonList(loanResponse));
             when(loanService.getLoansByStatus(eq(Loan.LoanStatus.UNDER_REVIEW), any(Pageable.class)))
@@ -103,19 +105,19 @@ class LoanProcessingControllerTest {
 
         @Test
         @DisplayName("PUT /loans/admin/{id}/review - Success")
-        void startReview_Success() throws Exception {
+        void startReviewShouldSucceed() throws Exception {
             loanResponse.setStatus(Loan.LoanStatus.UNDER_REVIEW);
             when(loanService.reviewLoan(eq(1L), anyLong())).thenReturn(loanResponse);
 
             mockMvc.perform(put("/loans/admin/1/review")
                     .header("X-User-Id", "100"))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.status").value("UNDER_REVIEW"));
+                    .andExpect(jsonPath(STATUS_PATH).value("UNDER_REVIEW"));
         }
 
         @Test
         @DisplayName("POST /loans/admin/{id}/credit-check - Success")
-        void performCreditCheck_Success() throws Exception {
+        void performCreditCheckShouldSucceed() throws Exception {
             CreditCheckRequest request = new CreditCheckRequest();
             request.setCreditScore(750);
             request.setRemarks("Credit check passed successfully");
@@ -131,7 +133,7 @@ class LoanProcessingControllerTest {
 
         @Test
         @DisplayName("PUT /loans/admin/{id}/approve - Success")
-        void approveLoan_Success() throws Exception {
+        void approveLoanShouldSucceed() throws Exception {
             LoanApprovalRequest request = new LoanApprovalRequest();
             request.setApprovedAmount(new BigDecimal("90000"));
             request.setInterestRate(new BigDecimal("12"));
@@ -145,12 +147,12 @@ class LoanProcessingControllerTest {
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.status").value("APPROVED"));
+                    .andExpect(jsonPath(STATUS_PATH).value("APPROVED"));
         }
 
         @Test
         @DisplayName("PUT /loans/admin/{id}/reject - Success")
-        void rejectLoan_Success() throws Exception {
+        void rejectLoanShouldSucceed() throws Exception {
             RejectRequest request = new RejectRequest();
             request.setRemarks("Rejected due to policy violation");
 
@@ -162,18 +164,18 @@ class LoanProcessingControllerTest {
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.status").value("REJECTED"));
+                    .andExpect(jsonPath(STATUS_PATH).value("REJECTED"));
         }
 
         @Test
         @DisplayName("PUT /loans/admin/{id}/disburse - Success")
-        void disburseLoan_Success() throws Exception {
+        void disburseLoanShouldSucceed() throws Exception {
             loanResponse.setStatus(Loan.LoanStatus.DISBURSED);
             when(loanService.disburseLoan(eq(1L))).thenReturn(loanResponse);
 
             mockMvc.perform(put("/loans/admin/1/disburse"))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.status").value("DISBURSED"));
+                    .andExpect(jsonPath(STATUS_PATH).value("DISBURSED"));
         }
     }
 }

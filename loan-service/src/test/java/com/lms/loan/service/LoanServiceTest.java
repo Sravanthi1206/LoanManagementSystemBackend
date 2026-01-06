@@ -38,6 +38,10 @@ import static org.mockito.Mockito.*;
 @DisplayName("LoanService Tests")
 class LoanServiceTest {
 
+
+    private static final String RABBITMQ_DOWN = "RabbitMQ Down";
+    private static final BigDecimal AMOUNT_90000 = new BigDecimal("90000");
+
     @Mock
     private LoanRepository repository;
 
@@ -86,7 +90,7 @@ class LoanServiceTest {
 
         @Test
         @DisplayName("Should apply for loan successfully")
-        void applyLoan_Success() {
+        void applyLoanSuccess() {
             when(repository.save(any(Loan.class))).thenReturn(testLoan);
 
             LoanApplicationResponse result = loanService.applyLoan(applicationRequest);
@@ -100,7 +104,7 @@ class LoanServiceTest {
 
         @Test
         @DisplayName("Should apply for different loan types")
-        void applyLoan_DifferentTypes() {
+        void applyLoanDifferentTypes() {
             for (Loan.LoanType type : Loan.LoanType.values()) {
                 applicationRequest.setType(type);
                 testLoan.setType(type);
@@ -120,7 +124,7 @@ class LoanServiceTest {
 
         @Test
         @DisplayName("Should get loan by ID entity")
-        void getLoan_Success() {
+        void getLoanSuccess() {
             when(repository.findById(1L)).thenReturn(Optional.of(testLoan));
 
             Loan result = loanService.getLoan(1L);
@@ -131,7 +135,7 @@ class LoanServiceTest {
 
         @Test
         @DisplayName("Should throw exception when loan not found")
-        void getLoan_NotFound_ThrowsException() {
+        void getLoanNotFoundThrowsException() {
             when(repository.findById(999L)).thenReturn(Optional.empty());
 
             assertThrows(LoanNotFoundException.class, () -> loanService.getLoan(999L));
@@ -139,7 +143,7 @@ class LoanServiceTest {
 
         @Test
         @DisplayName("Should get loan by ID with response")
-        void getLoanById_Success() {
+        void getLoanByIdSuccess() {
             when(repository.findById(1L)).thenReturn(Optional.of(testLoan));
 
             LoanApplicationResponse result = loanService.getLoanById(1L);
@@ -150,7 +154,7 @@ class LoanServiceTest {
 
         @Test
         @DisplayName("Should get user's loans")
-        void getMyLoans_Success() {
+        void getMyLoansSuccess() {
             List<Loan> loans = Collections.singletonList(testLoan);
             when(repository.findByUserId(1L)).thenReturn(loans);
 
@@ -162,7 +166,7 @@ class LoanServiceTest {
 
         @Test
         @DisplayName("Should return empty list when no loans")
-        void getMyLoans_NoLoans() {
+        void getMyLoansNoLoans() {
             when(repository.findByUserId(999L)).thenReturn(Collections.emptyList());
 
             List<LoanApplicationResponse> result = loanService.getMyLoans(999L);
@@ -178,7 +182,7 @@ class LoanServiceTest {
 
         @Test
         @DisplayName("Should withdraw loan successfully")
-        void withdrawLoan_Success() {
+        void withdrawLoanSuccess() {
             when(repository.findById(1L)).thenReturn(Optional.of(testLoan));
             when(repository.save(any(Loan.class))).thenReturn(testLoan);
 
@@ -190,7 +194,7 @@ class LoanServiceTest {
 
         @Test
         @DisplayName("Should throw exception when withdrawing others loan")
-        void withdrawLoan_UnauthorizedAccess_ThrowsException() {
+        void withdrawLoanUnauthorizedAccessThrowsException() {
             when(repository.findById(1L)).thenReturn(Optional.of(testLoan));
 
             assertThrows(UnauthorizedAccessException.class, 
@@ -199,7 +203,7 @@ class LoanServiceTest {
 
         @Test
         @DisplayName("Should throw exception when loan not in APPLIED status")
-        void withdrawLoan_InvalidStatus_ThrowsException() {
+        void withdrawLoanInvalidStatusThrowsException() {
             testLoan.setStatus(Loan.LoanStatus.APPROVED);
             when(repository.findById(1L)).thenReturn(Optional.of(testLoan));
 
@@ -214,7 +218,7 @@ class LoanServiceTest {
 
         @Test
         @DisplayName("Should get loans by status")
-        void getLoansByStatus_Success() {
+        void getLoansByStatusSuccess() {
             Page<Loan> page = new PageImpl<>(Collections.singletonList(testLoan));
             when(repository.findByStatus(eq(Loan.LoanStatus.APPLIED), any(Pageable.class))).thenReturn(page);
 
@@ -227,7 +231,7 @@ class LoanServiceTest {
 
         @Test
         @DisplayName("Should start review")
-        void reviewLoan_Success() {
+        void reviewLoanSuccess() {
             when(repository.findById(1L)).thenReturn(Optional.of(testLoan));
             when(repository.save(any(Loan.class))).thenReturn(testLoan);
 
@@ -240,7 +244,7 @@ class LoanServiceTest {
 
         @Test
         @DisplayName("Should throw exception when loan already assigned to different officer")
-        void reviewLoan_AlreadyAssigned_ThrowsException() {
+        void reviewLoanAlreadyAssignedThrowsException() {
             testLoan.setAssignedOfficerId(100L); // Already assigned to officer 100
             when(repository.findById(1L)).thenReturn(Optional.of(testLoan));
 
@@ -250,7 +254,7 @@ class LoanServiceTest {
 
         @Test
         @DisplayName("Should allow same officer to review again")
-        void reviewLoan_SameOfficer_Success() {
+        void reviewLoanSameOfficerSuccess() {
             testLoan.setAssignedOfficerId(100L); // Already assigned to officer 100
             when(repository.findById(1L)).thenReturn(Optional.of(testLoan));
             when(repository.save(any(Loan.class))).thenReturn(testLoan);
@@ -263,14 +267,14 @@ class LoanServiceTest {
 
         @Test
         @DisplayName("Should approve loan")
-        void approveLoan_Success() {
+        void approveLoanSuccess() {
             testLoan.setStatus(Loan.LoanStatus.UNDER_REVIEW);
             testLoan.setCreditScore(750); // Satisfy credit check requirement
             when(repository.findById(1L)).thenReturn(Optional.of(testLoan));
             when(repository.save(any(Loan.class))).thenReturn(testLoan);
 
             LoanApprovalRequest request = new LoanApprovalRequest();
-            request.setApprovedAmount(new BigDecimal("90000"));
+            request.setApprovedAmount(AMOUNT_90000);
             request.setInterestRate(new BigDecimal("12.5"));
             request.setRemarks("Approved");
 
@@ -283,7 +287,7 @@ class LoanServiceTest {
 
         @Test
         @DisplayName("Should reject loan")
-        void rejectLoan_Success() {
+        void rejectLoanSuccess() {
             testLoan.setStatus(Loan.LoanStatus.UNDER_REVIEW);
             when(repository.findById(1L)).thenReturn(Optional.of(testLoan));
             when(repository.save(any(Loan.class))).thenReturn(testLoan);
@@ -297,7 +301,7 @@ class LoanServiceTest {
 
         @Test
         @DisplayName("Should perform credit check with manual score")
-        void performCreditCheck_Success() {
+        void performCreditCheckSuccess() {
             testLoan.setStatus(Loan.LoanStatus.UNDER_REVIEW);
             when(repository.findById(1L)).thenReturn(Optional.of(testLoan));
             when(repository.save(any(Loan.class))).thenReturn(testLoan);
@@ -310,7 +314,7 @@ class LoanServiceTest {
 
         @Test
         @DisplayName("Should perform automated credit check when score is null")
-        void performCreditCheck_Automated_Success() {
+        void performCreditCheckAutomatedSuccess() {
             testLoan.setStatus(Loan.LoanStatus.UNDER_REVIEW);
             // Base 600 + Salaried 50 + Income 50 = 700
             when(repository.findById(1L)).thenReturn(Optional.of(testLoan));
@@ -328,9 +332,9 @@ class LoanServiceTest {
 
         @Test
         @DisplayName("Should disburse loan")
-        void disburseLoan_Success() {
+        void disburseLoanSuccess() {
             testLoan.setStatus(Loan.LoanStatus.APPROVED);
-            testLoan.setAmountApproved(new BigDecimal("90000"));
+            testLoan.setAmountApproved(AMOUNT_90000);
             testLoan.setInterestRate(new BigDecimal("12.5"));
             testLoan.setTenureMonths(24);
             when(repository.findById(1L)).thenReturn(Optional.of(testLoan));
@@ -346,7 +350,7 @@ class LoanServiceTest {
 
         @Test
         @DisplayName("Should throw exception when disbursing non-approved loan")
-        void disburseLoan_InvalidStatus_ThrowsException() {
+        void disburseLoanInvalidStatusThrowsException() {
             when(repository.findById(1L)).thenReturn(Optional.of(testLoan));
 
             assertThrows(InvalidLoanStatusException.class, 
@@ -360,7 +364,7 @@ class LoanServiceTest {
 
         @Test
         @DisplayName("Should transition from APPLIED to UNDER_REVIEW")
-        void statusTransition_AppliedToUnderReview() {
+        void statusTransitionAppliedToUnderReview() {
             when(repository.findById(1L)).thenReturn(Optional.of(testLoan));
             when(repository.save(any(Loan.class))).thenReturn(testLoan);
 
@@ -372,9 +376,9 @@ class LoanServiceTest {
 
         @Test
         @DisplayName("Should transition from APPROVED to DISBURSED")
-        void statusTransition_ApprovedToDisbursed() {
+        void statusTransitionApprovedToDisbursed() {
             testLoan.setStatus(Loan.LoanStatus.APPROVED);
-            testLoan.setAmountApproved(new BigDecimal("90000"));
+            testLoan.setAmountApproved(AMOUNT_90000);
             when(repository.findById(1L)).thenReturn(Optional.of(testLoan));
             when(repository.save(any(Loan.class))).thenReturn(testLoan);
 
@@ -390,10 +394,10 @@ class LoanServiceTest {
 
         @Test
         @DisplayName("Should save loan even if notification fails during application")
-        void applyLoan_NotificationFail_ShouldStillSave() {
+        void applyLoanNotificationFailShouldStillSave() {
             // Arrange
             when(repository.save(any(Loan.class))).thenReturn(testLoan);
-            doThrow(new RuntimeException("RabbitMQ Down"))
+            doThrow(new RuntimeException(RABBITMQ_DOWN))
                 .when(notificationPublisher).sendLoanNotification(anyLong(), anyLong(), anyString(), anyString(), anyString(), anyString());
 
             // Act
@@ -407,17 +411,17 @@ class LoanServiceTest {
 
         @Test
         @DisplayName("Should save approval even if notification fails")
-        void approveLoan_NotificationFail_ShouldStillSave() {
+        void approveLoanNotificationFailShouldStillSave() {
             // Arrange
             testLoan.setStatus(Loan.LoanStatus.UNDER_REVIEW);
             testLoan.setCreditScore(750);
             when(repository.findById(1L)).thenReturn(Optional.of(testLoan));
             when(repository.save(any(Loan.class))).thenReturn(testLoan);
-            doThrow(new RuntimeException("RabbitMQ Down"))
+            doThrow(new RuntimeException(RABBITMQ_DOWN))
                 .when(notificationPublisher).sendLoanNotification(anyLong(), anyLong(), anyString(), anyString(), anyString(), anyString());
 
             LoanApprovalRequest request = new LoanApprovalRequest();
-            request.setApprovedAmount(new BigDecimal("90000"));
+            request.setApprovedAmount(AMOUNT_90000);
             request.setInterestRate(new BigDecimal("12.5"));
             request.setRemarks("Approved");
 
@@ -432,12 +436,12 @@ class LoanServiceTest {
 
         @Test
         @DisplayName("Should save rejection even if notification fails")
-        void rejectLoan_NotificationFail_ShouldStillSave() {
+        void rejectLoanNotificationFailShouldStillSave() {
             // Arrange
             testLoan.setStatus(Loan.LoanStatus.UNDER_REVIEW);
             when(repository.findById(1L)).thenReturn(Optional.of(testLoan));
             when(repository.save(any(Loan.class))).thenReturn(testLoan);
-            doThrow(new RuntimeException("RabbitMQ Down"))
+            doThrow(new RuntimeException(RABBITMQ_DOWN))
                 .when(notificationPublisher).sendLoanNotification(anyLong(), anyLong(), anyString(), anyString(), anyString(), anyString());
 
             // Act
@@ -451,15 +455,15 @@ class LoanServiceTest {
 
         @Test
         @DisplayName("Should save disbursement even if notification fails")
-        void disburseLoan_NotificationFail_ShouldStillSave() {
+        void disburseLoanNotificationFailShouldStillSave() {
             // Arrange
             testLoan.setStatus(Loan.LoanStatus.APPROVED);
-            testLoan.setAmountApproved(new BigDecimal("90000"));
+            testLoan.setAmountApproved(AMOUNT_90000);
             testLoan.setInterestRate(new BigDecimal("12.5"));
             testLoan.setTenureMonths(24);
             when(repository.findById(1L)).thenReturn(Optional.of(testLoan));
             when(repository.save(any(Loan.class))).thenReturn(testLoan);
-            doThrow(new RuntimeException("RabbitMQ Down"))
+            doThrow(new RuntimeException(RABBITMQ_DOWN))
                 .when(notificationPublisher).sendLoanNotification(anyLong(), anyLong(), anyString(), anyString(), anyString(), anyString());
 
             // Act
