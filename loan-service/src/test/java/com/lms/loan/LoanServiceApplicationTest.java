@@ -8,7 +8,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 class LoanServiceApplicationTest {
 
     @Test
-    @Test
     void contextLoads() {
         // Context loads successfully
         assertDoesNotThrow(() -> {});

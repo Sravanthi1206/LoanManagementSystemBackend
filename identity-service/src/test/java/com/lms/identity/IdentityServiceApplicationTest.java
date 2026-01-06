@@ -8,7 +8,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 class IdentityServiceApplicationTest {
 
     @Test
-    @Test
     void contextLoads() {
         // Verifies Spring context loads successfully - no assertion needed
         // The test passes if the application context initializes without exceptions
