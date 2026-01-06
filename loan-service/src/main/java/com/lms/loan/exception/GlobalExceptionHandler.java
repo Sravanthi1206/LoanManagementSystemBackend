@@ -65,6 +65,8 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, Object>> handleInvalidLoanStatusException(
             InvalidLoanStatusException ex, WebRequest request) {
         
+        log.warn("Invalid Loan Status: {}", ex.getMessage());
+
         Map<String, Object> body = new HashMap<>();
         body.put(TIMESTAMP, LocalDateTime.now());
         body.put(STATUS, HttpStatus.BAD_REQUEST.value());
@@ -93,11 +95,31 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, Object>> handleIllegalArgumentException(
             IllegalArgumentException ex, WebRequest request) {
         
+        log.warn("Illegal Argument: {}", ex.getMessage());
+
         Map<String, Object> body = new HashMap<>();
         body.put(TIMESTAMP, LocalDateTime.now());
         body.put(STATUS, HttpStatus.BAD_REQUEST.value());
         body.put(ERROR, "Bad Request");
         body.put(MESSAGE, ex.getMessage());
+        body.put(PATH, request.getDescription(false).replace("uri=", ""));
+        
+        return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(InsufficientBalanceException.class)
+    public ResponseEntity<Map<String, Object>> handleInsufficientBalanceException(
+            InsufficientBalanceException ex, WebRequest request) {
+        
+        log.warn("Insufficient Balance: {}", ex.getMessage());
+
+        Map<String, Object> body = new HashMap<>();
+        body.put(TIMESTAMP, LocalDateTime.now());
+        body.put(STATUS, HttpStatus.BAD_REQUEST.value());
+        body.put(ERROR, "Insufficient Balance");
+        body.put(MESSAGE, ex.getMessage());
+        body.put("currentBalance", ex.getCurrentBalance());
+        body.put("requiredAmount", ex.getRequiredAmount());
         body.put(PATH, request.getDescription(false).replace("uri=", ""));
         
         return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);

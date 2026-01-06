@@ -78,7 +78,7 @@ public class EmiService {
     @Transactional
     public RepaymentSchedule markInstallmentAsPaid(Long installmentId) {
         RepaymentSchedule schedule = repository.findById(installmentId)
-                .orElseThrow(() -> new RuntimeException("Installment not found: " + installmentId));
+                .orElseThrow(() -> new com.lms.emi.exception.InstallmentNotFoundException(installmentId));
         schedule.setStatus(RepaymentSchedule.PaymentStatus.PAID);
         schedule.setPaidDate(LocalDate.now());
         return repository.save(schedule);
