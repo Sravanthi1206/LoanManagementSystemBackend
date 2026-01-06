@@ -68,8 +68,8 @@ class WalletServiceTest {
         WalletResponse response = walletService.getBalance(1L);
 
         assertEquals(1L, response.getUserId());
-        // Default balance logic in service
-        assertEquals(new BigDecimal("100000"), response.getBalance());
+        // New wallets start with zero balance
+        assertEquals(BigDecimal.ZERO, response.getBalance());
         verify(walletRepository).save(any(UserWallet.class));
     }
 

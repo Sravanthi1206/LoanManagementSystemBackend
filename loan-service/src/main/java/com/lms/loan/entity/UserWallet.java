@@ -27,7 +27,7 @@ public class UserWallet {
 
     @Column(nullable = false, precision = 15, scale = 2)
     @Builder.Default
-    private BigDecimal balance = new BigDecimal("100000.00"); // ₹1,00,000 starting balance
+    private BigDecimal balance = BigDecimal.ZERO;
 
     @Column(name = "last_updated")
     private LocalDateTime lastUpdated;

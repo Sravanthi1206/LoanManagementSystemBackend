@@ -21,16 +21,8 @@ public class WalletInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        log.info("Checking for demo wallets...");
-        
-        // Create wallet for customer (userId = 3, based on order of creation)
-        for (long userId = 1; userId <= 3; userId++) {
-            if (walletRepository.findByUserId(userId).isEmpty()) {
-                UserWallet wallet = new UserWallet();
-                wallet.setUserId(userId);
-                wallet.setBalance(new BigDecimal("100000.00"));
-                walletRepository.save(wallet);
-            }
-        }
+        log.info("Wallet initializer started - wallets will be created on-demand with zero balance");
+        // Wallets are now created on-demand when users access them
+        // No pre-seeding with fake balance
     }
 }

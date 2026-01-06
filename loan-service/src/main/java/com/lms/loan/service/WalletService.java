@@ -74,8 +74,8 @@ public class WalletService {
         return wallets.findByUserId(userId).orElseGet(() -> {
             var w = new UserWallet();
             w.setUserId(userId);
-            w.setBalance(new BigDecimal("100000"));
-            log.info("New wallet for user {}", userId);
+            w.setBalance(BigDecimal.ZERO);
+            log.info("New wallet created for user {}", userId);
             return wallets.save(w);
         });
     }
