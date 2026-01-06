@@ -26,7 +26,7 @@ style: |
 ---
 
 <!-- _class: lead -->
-<!-- _backgroundColor: linear-gradient(135deg, #667eea 0%, #764ba2 100%) -->
+<!-- _backgroundColor: #667eea -->
 <!-- _color: white -->
 
 # 🏦 LOAN MANAGEMENT SYSTEM
@@ -78,7 +78,7 @@ A modern, secure, **microservices-based** Loan Management System that automates 
 
 ## 🏗 System Architecture
 
-![height:400px](diagrams/ArchitectureDiagram.png)
+![bg contain](diagrams/ArchitectureDiagram.png)
 
 ---
 
@@ -137,13 +137,13 @@ A modern, secure, **microservices-based** Loan Management System that automates 
 
 ## 🗄 Database Design
 
-![height:400px](diagrams/ERDiagram.png)
+![bg contain](diagrams/ERDiagram.png)
 
 ---
 
 ## 📊 Loan Status Flow
 
-![height:400px](diagrams/Complete_Application_Flow.png)
+![bg contain](diagrams/Complete_Application_Flow.png)
 
 ---
 
@@ -174,7 +174,7 @@ A modern, secure, **microservices-based** Loan Management System that automates 
 
 ## 🔄 CI/CD Pipeline
 
-![height:350px](diagrams/ci-cd_pipeline%20flow.png)
+![bg contain](diagrams/ci-cd_pipeline%20flow.png)
 
 ### Quality Gates
 ✅ Coverage > 80% • ✅ No Critical Bugs • ✅ No Vulnerabilities
@@ -231,7 +231,7 @@ A modern, secure, **microservices-based** Loan Management System that automates 
 ---
 
 <!-- _class: lead -->
-<!-- _backgroundColor: linear-gradient(135deg, #667eea 0%, #764ba2 100%) -->
+<!-- _backgroundColor: #667eea -->
 <!-- _color: white -->
 
 # Thank You! 🙏
