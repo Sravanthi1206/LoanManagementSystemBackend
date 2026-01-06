@@ -14,11 +14,17 @@ import java.text.NumberFormat;
 import java.util.Locale;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class EmailService {
 
     private final JavaMailSender mailSender;
+    private final EmailService self;
+    
+    // Lazy injection via constructor to avoid cycle
+    public EmailService(JavaMailSender mailSender, @org.springframework.context.annotation.Lazy EmailService self) {
+        this.mailSender = mailSender;
+        this.self = self;
+    }
     
     private static final String FROM_EMAIL = "sravanthigurram955@gmail.com";
     private static final String FROM_NAME = "LoanEazy";
@@ -27,7 +33,11 @@ public class EmailService {
     private static final String WARNING_COLOR = "#F59E0B";
     private static final String ERROR_COLOR = "#EF4444";
     
-    private static final NumberFormat CURRENCY = NumberFormat.getCurrencyInstance(new Locale("en", "IN"));
+    private static final String THEME_SUCCESS = "success";
+    private static final String THEME_WARNING = "warning";
+    private static final String THEME_INFO = "info";
+
+    private static final NumberFormat CURRENCY = NumberFormat.getCurrencyInstance(Locale.forLanguageTag("en-IN"));
 
     @Async
     public void sendSimpleEmail(String to, String subject, String body) {
@@ -84,9 +94,10 @@ public class EmailService {
                 <li>Track status in your LoanEazy dashboard</li>
             </ul>
             """, loanId, loanType, formatCurrency(amount), appliedDate);
-        sendHtmlEmail(to, subject, wrapHtml("Application Received", content, "info"));
+        self.sendHtmlEmail(to, subject, wrapHtml("Application Received", content, THEME_INFO));
     }
 
+    @SuppressWarnings("java:S107") // Suppress too many parameters warning
     public void sendLoanApprovedEmail(String to, Long loanId, String loanType, BigDecimal approvedAmount, double interestRate, 
                                        int tenure, BigDecimal emi, String approvalDate) {
         String subject = "🎉 Congratulations! Loan Approved - #" + loanId;
@@ -109,7 +120,7 @@ public class EmailService {
             
             <p>The loan amount will be disbursed to your registered wallet shortly.</p>
             """, loanId, loanType, formatCurrency(approvedAmount), interestRate, tenure, formatCurrency(emi), approvalDate);
-        sendHtmlEmail(to, subject, wrapHtml("Loan Approved!", content, "success"));
+        self.sendHtmlEmail(to, subject, wrapHtml("Loan Approved!", content, THEME_SUCCESS));
     }
 
     public void sendLoanRejectedEmail(String to, Long loanId, String loanType, BigDecimal requestedAmount, String reason) {
@@ -130,7 +141,7 @@ public class EmailService {
             
             <p>You may apply again after addressing the above concerns. Contact our support team for assistance.</p>
             """, loanId, loanType, formatCurrency(requestedAmount), reason);
-        sendHtmlEmail(to, subject, wrapHtml("Application Update", content, "warning"));
+        self.sendHtmlEmail(to, subject, wrapHtml("Application Update", content, THEME_WARNING));
     }
 
     public void sendLoanDisbursedEmail(String to, Long loanId, String loanType, BigDecimal amount, BigDecimal emi, int tenure, String disbursementDate) {
@@ -153,7 +164,7 @@ public class EmailService {
             
             <p>You can view your wallet balance in the dashboard. EMI payments will start from next month.</p>
             """, loanId, loanType, formatCurrency(amount), formatCurrency(emi), tenure, disbursementDate);
-        sendHtmlEmail(to, subject, wrapHtml("Loan Disbursed", content, "success"));
+        self.sendHtmlEmail(to, subject, wrapHtml("Loan Disbursed", content, THEME_SUCCESS));
     }
 
     // ============ EMI EMAILS ============
@@ -182,7 +193,7 @@ public class EmailService {
             </ul>
             <p>Avoid late payment charges by paying on time.</p>
             """, loanId, loanType, installmentNumber, formatCurrency(amount), dueDate, remainingInstallments);
-        sendHtmlEmail(to, subject, wrapHtml("EMI Reminder", content, "warning"));
+        self.sendHtmlEmail(to, subject, wrapHtml("EMI Reminder", content, THEME_WARNING));
     }
 
     public void sendEmiPaidEmail(String to, Long loanId, String loanType, int installmentNumber, BigDecimal amount, String transactionId, int remainingInstallments) {
@@ -204,7 +215,7 @@ public class EmailService {
             
             <p>Thank you for your timely payment. View your payment history in the dashboard.</p>
             """, loanId, loanType, installmentNumber, formatCurrency(amount), transactionId, remainingInstallments);
-        sendHtmlEmail(to, subject, wrapHtml("Payment Confirmed", content, "success"));
+        self.sendHtmlEmail(to, subject, wrapHtml("Payment Confirmed", content, THEME_SUCCESS));
     }
 
     // ============ WALLET EMAILS ============
@@ -225,7 +236,7 @@ public class EmailService {
             
             <p>You can use this balance to pay your EMIs.</p>
             """, formatCurrency(amount), formatCurrency(newBalance), transactionId);
-        sendHtmlEmail(to, subject, wrapHtml("Wallet Top-up", content, "success"));
+        self.sendHtmlEmail(to, subject, wrapHtml("Wallet Top-up", content, THEME_SUCCESS));
     }
 
     public void sendWalletDebitEmail(String to, BigDecimal amount, BigDecimal newBalance, String purpose) {
@@ -242,7 +253,7 @@ public class EmailService {
                 </table>
             </div>
             """, formatCurrency(amount), purpose, formatCurrency(newBalance));
-        sendHtmlEmail(to, subject, wrapHtml("Wallet Transaction", content, "info"));
+        self.sendHtmlEmail(to, subject, wrapHtml("Wallet Transaction", content, THEME_INFO));
     }
 
     // ============ LEGACY METHODS ============
@@ -254,7 +265,7 @@ public class EmailService {
             <p><strong>Status:</strong> <span class='status-info'>%s</span></p>
             <p>%s</p>
             """, loanNumber, status, messageContent);
-        sendHtmlEmail(to, subject, wrapHtml("Loan Update", content, "info"));
+        self.sendHtmlEmail(to, subject, wrapHtml("Loan Update", content, THEME_INFO));
     }
 
     public void sendEmiReminderEmail(String to, String loanNumber, String dueDate, String amount) {
@@ -265,7 +276,7 @@ public class EmailService {
             <div class='due-date'><strong>Due:</strong> %s</div>
             <p>Please ensure timely payment.</p>
             """, loanNumber, amount, dueDate);
-        sendHtmlEmail(to, subject, wrapHtml("EMI Reminder", content, "warning"));
+        self.sendHtmlEmail(to, subject, wrapHtml("EMI Reminder", content, THEME_WARNING));
     }
 
     // ============ HELPERS ============
@@ -277,8 +288,8 @@ public class EmailService {
 
     private String wrapHtml(String title, String content, String theme) {
         String themeColor = switch (theme) {
-            case "success" -> SUCCESS_COLOR;
-            case "warning" -> WARNING_COLOR;
+            case THEME_SUCCESS -> SUCCESS_COLOR;
+            case THEME_WARNING -> WARNING_COLOR;
             case "error" -> ERROR_COLOR;
             default -> BRAND_COLOR;
         };

@@ -93,7 +93,7 @@ public class AdminService {
     public List<UserResponse> getPendingApprovals() {
         return repository.findByApprovalPendingTrue().stream()
                 .map(this::mapToUserResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
     
     // Approve pending admin (ROOT_ADMIN only)

@@ -11,6 +11,9 @@ import static org.junit.jupiter.api.Assertions.*;
 @DisplayName("PaymentResult Tests")
 class PaymentResultTest {
 
+    private static final String TXN_ID = "TXN123";
+    private static final String STATUS_SUCCESS = "SUCCESS";
+
     @Test
     @DisplayName("Should build PaymentResult with all fields")
     void shouldBuildPaymentResultWithAllFields() {
@@ -18,9 +21,9 @@ class PaymentResultTest {
         
         PaymentResult result = PaymentResult.builder()
                 .success(true)
-                .transactionId("TXN123")
+                .transactionId(TXN_ID)
                 .gatewayTransactionId("GTW_TXN123")
-                .status("SUCCESS")
+                .status(STATUS_SUCCESS)
                 .message("Payment processed")
                 .amount(new BigDecimal("1000.00"))
                 .currency("INR")
@@ -30,9 +33,9 @@ class PaymentResultTest {
                 .build();
 
         assertTrue(result.isSuccess());
-        assertEquals("TXN123", result.getTransactionId());
+        assertEquals(TXN_ID, result.getTransactionId());
         assertEquals("GTW_TXN123", result.getGatewayTransactionId());
-        assertEquals("SUCCESS", result.getStatus());
+        assertEquals(STATUS_SUCCESS, result.getStatus());
         assertEquals("Payment processed", result.getMessage());
         assertEquals(new BigDecimal("1000.00"), result.getAmount());
         assertEquals("INR", result.getCurrency());
@@ -65,9 +68,9 @@ class PaymentResultTest {
         
         PaymentResult result1 = PaymentResult.builder()
                 .success(true)
-                .transactionId("TXN123")
+                .transactionId(TXN_ID)
                 .gatewayTransactionId("GTW123")
-                .status("SUCCESS")
+                .status(STATUS_SUCCESS)
                 .amount(new BigDecimal("500.00"))
                 .currency("INR")
                 .processedAt(now)
@@ -75,9 +78,9 @@ class PaymentResultTest {
 
         PaymentResult result2 = PaymentResult.builder()
                 .success(true)
-                .transactionId("TXN123")
+                .transactionId(TXN_ID)
                 .gatewayTransactionId("GTW123")
-                .status("SUCCESS")
+                .status(STATUS_SUCCESS)
                 .amount(new BigDecimal("500.00"))
                 .currency("INR")
                 .processedAt(now)
@@ -91,8 +94,8 @@ class PaymentResultTest {
         // Test equals
         assertEquals(result1, result2);
         assertNotEquals(result1, result3);
-        assertNotEquals(result1, null);
-        assertNotEquals(result1, "string");
+        assertNotNull(result1);
+        assertNotEquals("string", result1);
         assertEquals(result1, result1);
 
         // Test hashCode
@@ -106,7 +109,7 @@ class PaymentResultTest {
         PaymentResult result = PaymentResult.builder()
                 .success(true)
                 .transactionId("TXN789")
-                .status("SUCCESS")
+                .status(STATUS_SUCCESS)
                 .amount(new BigDecimal("250.00"))
                 .build();
 
@@ -115,7 +118,7 @@ class PaymentResultTest {
         assertNotNull(toString);
         assertTrue(toString.contains("success=true"));
         assertTrue(toString.contains("TXN789"));
-        assertTrue(toString.contains("SUCCESS"));
+        assertTrue(toString.contains(STATUS_SUCCESS));
         assertTrue(toString.contains("250.00"));
     }
 

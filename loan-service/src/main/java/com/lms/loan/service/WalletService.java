@@ -14,6 +14,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 
 import java.math.BigDecimal;
 import java.util.UUID;
@@ -25,6 +27,10 @@ public class WalletService {
 
     private final WalletRepository wallets;
     private final WalletTransactionRepository transactions;
+
+    @Autowired
+    @Lazy
+    private WalletService self;
 
     public WalletResponse getBalance(Long userId) {
         var wallet = findOrCreate(userId);
@@ -58,12 +64,12 @@ public class WalletService {
 
     @Transactional
     public TransactionResponse disburseLoan(Long userId, Long loanId, BigDecimal amount, String appNo) {
-        return credit(userId, amount, TransactionType.DISBURSEMENT, loanId, "Loan Disbursement - " + appNo);
+        return self.credit(userId, amount, TransactionType.DISBURSEMENT, loanId, "Loan Disbursement - " + appNo);
     }
 
     @Transactional
     public TransactionResponse payEmi(Long userId, Long loanId, BigDecimal amount, int installmentNo) {
-        return debit(userId, amount, TransactionType.EMI_PAYMENT, loanId, "EMI #" + installmentNo);
+        return self.debit(userId, amount, TransactionType.EMI_PAYMENT, loanId, "EMI #" + installmentNo);
     }
 
     public Page<TransactionResponse> getTransactionHistory(Long userId, Pageable pageable) {
