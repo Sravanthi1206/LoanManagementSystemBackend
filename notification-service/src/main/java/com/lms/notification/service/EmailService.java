@@ -87,7 +87,7 @@ public class EmailService {
         sendHtmlEmail(to, subject, wrapHtml("Application Received", content, "info"));
     }
 
-    public void sendLoanApprovedEmail(String to, Long loanId, BigDecimal approvedAmount, double interestRate, 
+    public void sendLoanApprovedEmail(String to, Long loanId, String loanType, BigDecimal approvedAmount, double interestRate, 
                                        int tenure, BigDecimal emi, String approvalDate) {
         String subject = "🎉 Congratulations! Loan Approved - #" + loanId;
         String content = String.format("""
@@ -98,6 +98,7 @@ public class EmailService {
                 <h3>Loan Details</h3>
                 <table class='details-table'>
                     <tr><td>Loan ID</td><td><strong>#%d</strong></td></tr>
+                    <tr><td>Loan Type</td><td>%s</td></tr>
                     <tr><td>Approved Amount</td><td class='amount'>%s</td></tr>
                     <tr><td>Interest Rate</td><td>%.2f%% p.a.</td></tr>
                     <tr><td>Tenure</td><td>%d months</td></tr>
@@ -107,11 +108,11 @@ public class EmailService {
             </div>
             
             <p>The loan amount will be disbursed to your registered wallet shortly.</p>
-            """, loanId, formatCurrency(approvedAmount), interestRate, tenure, formatCurrency(emi), approvalDate);
+            """, loanId, loanType, formatCurrency(approvedAmount), interestRate, tenure, formatCurrency(emi), approvalDate);
         sendHtmlEmail(to, subject, wrapHtml("Loan Approved!", content, "success"));
     }
 
-    public void sendLoanRejectedEmail(String to, Long loanId, String reason) {
+    public void sendLoanRejectedEmail(String to, Long loanId, String loanType, BigDecimal requestedAmount, String reason) {
         String subject = "Loan Application Update - #" + loanId;
         String content = String.format("""
             <p>Dear Customer,</p>
@@ -120,17 +121,19 @@ public class EmailService {
             <div class='info-box warning-box'>
                 <table class='details-table'>
                     <tr><td>Application ID</td><td><strong>#%d</strong></td></tr>
+                    <tr><td>Loan Type</td><td>%s</td></tr>
+                    <tr><td>Amount Requested</td><td class='amount'>%s</td></tr>
                     <tr><td>Status</td><td><span class='status-error'>Not Approved</span></td></tr>
                     <tr><td>Reason</td><td>%s</td></tr>
                 </table>
             </div>
             
             <p>You may apply again after addressing the above concerns. Contact our support team for assistance.</p>
-            """, loanId, reason);
+            """, loanId, loanType, formatCurrency(requestedAmount), reason);
         sendHtmlEmail(to, subject, wrapHtml("Application Update", content, "warning"));
     }
 
-    public void sendLoanDisbursedEmail(String to, Long loanId, BigDecimal amount, String disbursementDate) {
+    public void sendLoanDisbursedEmail(String to, Long loanId, String loanType, BigDecimal amount, BigDecimal emi, int tenure, String disbursementDate) {
         String subject = "💰 Loan Disbursed - #" + loanId;
         String content = String.format("""
             <p>Dear Customer,</p>
@@ -139,20 +142,23 @@ public class EmailService {
             <div class='info-box success-box'>
                 <table class='details-table'>
                     <tr><td>Loan ID</td><td><strong>#%d</strong></td></tr>
+                    <tr><td>Loan Type</td><td>%s</td></tr>
                     <tr><td>Disbursed Amount</td><td class='amount'>%s</td></tr>
+                    <tr><td>Monthly EMI</td><td class='amount'>%s</td></tr>
+                    <tr><td>Tenure</td><td>%d months</td></tr>
                     <tr><td>Disbursement Date</td><td>%s</td></tr>
                     <tr><td>Credited To</td><td>Your LoanEazy Wallet</td></tr>
                 </table>
             </div>
             
             <p>You can view your wallet balance in the dashboard. EMI payments will start from next month.</p>
-            """, loanId, formatCurrency(amount), disbursementDate);
+            """, loanId, loanType, formatCurrency(amount), formatCurrency(emi), tenure, disbursementDate);
         sendHtmlEmail(to, subject, wrapHtml("Loan Disbursed", content, "success"));
     }
 
     // ============ EMI EMAILS ============
 
-    public void sendEmiDueEmail(String to, Long loanId, int installmentNumber, BigDecimal amount, String dueDate) {
+    public void sendEmiDueEmail(String to, Long loanId, String loanType, int installmentNumber, BigDecimal amount, String dueDate, int remainingInstallments) {
         String subject = "⏰ EMI Payment Reminder - Loan #" + loanId;
         String content = String.format("""
             <p>Dear Customer,</p>
@@ -161,9 +167,11 @@ public class EmailService {
             <div class='info-box warning-box'>
                 <table class='details-table'>
                     <tr><td>Loan ID</td><td><strong>#%d</strong></td></tr>
+                    <tr><td>Loan Type</td><td>%s</td></tr>
                     <tr><td>Installment</td><td>#%d</td></tr>
                     <tr><td>Amount Due</td><td class='amount'>%s</td></tr>
                     <tr><td>Due Date</td><td><strong>%s</strong></td></tr>
+                    <tr><td>Remaining EMIs</td><td>%d</td></tr>
                 </table>
             </div>
             
@@ -173,11 +181,11 @@ public class EmailService {
                 <li>Top-up wallet using Card/UPI and pay</li>
             </ul>
             <p>Avoid late payment charges by paying on time.</p>
-            """, loanId, installmentNumber, formatCurrency(amount), dueDate);
+            """, loanId, loanType, installmentNumber, formatCurrency(amount), dueDate, remainingInstallments);
         sendHtmlEmail(to, subject, wrapHtml("EMI Reminder", content, "warning"));
     }
 
-    public void sendEmiPaidEmail(String to, Long loanId, int installmentNumber, BigDecimal amount, String transactionId) {
+    public void sendEmiPaidEmail(String to, Long loanId, String loanType, int installmentNumber, BigDecimal amount, String transactionId, int remainingInstallments) {
         String subject = "✅ EMI Payment Confirmed - Loan #" + loanId;
         String content = String.format("""
             <p>Dear Customer,</p>
@@ -186,14 +194,16 @@ public class EmailService {
             <div class='info-box success-box'>
                 <table class='details-table'>
                     <tr><td>Loan ID</td><td><strong>#%d</strong></td></tr>
+                    <tr><td>Loan Type</td><td>%s</td></tr>
                     <tr><td>Installment Paid</td><td>#%d</td></tr>
                     <tr><td>Amount Paid</td><td class='amount'>%s</td></tr>
                     <tr><td>Transaction ID</td><td><code>%s</code></td></tr>
+                    <tr><td>Remaining EMIs</td><td>%d</td></tr>
                 </table>
             </div>
             
             <p>Thank you for your timely payment. View your payment history in the dashboard.</p>
-            """, loanId, installmentNumber, formatCurrency(amount), transactionId);
+            """, loanId, loanType, installmentNumber, formatCurrency(amount), transactionId, remainingInstallments);
         sendHtmlEmail(to, subject, wrapHtml("Payment Confirmed", content, "success"));
     }
 

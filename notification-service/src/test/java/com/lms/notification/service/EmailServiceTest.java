@@ -1,6 +1,5 @@
 package com.lms.notification.service;
 
-import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -11,9 +10,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 
+import java.math.BigDecimal;
+
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -33,7 +33,6 @@ class EmailServiceTest {
     @DisplayName("Send Simple Email - success")
     void sendSimpleEmail_Success() {
         emailService.sendSimpleEmail("test@example.com", "Subject", "Body");
-
         verify(mailSender).send(any(SimpleMailMessage.class));
     }
 
@@ -41,7 +40,6 @@ class EmailServiceTest {
     @DisplayName("Send Simple Email - failure handled")
     void sendSimpleEmail_Failure() {
         doThrow(new RuntimeException("Mail error")).when(mailSender).send(any(SimpleMailMessage.class));
-
         assertDoesNotThrow(() -> 
             emailService.sendSimpleEmail("test@example.com", "Subject", "Body")
         );
@@ -51,41 +49,114 @@ class EmailServiceTest {
     @DisplayName("Send HTML Email - success")
     void sendHtmlEmail_Success() {
         when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
-
         emailService.sendHtmlEmail("test@example.com", "Subject", "<html>Body</html>");
-
         verify(mailSender).send(mimeMessage);
     }
     
     @Test
-    @DisplayName("Send HTML Email - messaging exception handled")
-    void sendHtmlEmail_MessagingException() {
-        // Need to simulate MimeMessageHelper failure or send failure
+    @DisplayName("Send HTML Email - exception handled")
+    void sendHtmlEmail_Exception() {
         when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
-        doThrow(new org.springframework.mail.MailSendException("Send failed")).when(mailSender).send(mimeMessage); // MailSendException is Runtime
-
+        doThrow(new org.springframework.mail.MailSendException("Send failed")).when(mailSender).send(mimeMessage);
         assertDoesNotThrow(() -> 
             emailService.sendHtmlEmail("test@example.com", "Subject", "<html>Body</html>")
         );
     }
 
+    // ============ LOAN EMAILS ============
+
     @Test
-    @DisplayName("Send Loan Status Email")
-    void sendLoanStatusEmail() {
+    @DisplayName("Send Loan Applied Email")
+    void sendLoanAppliedEmail() {
         when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
-
-        emailService.sendLoanStatusEmail("test@example.com", "LN-123", "APPROVED", "Congratulations!");
-
+        emailService.sendLoanAppliedEmail("test@example.com", 123L, "HOME", 
+            new BigDecimal("500000"), "2026-01-06");
         verify(mailSender).send(mimeMessage);
     }
 
     @Test
-    @DisplayName("Send EMI Reminder Email")
+    @DisplayName("Send Loan Approved Email")
+    void sendLoanApprovedEmail() {
+        when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
+        emailService.sendLoanApprovedEmail("test@example.com", 123L, "HOME",
+            new BigDecimal("500000"), 8.5, 60, new BigDecimal("10324.56"), "2026-01-06");
+        verify(mailSender).send(mimeMessage);
+    }
+
+    @Test
+    @DisplayName("Send Loan Rejected Email")
+    void sendLoanRejectedEmail() {
+        when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
+        emailService.sendLoanRejectedEmail("test@example.com", 123L, "PERSONAL",
+            new BigDecimal("100000"), "Low credit score");
+        verify(mailSender).send(mimeMessage);
+    }
+
+    @Test
+    @DisplayName("Send Loan Disbursed Email")
+    void sendLoanDisbursedEmail() {
+        when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
+        emailService.sendLoanDisbursedEmail("test@example.com", 123L, "HOME",
+            new BigDecimal("500000"), new BigDecimal("10324.56"), 60, "2026-01-07");
+        verify(mailSender).send(mimeMessage);
+    }
+
+    // ============ EMI EMAILS ============
+
+    @Test
+    @DisplayName("Send EMI Due Email")
+    void sendEmiDueEmail() {
+        when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
+        emailService.sendEmiDueEmail("test@example.com", 123L, "HOME", 
+            1, new BigDecimal("10324.56"), "2026-02-06", 59);
+        verify(mailSender).send(mimeMessage);
+    }
+
+    @Test
+    @DisplayName("Send EMI Paid Email")
+    void sendEmiPaidEmail() {
+        when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
+        emailService.sendEmiPaidEmail("test@example.com", 123L, "HOME",
+            1, new BigDecimal("10324.56"), "TXN-ABC123", 59);
+        verify(mailSender).send(mimeMessage);
+    }
+
+    // ============ WALLET EMAILS ============
+
+    @Test
+    @DisplayName("Send Wallet Topup Email")
+    void sendWalletTopupEmail() {
+        when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
+        emailService.sendWalletTopupEmail("test@example.com", 
+            new BigDecimal("5000"), new BigDecimal("15000"), "TXN-XYZ789");
+        verify(mailSender).send(mimeMessage);
+    }
+
+    @Test
+    @DisplayName("Send Wallet Debit Email")
+    void sendWalletDebitEmail() {
+        when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
+        emailService.sendWalletDebitEmail("test@example.com",
+            new BigDecimal("10324.56"), new BigDecimal("4675.44"), "EMI Payment");
+        verify(mailSender).send(mimeMessage);
+    }
+
+    // ============ LEGACY EMAILS ============
+
+    @Test
+    @DisplayName("Send Loan Status Email (Legacy)")
+    void sendLoanStatusEmail() {
+        when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
+        emailService.sendLoanStatusEmail("test@example.com", "LN-123", "APPROVED", "Congratulations!");
+        verify(mailSender).send(mimeMessage);
+    }
+
+    @Test
+    @DisplayName("Send EMI Reminder Email (Legacy)")
     void sendEmiReminderEmail() {
         when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
-
         emailService.sendEmiReminderEmail("test@example.com", "LN-123", "2026-02-01", "5000");
-
         verify(mailSender).send(mimeMessage);
     }
 }
+
