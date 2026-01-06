@@ -36,6 +36,7 @@ public class ApplicationDocument {
 
     private String contentType;
 
+    @Column(updatable = false)
     private LocalDateTime uploadedAt;
 
     @PrePersist

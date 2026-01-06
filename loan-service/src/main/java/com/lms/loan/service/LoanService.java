@@ -24,11 +24,12 @@ import java.util.List;
 @RequiredArgsConstructor
 public class LoanService {
 
+    private static final String NOTIFICATION_FAILED_LOG = "Failed to send notification (ignored): {}";
+    private static final String LOAN_PREFIX = "Loan #";
+
     private final LoanRepository loans;
     private final NotificationPublisher notifications;
     private final com.lms.loan.client.EmiClient emiClient;
-
-    // ... (existing code)
 
     @Transactional
     public LoanApplicationResponse applyLoan(LoanApplicationRequest req) {
@@ -53,7 +54,7 @@ public class LoanService {
             notify(loan, "LOAN_APPLIED", "Application Received", 
                    "Your loan #" + loan.getLoanId() + " for Rs." + loan.getAmountRequested() + " is under review.");
         } catch (Exception e) {
-            log.warn("Failed to send notification (ignored): {}", e.getMessage());
+            log.warn(NOTIFICATION_FAILED_LOG, e.getMessage());
         }
         return toResponse(loan);
     }
@@ -141,8 +142,15 @@ public class LoanService {
         }
         
         loan.setCreditScore(score);
-        loan.setRiskCategory(score >= 750 ? Loan.RiskCategory.LOW : 
-                            score >= 650 ? Loan.RiskCategory.MEDIUM : Loan.RiskCategory.HIGH);
+        Loan.RiskCategory riskCategory;
+        if (score >= 750) {
+            riskCategory = Loan.RiskCategory.LOW;
+        } else if (score >= 650) {
+            riskCategory = Loan.RiskCategory.MEDIUM;
+        } else {
+            riskCategory = Loan.RiskCategory.HIGH;
+        }
+        loan.setRiskCategory(riskCategory);
         
         if (remarks != null && !remarks.isBlank()) {
             var existing = loan.getOfficerRemarks() != null ? loan.getOfficerRemarks() + "\n" : "";
@@ -169,9 +177,9 @@ public class LoanService {
         loan = loans.save(loan);
         try {
             notify(loan, "LOAN_APPROVED", "Approved!", 
-                   "Loan #" + loan.getLoanId() + " approved for Rs." + loan.getAmountApproved());
+                   LOAN_PREFIX + loan.getLoanId() + " approved for Rs." + loan.getAmountApproved());
         } catch (Exception e) {
-            log.warn("Failed to send notification (ignored): {}", e.getMessage());
+            log.warn(NOTIFICATION_FAILED_LOG, e.getMessage());
         }
         return toResponse(loan);
     }
@@ -185,9 +193,9 @@ public class LoanService {
         loan.setOfficerRemarks(remarks);
         loan = loans.save(loan);
         try {
-            notify(loan, "LOAN_REJECTED", "Update", "Loan #" + loan.getLoanId() + " rejected");
+            notify(loan, "LOAN_REJECTED", "Update", LOAN_PREFIX + loan.getLoanId() + " rejected");
         } catch (Exception e) {
-            log.warn("Failed to send notification (ignored): {}", e.getMessage());
+            log.warn(NOTIFICATION_FAILED_LOG, e.getMessage());
         }
         return toResponse(loan);
     }
@@ -209,14 +217,14 @@ public class LoanService {
                     loan.getTenureMonths()
             );
         } catch (Exception e) {
-            throw new RuntimeException("Failed to generate EMI schedule: " + e.getMessage(), e);
+            throw new InvalidLoanStatusException("Failed to generate EMI schedule: " + e.getMessage());
         }
 
         try {
             notify(loan, "LOAN_DISBURSED", "Disbursed", 
-                   "Loan #" + loan.getLoanId() + " disbursed: Rs." + loan.getAmountApproved());
+                   LOAN_PREFIX + loan.getLoanId() + " disbursed: Rs." + loan.getAmountApproved());
         } catch (Exception e) {
-            log.warn("Failed to send notification (ignored): {}", e.getMessage());
+            log.warn(NOTIFICATION_FAILED_LOG, e.getMessage());
         }
         return toResponse(loan);
     }

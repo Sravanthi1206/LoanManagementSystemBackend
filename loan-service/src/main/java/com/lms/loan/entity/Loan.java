@@ -81,8 +81,13 @@ public class Loan {
     private RiskCategory riskCategory;
 
 
+    @Column(updatable = false)
     private LocalDateTime appliedOn;
+    
+    @Column
     private LocalDateTime approvedOn;
+    
+    @Column
     private LocalDateTime updatedAt;
 
     @PrePersist

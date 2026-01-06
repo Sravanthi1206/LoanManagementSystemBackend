@@ -178,7 +178,7 @@ public class LoanEligibilityService {
      *   n = Number of months (tenure)
      */
     public BigDecimal calculateEstimatedEmi(BigDecimal principal, BigDecimal annualRate, int tenureMonths) {
-        BigDecimal monthlyRate = annualRate.divide(BigDecimal.valueOf(12 * 100), 10, RoundingMode.HALF_UP);
+        BigDecimal monthlyRate = annualRate.divide(BigDecimal.valueOf(12L * 100), 10, RoundingMode.HALF_UP);
         
         // (1 + r)^n
         BigDecimal onePlusR = BigDecimal.ONE.add(monthlyRate);

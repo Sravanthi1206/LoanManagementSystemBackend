@@ -16,75 +16,79 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class GlobalExceptionHandlerTest {
+class GlobalExceptionHandlerTest {
+
+    private static final String TEST_URI = "uri=/test";
+    private static final String MESSAGE = "message";
 
     private final GlobalExceptionHandler handler = new GlobalExceptionHandler();
     private final WebRequest webRequest = mock(WebRequest.class);
 
     @Test
-    public void testHandleUserNotFoundException() {
+    void testHandleUserNotFoundException() {
         UserNotFoundException ex = new UserNotFoundException("User not found");
-        when(webRequest.getDescription(false)).thenReturn("uri=/test");
+        when(webRequest.getDescription(false)).thenReturn(TEST_URI);
 
         ResponseEntity<Map<String, Object>> response = handler.handleUserNotFoundException(ex, webRequest);
 
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
-        assertEquals("User not found", response.getBody().get("message"));
+        assertEquals("User not found", response.getBody().get(MESSAGE));
     }
 
     @Test
-    public void testHandleDuplicateUserException() {
+    void testHandleDuplicateUserException() {
         DuplicateUserException ex = new DuplicateUserException("User exists");
-        when(webRequest.getDescription(false)).thenReturn("uri=/test");
+        when(webRequest.getDescription(false)).thenReturn(TEST_URI);
 
         ResponseEntity<Map<String, Object>> response = handler.handleDuplicateUserException(ex, webRequest);
 
         assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
-        assertEquals("User exists", response.getBody().get("message"));
+        assertEquals("User exists", response.getBody().get(MESSAGE));
     }
 
     @Test
-    public void testHandleInvalidCredentialsException() {
+    void testHandleInvalidCredentialsException() {
         InvalidCredentialsException ex = new InvalidCredentialsException("Invalid creds");
-        when(webRequest.getDescription(false)).thenReturn("uri=/test");
+        when(webRequest.getDescription(false)).thenReturn(TEST_URI);
 
         ResponseEntity<Map<String, Object>> response = handler.handleInvalidCredentialsException(ex, webRequest);
 
         assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
-        assertEquals("Invalid creds", response.getBody().get("message"));
+        assertEquals("Invalid creds", response.getBody().get(MESSAGE));
     }
 
     @Test
-    public void testHandleInvalidRoleException() {
+    void testHandleInvalidRoleException() {
         InvalidRoleException ex = new InvalidRoleException("Invalid role");
-        when(webRequest.getDescription(false)).thenReturn("uri=/test");
+        when(webRequest.getDescription(false)).thenReturn(TEST_URI);
 
         ResponseEntity<Map<String, Object>> response = handler.handleInvalidRoleException(ex, webRequest);
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-        assertEquals("Invalid role", response.getBody().get("message"));
+        assertEquals("Invalid role", response.getBody().get(MESSAGE));
     }
 
     @Test
-    public void testHandleGlobalException() {
+    void testHandleGlobalException() {
         Exception ex = new Exception("Internal error");
-        when(webRequest.getDescription(false)).thenReturn("uri=/test");
+        when(webRequest.getDescription(false)).thenReturn(TEST_URI);
 
         ResponseEntity<Map<String, Object>> response = handler.handleGlobalException(ex, webRequest);
 
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
-        assertEquals("Internal error", response.getBody().get("message"));
+        assertEquals("Internal error", response.getBody().get(MESSAGE));
     }
 
     @Test
-    public void testHandleValidationExceptions() {
+    @SuppressWarnings("unchecked")
+    void testHandleValidationExceptions() {
         MethodArgumentNotValidException ex = mock(MethodArgumentNotValidException.class);
         BindingResult bindingResult = mock(BindingResult.class);
         FieldError fieldError = new FieldError("object", "field", "error message");
 
         when(ex.getBindingResult()).thenReturn(bindingResult);
         when(bindingResult.getAllErrors()).thenReturn(Collections.singletonList(fieldError));
-        when(webRequest.getDescription(false)).thenReturn("uri=/test");
+        when(webRequest.getDescription(false)).thenReturn(TEST_URI);
 
         ResponseEntity<Map<String, Object>> response = handler.handleValidationExceptions(ex, webRequest);
 

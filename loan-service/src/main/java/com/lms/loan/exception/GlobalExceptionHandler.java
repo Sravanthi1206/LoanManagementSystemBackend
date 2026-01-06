@@ -18,23 +18,29 @@ import lombok.extern.slf4j.Slf4j;
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
+    private static final String TIMESTAMP = "timestamp";
+    private static final String STATUS = "status";
+    private static final String ERROR = "error";
+    private static final String MESSAGE = "message";
+    private static final String PATH = "path";
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, Object>> handleValidationExceptions(
             MethodArgumentNotValidException ex, WebRequest request) {
         
         Map<String, String> errors = new HashMap<>();
-        ex.getBindingResult().getAllErrors().forEach((error) -> {
+        ex.getBindingResult().getAllErrors().forEach(error -> {
             String fieldName = ((FieldError) error).getField();
             String errorMessage = error.getDefaultMessage();
             errors.put(fieldName, errorMessage);
         });
         
         Map<String, Object> body = new HashMap<>();
-        body.put("timestamp", LocalDateTime.now());
-        body.put("status", HttpStatus.BAD_REQUEST.value());
-        body.put("error", "Validation Error");
+        body.put(TIMESTAMP, LocalDateTime.now());
+        body.put(STATUS, HttpStatus.BAD_REQUEST.value());
+        body.put(ERROR, "Validation Error");
         body.put("errors", errors);
-        body.put("path", request.getDescription(false).replace("uri=", ""));
+        body.put(PATH, request.getDescription(false).replace("uri=", ""));
         
         return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
     }
@@ -46,11 +52,11 @@ public class GlobalExceptionHandler {
         log.error("Loan Not Found Error: {}", ex.getMessage());
 
         Map<String, Object> body = new HashMap<>();
-        body.put("timestamp", LocalDateTime.now());
-        body.put("status", HttpStatus.NOT_FOUND.value());
-        body.put("error", "Not Found");
-        body.put("message", ex.getMessage());
-        body.put("path", request.getDescription(false).replace("uri=", ""));
+        body.put(TIMESTAMP, LocalDateTime.now());
+        body.put(STATUS, HttpStatus.NOT_FOUND.value());
+        body.put(ERROR, "Not Found");
+        body.put(MESSAGE, ex.getMessage());
+        body.put(PATH, request.getDescription(false).replace("uri=", ""));
         
         return new ResponseEntity<>(body, HttpStatus.NOT_FOUND);
     }
@@ -60,11 +66,11 @@ public class GlobalExceptionHandler {
             InvalidLoanStatusException ex, WebRequest request) {
         
         Map<String, Object> body = new HashMap<>();
-        body.put("timestamp", LocalDateTime.now());
-        body.put("status", HttpStatus.BAD_REQUEST.value());
-        body.put("error", "Invalid Operation");
-        body.put("message", ex.getMessage());
-        body.put("path", request.getDescription(false).replace("uri=", ""));
+        body.put(TIMESTAMP, LocalDateTime.now());
+        body.put(STATUS, HttpStatus.BAD_REQUEST.value());
+        body.put(ERROR, "Invalid Operation");
+        body.put(MESSAGE, ex.getMessage());
+        body.put(PATH, request.getDescription(false).replace("uri=", ""));
         
         return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
     }
@@ -74,11 +80,11 @@ public class GlobalExceptionHandler {
             UnauthorizedAccessException ex, WebRequest request) {
         
         Map<String, Object> body = new HashMap<>();
-        body.put("timestamp", LocalDateTime.now());
-        body.put("status", HttpStatus.FORBIDDEN.value());
-        body.put("error", "Forbidden");
-        body.put("message", ex.getMessage());
-        body.put("path", request.getDescription(false).replace("uri=", ""));
+        body.put(TIMESTAMP, LocalDateTime.now());
+        body.put(STATUS, HttpStatus.FORBIDDEN.value());
+        body.put(ERROR, "Forbidden");
+        body.put(MESSAGE, ex.getMessage());
+        body.put(PATH, request.getDescription(false).replace("uri=", ""));
         
         return new ResponseEntity<>(body, HttpStatus.FORBIDDEN);
     }
@@ -88,11 +94,11 @@ public class GlobalExceptionHandler {
             IllegalArgumentException ex, WebRequest request) {
         
         Map<String, Object> body = new HashMap<>();
-        body.put("timestamp", LocalDateTime.now());
-        body.put("status", HttpStatus.BAD_REQUEST.value());
-        body.put("error", "Bad Request");
-        body.put("message", ex.getMessage());
-        body.put("path", request.getDescription(false).replace("uri=", ""));
+        body.put(TIMESTAMP, LocalDateTime.now());
+        body.put(STATUS, HttpStatus.BAD_REQUEST.value());
+        body.put(ERROR, "Bad Request");
+        body.put(MESSAGE, ex.getMessage());
+        body.put(PATH, request.getDescription(false).replace("uri=", ""));
         
         return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
     }
@@ -102,11 +108,11 @@ public class GlobalExceptionHandler {
             Exception ex, WebRequest request) {
         
         Map<String, Object> body = new HashMap<>();
-        body.put("timestamp", LocalDateTime.now());
-        body.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
-        body.put("error", "Internal Server Error");
-        body.put("message", ex.getMessage());
-        body.put("path", request.getDescription(false).replace("uri=", ""));
+        body.put(TIMESTAMP, LocalDateTime.now());
+        body.put(STATUS, HttpStatus.INTERNAL_SERVER_ERROR.value());
+        body.put(ERROR, "Internal Server Error");
+        body.put(MESSAGE, ex.getMessage());
+        body.put(PATH, request.getDescription(false).replace("uri=", ""));
         
         return new ResponseEntity<>(body, HttpStatus.INTERNAL_SERVER_ERROR);
     }
