@@ -15,10 +15,17 @@ import java.math.BigDecimal;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import org.springframework.test.util.ReflectionTestUtils;
+import org.junit.jupiter.api.BeforeEach;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("Email Service Tests")
 class EmailServiceTest {
+
+    private static final String TEST_EMAIL = "test@example.com";
+    private static final String TEST_SUBJECT = "Subject";
+    private static final BigDecimal AMOUNT_500000 = new BigDecimal("500000");
+    private static final BigDecimal AMOUNT_EMI = new BigDecimal("10324.56");
 
     @Mock
     private JavaMailSender mailSender;
@@ -29,37 +36,43 @@ class EmailServiceTest {
     @InjectMocks
     private EmailService emailService;
 
+    @BeforeEach
+    void setUp() {
+        // Manually inject self-reference for @Lazy injection
+        ReflectionTestUtils.setField(emailService, "self", emailService);
+    }
+
     @Test
     @DisplayName("Send Simple Email - success")
-    void sendSimpleEmail_Success() {
-        emailService.sendSimpleEmail("test@example.com", "Subject", "Body");
+    void sendSimpleEmailSuccess() {
+        emailService.sendSimpleEmail(TEST_EMAIL, TEST_SUBJECT, "Body");
         verify(mailSender).send(any(SimpleMailMessage.class));
     }
 
     @Test
     @DisplayName("Send Simple Email - failure handled")
-    void sendSimpleEmail_Failure() {
+    void sendSimpleEmailFailure() {
         doThrow(new RuntimeException("Mail error")).when(mailSender).send(any(SimpleMailMessage.class));
         assertDoesNotThrow(() -> 
-            emailService.sendSimpleEmail("test@example.com", "Subject", "Body")
+            emailService.sendSimpleEmail(TEST_EMAIL, TEST_SUBJECT, "Body")
         );
     }
 
     @Test
     @DisplayName("Send HTML Email - success")
-    void sendHtmlEmail_Success() {
+    void sendHtmlEmailSuccess() {
         when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
-        emailService.sendHtmlEmail("test@example.com", "Subject", "<html>Body</html>");
+        emailService.sendHtmlEmail(TEST_EMAIL, TEST_SUBJECT, "<html>Body</html>");
         verify(mailSender).send(mimeMessage);
     }
     
     @Test
     @DisplayName("Send HTML Email - exception handled")
-    void sendHtmlEmail_Exception() {
+    void sendHtmlEmailException() {
         when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
         doThrow(new org.springframework.mail.MailSendException("Send failed")).when(mailSender).send(mimeMessage);
         assertDoesNotThrow(() -> 
-            emailService.sendHtmlEmail("test@example.com", "Subject", "<html>Body</html>")
+            emailService.sendHtmlEmail(TEST_EMAIL, TEST_SUBJECT, "<html>Body</html>")
         );
     }
 
@@ -69,8 +82,8 @@ class EmailServiceTest {
     @DisplayName("Send Loan Applied Email")
     void sendLoanAppliedEmail() {
         when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
-        emailService.sendLoanAppliedEmail("test@example.com", 123L, "HOME", 
-            new BigDecimal("500000"), "2026-01-06");
+        emailService.sendLoanAppliedEmail(TEST_EMAIL, 123L, "HOME", 
+            AMOUNT_500000, "2026-01-06");
         verify(mailSender).send(mimeMessage);
     }
 
@@ -78,8 +91,8 @@ class EmailServiceTest {
     @DisplayName("Send Loan Approved Email")
     void sendLoanApprovedEmail() {
         when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
-        emailService.sendLoanApprovedEmail("test@example.com", 123L, "HOME",
-            new BigDecimal("500000"), 8.5, 60, new BigDecimal("10324.56"), "2026-01-06");
+        emailService.sendLoanApprovedEmail(TEST_EMAIL, 123L, "HOME",
+            AMOUNT_500000, 8.5, 60, AMOUNT_EMI, "2026-01-06");
         verify(mailSender).send(mimeMessage);
     }
 
@@ -87,7 +100,7 @@ class EmailServiceTest {
     @DisplayName("Send Loan Rejected Email")
     void sendLoanRejectedEmail() {
         when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
-        emailService.sendLoanRejectedEmail("test@example.com", 123L, "PERSONAL",
+        emailService.sendLoanRejectedEmail(TEST_EMAIL, 123L, "PERSONAL",
             new BigDecimal("100000"), "Low credit score");
         verify(mailSender).send(mimeMessage);
     }
@@ -96,8 +109,8 @@ class EmailServiceTest {
     @DisplayName("Send Loan Disbursed Email")
     void sendLoanDisbursedEmail() {
         when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
-        emailService.sendLoanDisbursedEmail("test@example.com", 123L, "HOME",
-            new BigDecimal("500000"), new BigDecimal("10324.56"), 60, "2026-01-07");
+        emailService.sendLoanDisbursedEmail(TEST_EMAIL, 123L, "HOME",
+            AMOUNT_500000, AMOUNT_EMI, 60, "2026-01-07");
         verify(mailSender).send(mimeMessage);
     }
 
@@ -107,8 +120,8 @@ class EmailServiceTest {
     @DisplayName("Send EMI Due Email")
     void sendEmiDueEmail() {
         when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
-        emailService.sendEmiDueEmail("test@example.com", 123L, "HOME", 
-            1, new BigDecimal("10324.56"), "2026-02-06", 59);
+        emailService.sendEmiDueEmail(TEST_EMAIL, 123L, "HOME", 
+            1, AMOUNT_EMI, "2026-02-06", 59);
         verify(mailSender).send(mimeMessage);
     }
 
@@ -116,8 +129,8 @@ class EmailServiceTest {
     @DisplayName("Send EMI Paid Email")
     void sendEmiPaidEmail() {
         when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
-        emailService.sendEmiPaidEmail("test@example.com", 123L, "HOME",
-            1, new BigDecimal("10324.56"), "TXN-ABC123", 59);
+        emailService.sendEmiPaidEmail(TEST_EMAIL, 123L, "HOME",
+            1, AMOUNT_EMI, "TXN-ABC123", 59);
         verify(mailSender).send(mimeMessage);
     }
 
@@ -127,7 +140,7 @@ class EmailServiceTest {
     @DisplayName("Send Wallet Topup Email")
     void sendWalletTopupEmail() {
         when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
-        emailService.sendWalletTopupEmail("test@example.com", 
+        emailService.sendWalletTopupEmail(TEST_EMAIL, 
             new BigDecimal("5000"), new BigDecimal("15000"), "TXN-XYZ789");
         verify(mailSender).send(mimeMessage);
     }
@@ -136,8 +149,8 @@ class EmailServiceTest {
     @DisplayName("Send Wallet Debit Email")
     void sendWalletDebitEmail() {
         when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
-        emailService.sendWalletDebitEmail("test@example.com",
-            new BigDecimal("10324.56"), new BigDecimal("4675.44"), "EMI Payment");
+        emailService.sendWalletDebitEmail(TEST_EMAIL,
+            AMOUNT_EMI, new BigDecimal("4675.44"), "EMI Payment");
         verify(mailSender).send(mimeMessage);
     }
 
@@ -147,7 +160,7 @@ class EmailServiceTest {
     @DisplayName("Send Loan Status Email (Legacy)")
     void sendLoanStatusEmail() {
         when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
-        emailService.sendLoanStatusEmail("test@example.com", "LN-123", "APPROVED", "Congratulations!");
+        emailService.sendLoanStatusEmail(TEST_EMAIL, "LN-123", "APPROVED", "Congratulations!");
         verify(mailSender).send(mimeMessage);
     }
 
@@ -155,7 +168,7 @@ class EmailServiceTest {
     @DisplayName("Send EMI Reminder Email (Legacy)")
     void sendEmiReminderEmail() {
         when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
-        emailService.sendEmiReminderEmail("test@example.com", "LN-123", "2026-02-01", "5000");
+        emailService.sendEmiReminderEmail(TEST_EMAIL, "LN-123", "2026-02-01", "5000");
         verify(mailSender).send(mimeMessage);
     }
 }

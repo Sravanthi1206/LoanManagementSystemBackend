@@ -18,6 +18,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.test.util.ReflectionTestUtils;
+import org.junit.jupiter.api.BeforeEach;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -43,6 +45,12 @@ class WalletServiceTest {
 
     @InjectMocks
     private WalletService walletService;
+
+    @BeforeEach
+    void setUp() {
+        // Manually inject self-reference for @Lazy injection
+        ReflectionTestUtils.setField(walletService, "self", walletService);
+    }
 
     @Test
     @DisplayName("Get Balance - existing wallet")
