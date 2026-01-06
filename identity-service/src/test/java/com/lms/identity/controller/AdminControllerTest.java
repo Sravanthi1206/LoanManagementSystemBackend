@@ -47,7 +47,7 @@ class AdminControllerTest {
         request.setRole(User.Role.ADMIN);
 
         UserResponse response = UserResponse.builder().id(1L).email("admin@example.com").role(User.Role.ADMIN).build();
-        when(adminService.createStaffAccount(any(CreateStaffRequest.class))).thenReturn(response);
+        when(adminService.createStaffAccount(any(CreateStaffRequest.class), any())).thenReturn(response);
 
         mockMvc.perform(post("/admin/users")
                         .contentType(MediaType.APPLICATION_JSON)
