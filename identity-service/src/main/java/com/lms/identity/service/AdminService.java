@@ -71,6 +71,12 @@ public class AdminService {
     public UserResponse deactivateUser(Long userId) {
         User user = repository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
+        
+        // ROOT_ADMIN cannot be deactivated
+        if (user.getRole() == User.Role.ROOT_ADMIN) {
+            throw new InvalidRoleException("ROOT_ADMIN cannot be deactivated");
+        }
+        
         user.setActive(false);
         return mapToUserResponse(repository.save(user));
     }

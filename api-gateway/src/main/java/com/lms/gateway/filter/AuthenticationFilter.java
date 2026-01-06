@@ -39,7 +39,7 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
 
             if (!exchange.getRequest().getHeaders().containsKey(HttpHeaders.AUTHORIZATION)) {
                 log.warn("Missing Authorization header for: {}", path);
-                return onError(exchange.getResponse(), "Missing Authorization Header", HttpStatus.UNAUTHORIZED);
+                return onError(exchange.getResponse(), HttpStatus.UNAUTHORIZED);
             }
 
             String authHeader = exchange.getRequest().getHeaders().get(HttpHeaders.AUTHORIZATION).get(0);
@@ -50,7 +50,7 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
                 log.debug("Token extracted, length: {}", authHeader.length());
             } else {
                 log.warn("Invalid auth header format");
-                return onError(exchange.getResponse(), "Invalid Authorization Header format", HttpStatus.UNAUTHORIZED);
+                return onError(exchange.getResponse(), HttpStatus.UNAUTHORIZED);
             }
 
             try {
@@ -75,7 +75,7 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
             } catch (Exception e) {
                 log.error("Token validation FAILED! Exception: {}, Message: {}", e.getClass().getName(), e.getMessage());
                 e.printStackTrace();
-                return onError(exchange.getResponse(), "Unauthorized: Invalid token", HttpStatus.UNAUTHORIZED);
+                return onError(exchange.getResponse(), HttpStatus.UNAUTHORIZED);
             }
         });
     }
@@ -85,11 +85,21 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
             || path.equals("/emi/calculate");
     }
     
-    private Mono<Void> onError(ServerHttpResponse response, String message, HttpStatus status) {
+    private Mono<Void> onError(ServerHttpResponse response, HttpStatus status) {
         response.setStatusCode(status);
         return response.setComplete();
     }
 
     public static class Config {
+        // Configuration placeholder for filter customization
+        private boolean enabled = true;
+
+        public boolean isEnabled() {
+            return enabled;
+        }
+
+        public void setEnabled(boolean enabled) {
+            this.enabled = enabled;
+        }
     }
 }

@@ -1,6 +1,6 @@
 package com.lms.payment.client;
 
-import org.junit.jupiter.api.BeforeEach;
+import com.lms.payment.exception.ServiceUnavailableException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -11,59 +11,63 @@ import static org.junit.jupiter.api.Assertions.*;
 @DisplayName("LoanClientFallback Tests")
 class LoanClientFallbackTest {
 
-    private LoanClientFallback fallback;
-
-    @BeforeEach
-    void setUp() {
-        fallback = new LoanClientFallback();
-    }
-
     @Test
-    @DisplayName("debitWallet should throw RuntimeException when circuit breaker is open")
-    void debitWallet_ShouldThrowRuntimeException() {
+    @DisplayName("debitWallet should throw ServiceUnavailableException when circuit breaker is open")
+    void debitWalletShouldThrowServiceUnavailableException() {
+        LoanClientFallback fallback = new LoanClientFallback();
         Long userId = 123L;
         BigDecimal amount = new BigDecimal("500.00");
 
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
-            fallback.debitWallet(userId, amount);
-        });
+        ServiceUnavailableException exception = assertThrows(
+                ServiceUnavailableException.class,
+                () -> fallback.debitWallet(userId, amount)
+        );
 
         assertNotNull(exception.getMessage());
         assertTrue(exception.getMessage().contains("Wallet service temporarily unavailable"));
     }
 
     @Test
-    @DisplayName("creditWallet should throw RuntimeException when circuit breaker is open")
-    void creditWallet_ShouldThrowRuntimeException() {
+    @DisplayName("creditWallet should throw ServiceUnavailableException when circuit breaker is open")
+    void creditWalletShouldThrowServiceUnavailableException() {
+        LoanClientFallback fallback = new LoanClientFallback();
         Long userId = 456L;
         BigDecimal amount = new BigDecimal("1000.00");
         String description = "Test credit";
 
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
-            fallback.creditWallet(userId, amount, description);
-        });
+        ServiceUnavailableException exception = assertThrows(
+                ServiceUnavailableException.class,
+                () -> fallback.creditWallet(userId, amount, description)
+        );
 
         assertNotNull(exception.getMessage());
         assertTrue(exception.getMessage().contains("Wallet service temporarily unavailable"));
     }
 
     @Test
-    @DisplayName("debitWallet should log error message")
-    void debitWallet_ShouldThrowWithCorrectMessage() {
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
-            fallback.debitWallet(1L, BigDecimal.TEN);
-        });
+    @DisplayName("debitWallet should throw with correct message")
+    void debitWalletShouldThrowWithCorrectMessage() {
+        LoanClientFallback fallback = new LoanClientFallback();
+
+        ServiceUnavailableException exception = assertThrows(
+                ServiceUnavailableException.class,
+                () -> fallback.debitWallet(1L, BigDecimal.TEN)
+        );
 
         assertEquals("Wallet service temporarily unavailable. Please try again later.", exception.getMessage());
     }
 
     @Test
-    @DisplayName("creditWallet should log error message")
-    void creditWallet_ShouldThrowWithCorrectMessage() {
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
-            fallback.creditWallet(1L, BigDecimal.TEN, "desc");
-        });
+    @DisplayName("creditWallet should throw with correct message")
+    void creditWalletShouldThrowWithCorrectMessage() {
+        LoanClientFallback fallback = new LoanClientFallback();
+
+        ServiceUnavailableException exception = assertThrows(
+                ServiceUnavailableException.class,
+                () -> fallback.creditWallet(1L, BigDecimal.TEN, "desc")
+        );
 
         assertEquals("Wallet service temporarily unavailable. Please try again later.", exception.getMessage());
     }
 }
+

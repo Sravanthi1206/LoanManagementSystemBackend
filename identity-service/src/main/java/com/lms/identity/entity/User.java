@@ -59,8 +59,10 @@ public class User {
     
     private Long createdByUserId;  // Who created this user (null for self-registered)
 
+    @Column(updatable = false)
     private LocalDateTime createdAt;
     
+    @Column
     private LocalDateTime updatedAt;
 
     @PrePersist

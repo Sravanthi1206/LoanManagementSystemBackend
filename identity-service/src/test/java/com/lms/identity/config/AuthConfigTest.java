@@ -23,12 +23,7 @@ class AuthConfigTest {
         assertNotNull(encoder);
 
         AuthenticationConfiguration authConfig = mock(AuthenticationConfiguration.class);
-        AuthenticationManager manager = config.authenticationManager(authConfig);
-        // manager might be null if mock returns null, but valid call
+        config.authenticationManager(authConfig);
         verify(authConfig, times(1)).getAuthenticationManager();
-        
-        HttpSecurity http = mock(HttpSecurity.class, RETURNS_DEEP_STUBS);
-        // Mocking HttpSecurity builder chain is hard, we can skip specific filter chain test or try basic
-        // For boilerplate, just calling methods helps.
     }
 }

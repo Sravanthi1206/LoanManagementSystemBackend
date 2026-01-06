@@ -15,14 +15,8 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.Arrays;
-import java.util.List;
-
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.Mockito.when;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.doNothing;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -36,6 +30,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @DisplayName("AuthController Integration Tests")
 class AuthControllerTest {
 
+    private static final String TEST_EMAIL = "test@example.com";
+    private static final String TEST_TOKEN = "jwt-token-here";
+
     @Autowired
     private MockMvc mockMvc;
 
@@ -47,25 +44,24 @@ class AuthControllerTest {
 
     private UserRegisterRequest registerRequest;
     private LoginRequest loginRequest;
-    private UserResponse userResponse;
     private LoginResponse loginResponse;
 
     @BeforeEach
     void setUp() {
         registerRequest = new UserRegisterRequest();
-        registerRequest.setEmail("test@example.com");
+        registerRequest.setEmail(TEST_EMAIL);
         registerRequest.setPassword("Password@123");
         registerRequest.setFirstName("John");
         registerRequest.setLastName("Doe");
         registerRequest.setPhone("1234567890");
 
         loginRequest = new LoginRequest();
-        loginRequest.setEmail("test@example.com");
+        loginRequest.setEmail(TEST_EMAIL);
         loginRequest.setPassword("Password@123");
 
-        userResponse = UserResponse.builder()
+        UserResponse userResponse = UserResponse.builder()
                 .id(1L)
-                .email("test@example.com")
+                .email(TEST_EMAIL)
                 .firstName("John")
                 .lastName("Doe")
                 .role(User.Role.CUSTOMER)
@@ -73,7 +69,7 @@ class AuthControllerTest {
                 .build();
 
         loginResponse = LoginResponse.builder()
-                .accessToken("jwt-token-here")
+                .accessToken(TEST_TOKEN)
                 .tokenType("Bearer")
                 .expiresIn(86400L)
                 .user(userResponse)
@@ -86,20 +82,20 @@ class AuthControllerTest {
 
         @Test
         @DisplayName("POST /auth/register - Success")
-        void register_Success() throws Exception {
+        void registerShouldSucceed() throws Exception {
             when(authService.register(any(UserRegisterRequest.class))).thenReturn(loginResponse);
 
             mockMvc.perform(post("/auth/register")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(registerRequest)))
                     .andExpect(status().isCreated())
-                    .andExpect(jsonPath("$.user.email").value("test@example.com"))
-                    .andExpect(jsonPath("$.accessToken").value("jwt-token-here"));
+                    .andExpect(jsonPath("$.user.email").value(TEST_EMAIL))
+                    .andExpect(jsonPath("$.accessToken").value(TEST_TOKEN));
         }
 
         @Test
         @DisplayName("POST /auth/register - Validation Error")
-        void register_ValidationError() throws Exception {
+        void registerShouldFailOnValidationError() throws Exception {
             UserRegisterRequest invalidRequest = new UserRegisterRequest();
 
             mockMvc.perform(post("/auth/register")
@@ -115,20 +111,20 @@ class AuthControllerTest {
 
         @Test
         @DisplayName("POST /auth/login - Success")
-        void login_Success() throws Exception {
+        void loginShouldSucceed() throws Exception {
             when(authService.login(any(LoginRequest.class))).thenReturn(loginResponse);
 
             mockMvc.perform(post("/auth/login")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(loginRequest)))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.accessToken").value("jwt-token-here"))
+                    .andExpect(jsonPath("$.accessToken").value(TEST_TOKEN))
                     .andExpect(jsonPath("$.user.id").value(1));
         }
 
         @Test
         @DisplayName("POST /auth/login - Missing Fields")
-        void login_MissingFields() throws Exception {
+        void loginShouldFailOnMissingFields() throws Exception {
             LoginRequest invalidRequest = new LoginRequest();
 
             mockMvc.perform(post("/auth/login")
@@ -140,7 +136,7 @@ class AuthControllerTest {
 
     @Test
     @DisplayName("POST /auth/change-password - Success")
-    void changePassword_ShouldReturnOk() throws Exception {
+    void changePasswordShouldReturnOk() throws Exception {
         ChangePasswordRequest request = new ChangePasswordRequest("oldPassword", "newPassword123");
         
         doNothing().when(authService).changePassword(eq(1L), any(ChangePasswordRequest.class));
