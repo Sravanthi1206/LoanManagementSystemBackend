@@ -32,8 +32,10 @@ public class DashboardController {
      */
     @GetMapping("/stats")
     @Operation(summary = "Get dashboard statistics", description = "Returns overall loan statistics for admin dashboard")
-    public ResponseEntity<DashboardStats> getDashboardStats() {
-        List<Loan> allLoans = loanRepository.findAll();
+    public ResponseEntity<DashboardStats> getDashboardStats(
+            @RequestHeader(value = "X-User-Role", required = false) String role,
+            @RequestHeader(value = "X-User-Id", required = false) Long userId) {
+        List<Loan> allLoans = getLoansForUser(role, userId);
         
         // Count by status using Java 8 Streams
         Map<Loan.LoanStatus, Long> statusCounts = allLoans.stream()
@@ -77,8 +79,10 @@ public class DashboardController {
      */
     @GetMapping("/loans-by-status")
     @Operation(summary = "Get loans by status", description = "Returns loan count grouped by status for charts")
-    public ResponseEntity<Map<String, Long>> getLoansByStatus() {
-        List<Loan> allLoans = loanRepository.findAll();
+    public ResponseEntity<Map<String, Long>> getLoansByStatus(
+            @RequestHeader(value = "X-User-Role", required = false) String role,
+            @RequestHeader(value = "X-User-Id", required = false) Long userId) {
+        List<Loan> allLoans = getLoansForUser(role, userId);
         
         Map<String, Long> statusCounts = allLoans.stream()
                 .collect(Collectors.groupingBy(
@@ -94,8 +98,10 @@ public class DashboardController {
      */
     @GetMapping("/loans-by-type")
     @Operation(summary = "Get loans by type", description = "Returns loan count grouped by loan type for charts")
-    public ResponseEntity<Map<String, Long>> getLoansByType() {
-        List<Loan> allLoans = loanRepository.findAll();
+    public ResponseEntity<Map<String, Long>> getLoansByType(
+            @RequestHeader(value = "X-User-Role", required = false) String role,
+            @RequestHeader(value = "X-User-Id", required = false) Long userId) {
+        List<Loan> allLoans = getLoansForUser(role, userId);
         
         Map<String, Long> typeCounts = allLoans.stream()
                 .collect(Collectors.groupingBy(
@@ -144,5 +150,16 @@ public class DashboardController {
         report.put("message", "Call EMI service at /api/emi/overdue for detailed overdue report");
         report.put("totalOverdue", 0);
         return ResponseEntity.ok(report);
+    }
+    
+    /**
+     * Helper method to get loans based on user role.
+     * LOAN_OFFICER sees only their assigned loans, ADMIN sees all.
+     */
+    private List<Loan> getLoansForUser(String role, Long userId) {
+        if ("LOAN_OFFICER".equals(role) && userId != null) {
+            return loanRepository.findByAssignedOfficerId(userId);
+        }
+        return loanRepository.findAll();
     }
 }

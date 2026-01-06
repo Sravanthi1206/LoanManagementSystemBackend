@@ -97,6 +97,33 @@ class LoanProcessingControllerTest {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.content[0].status").value("UNDER_REVIEW"));
         }
+
+        @Test
+        @DisplayName("GET /loans/admin - As Officer - Should Return Assigned Loans")
+        void getAllLoansAsOfficer_ShouldReturnAssignedLoans() throws Exception {
+            Page<LoanApplicationResponse> page = new PageImpl<>(Collections.singletonList(loanResponse));
+            when(loanService.getMyAssignedLoans(eq(100L), any(Pageable.class))).thenReturn(page);
+
+            mockMvc.perform(get("/loans/admin")
+                    .header("X-User-Role", "LOAN_OFFICER")
+                    .header("X-User-Id", "100"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.content[0].loanId").value(1));
+        }
+
+        @Test
+        @DisplayName("GET /loans/admin/by-status/{status} - As Officer - Should Return Assigned Loans")
+        void getLoansByStatusAsOfficer_ShouldReturnAssignedLoans() throws Exception {
+            Page<LoanApplicationResponse> page = new PageImpl<>(Collections.singletonList(loanResponse));
+            when(loanService.getMyLoansByStatus(eq(100L), eq(Loan.LoanStatus.APPLIED), any(Pageable.class)))
+                    .thenReturn(page);
+
+            mockMvc.perform(get("/loans/admin/by-status/APPLIED")
+                    .header("X-User-Role", "LOAN_OFFICER")
+                    .header("X-User-Id", "100"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.content[0].loanId").value(1));
+        }
     }
 
     @Nested

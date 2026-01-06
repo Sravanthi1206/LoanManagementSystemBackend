@@ -23,26 +23,50 @@ public class LoanProcessingController {
 
     @GetMapping
     public ResponseEntity<Page<LoanApplicationResponse>> getAllLoans(
+            @RequestHeader(value = "X-User-Role", required = false) String role,
+            @RequestHeader(value = "X-User-Id", required = false) Long userId,
             @PageableDefault(size = 10, sort = "appliedOn") Pageable pageable) {
+        
+        if ("LOAN_OFFICER".equals(role)) {
+            return ResponseEntity.ok(loanService.getMyAssignedLoans(userId, pageable));
+        }
         return ResponseEntity.ok(loanService.getAllLoans(pageable));
     }
 
     @GetMapping("/pending")
     public ResponseEntity<Page<LoanApplicationResponse>> getPendingLoans(
+            @RequestHeader(value = "X-User-Role", required = false) String role,
+            @RequestHeader(value = "X-User-Id", required = false) Long userId,
             @PageableDefault(size = 10, sort = "appliedOn") Pageable pageable) {
+        
+        if ("LOAN_OFFICER".equals(role)) {
+            return ResponseEntity.ok(loanService.getMyLoansByStatus(userId, Loan.LoanStatus.APPLIED, pageable));
+        }
         return ResponseEntity.ok(loanService.getLoansByStatus(Loan.LoanStatus.APPLIED, pageable));
     }
 
     @GetMapping("/under-review")
     public ResponseEntity<Page<LoanApplicationResponse>> getUnderReviewLoans(
+            @RequestHeader(value = "X-User-Role", required = false) String role,
+            @RequestHeader(value = "X-User-Id", required = false) Long userId,
             @PageableDefault(size = 10, sort = "appliedOn") Pageable pageable) {
+        
+        if ("LOAN_OFFICER".equals(role)) {
+            return ResponseEntity.ok(loanService.getMyLoansByStatus(userId, Loan.LoanStatus.UNDER_REVIEW, pageable));
+        }
         return ResponseEntity.ok(loanService.getLoansByStatus(Loan.LoanStatus.UNDER_REVIEW, pageable));
     }
 
     @GetMapping("/by-status/{status}")
     public ResponseEntity<Page<LoanApplicationResponse>> getLoansByStatus(
             @PathVariable Loan.LoanStatus status,
+            @RequestHeader(value = "X-User-Role", required = false) String role,
+            @RequestHeader(value = "X-User-Id", required = false) Long userId,
             @PageableDefault(size = 10) Pageable pageable) {
+        
+        if ("LOAN_OFFICER".equals(role)) {
+            return ResponseEntity.ok(loanService.getMyLoansByStatus(userId, status, pageable));
+        }
         return ResponseEntity.ok(loanService.getLoansByStatus(status, pageable));
     }
 

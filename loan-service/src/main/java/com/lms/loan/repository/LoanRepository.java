@@ -17,6 +17,7 @@ public interface LoanRepository extends JpaRepository<Loan, Long> {
     Page<Loan> findByStatus(Loan.LoanStatus status, Pageable pageable);
     
     // Officer-specific queries
+    List<Loan> findByAssignedOfficerId(Long officerId);
     Page<Loan> findByAssignedOfficerId(Long officerId, Pageable pageable);
     Page<Loan> findByAssignedOfficerIdAndStatus(Long officerId, Loan.LoanStatus status, Pageable pageable);
     Page<Loan> findByStatusAndAssignedOfficerIdIsNull(Loan.LoanStatus status, Pageable pageable);
