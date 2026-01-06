@@ -16,15 +16,15 @@ spring:
   rabbitmq:
     host: localhost
     port: 5672
-    username: guest
-    password: guest
+    username: ${RABBITMQ_USER:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
   
   # Email Configuration (Gmail SMTP) - HARDCODED FOR RELIABILITY
   mail:
     host: smtp.gmail.com
     port: 587
-    username: sravanthigurram955@gmail.com
-    password: blmvcdbtosuvhlzt
+    username: ${MAIL_USERNAME:sravanthigurram955@gmail.com}
+    password: ${MAIL_PASSWORD:blmvcdbtosuvhlzt}
     properties:
       mail:
         smtp:
