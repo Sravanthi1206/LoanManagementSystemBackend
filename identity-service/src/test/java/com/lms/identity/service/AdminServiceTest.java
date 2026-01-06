@@ -115,4 +115,156 @@ class AdminServiceTest {
 
         assertThrows(UserNotFoundException.class, () -> adminService.deactivateUser(1L));
     }
+
+    // ROOT_ADMIN Approval Workflow Tests
+
+    @Test
+    @DisplayName("Create Admin by non-ROOT_ADMIN requires approval")
+    void createAdminByNonRootAdmin_RequiresApproval() {
+        CreateStaffRequest request = new CreateStaffRequest();
+        request.setEmail("admin@example.com");
+        request.setPassword("password");
+        request.setFirstName("New");
+        request.setLastName("Admin");
+        request.setRole(User.Role.ADMIN);
+
+        User creator = User.builder().id(10L).role(User.Role.ADMIN).build();
+        
+        when(userRepository.existsByEmail("admin@example.com")).thenReturn(false);
+        when(userRepository.findById(10L)).thenReturn(Optional.of(creator));
+        when(passwordEncoder.encode("password")).thenReturn("encoded");
+        when(userRepository.save(any(User.class))).thenAnswer(i -> {
+            User u = i.getArgument(0);
+            u.setId(2L);
+            return u;
+        });
+
+        UserResponse response = adminService.createStaffAccount(request, 10L);
+
+        assertNotNull(response);
+        assertTrue(response.getApprovalPending());
+        assertFalse(response.getApproved());
+        verify(userRepository).save(any(User.class));
+    }
+
+    @Test
+    @DisplayName("Create Admin by ROOT_ADMIN does not require approval")
+    void createAdminByRootAdmin_NoApprovalNeeded() {
+        CreateStaffRequest request = new CreateStaffRequest();
+        request.setEmail("admin@example.com");
+        request.setPassword("password");
+        request.setFirstName("New");
+        request.setLastName("Admin");
+        request.setRole(User.Role.ADMIN);
+
+        User creator = User.builder().id(1L).role(User.Role.ROOT_ADMIN).build();
+        
+        when(userRepository.existsByEmail("admin@example.com")).thenReturn(false);
+        when(userRepository.findById(1L)).thenReturn(Optional.of(creator));
+        when(passwordEncoder.encode("password")).thenReturn("encoded");
+        when(userRepository.save(any(User.class))).thenAnswer(i -> {
+            User u = i.getArgument(0);
+            u.setId(2L);
+            return u;
+        });
+
+        UserResponse response = adminService.createStaffAccount(request, 1L);
+
+        assertNotNull(response);
+        assertFalse(response.getApprovalPending());
+        assertTrue(response.getApproved());
+    }
+
+    @Test
+    @DisplayName("Get Pending Approvals - returns pending users")
+    void getPendingApprovals_ReturnsPendingUsers() {
+        User pendingUser = User.builder()
+                .id(5L)
+                .email("pending@example.com")
+                .approvalPending(true)
+                .approved(false)
+                .role(User.Role.ADMIN)
+                .build();
+        
+        when(userRepository.findByApprovalPendingTrue()).thenReturn(java.util.List.of(pendingUser));
+
+        var result = adminService.getPendingApprovals();
+
+        assertEquals(1, result.size());
+        assertEquals(5L, result.get(0).getId());
+        assertTrue(result.get(0).getApprovalPending());
+    }
+
+    @Test
+    @DisplayName("Approve Admin - success")
+    void approveAdmin_Success() {
+        User pendingUser = User.builder()
+                .id(5L)
+                .email("pending@example.com")
+                .approvalPending(true)
+                .approved(false)
+                .active(false)
+                .role(User.Role.ADMIN)
+                .build();
+        
+        when(userRepository.findById(5L)).thenReturn(Optional.of(pendingUser));
+        when(userRepository.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
+
+        UserResponse response = adminService.approveAdmin(5L);
+
+        assertFalse(response.getApprovalPending());
+        assertTrue(response.getApproved());
+        assertTrue(response.getActive());
+        verify(userRepository).save(pendingUser);
+    }
+
+    @Test
+    @DisplayName("Approve Admin - user not pending throws exception")
+    void approveAdmin_NotPending_ThrowsException() {
+        User activeUser = User.builder()
+                .id(5L)
+                .approvalPending(false)
+                .approved(true)
+                .build();
+        
+        when(userRepository.findById(5L)).thenReturn(Optional.of(activeUser));
+
+        assertThrows(InvalidRoleException.class, () -> adminService.approveAdmin(5L));
+    }
+
+    @Test
+    @DisplayName("Reject Admin - success")
+    void rejectAdmin_Success() {
+        User pendingUser = User.builder()
+                .id(5L)
+                .approvalPending(true)
+                .build();
+        
+        when(userRepository.findById(5L)).thenReturn(Optional.of(pendingUser));
+
+        adminService.rejectAdmin(5L);
+
+        verify(userRepository).delete(pendingUser);
+    }
+
+    @Test
+    @DisplayName("Reject Admin - user not pending throws exception")
+    void rejectAdmin_NotPending_ThrowsException() {
+        User activeUser = User.builder()
+                .id(5L)
+                .approvalPending(false)
+                .build();
+        
+        when(userRepository.findById(5L)).thenReturn(Optional.of(activeUser));
+
+        assertThrows(InvalidRoleException.class, () -> adminService.rejectAdmin(5L));
+    }
+
+    @Test
+    @DisplayName("Reject Admin - user not found throws exception")
+    void rejectAdmin_NotFound_ThrowsException() {
+        when(userRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThrows(UserNotFoundException.class, () -> adminService.rejectAdmin(99L));
+    }
 }
