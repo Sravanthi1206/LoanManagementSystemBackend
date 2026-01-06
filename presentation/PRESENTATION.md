@@ -206,8 +206,9 @@ loans (1) ─── (*) payments
 
 | Rule | Description |
 |------|-------------|
-| Eligibility Age | Applicant must be 21-60 years old |
-| Income Ratio | EMI ≤ 50% of monthly income |
+| Minimum Income | Monthly income ≥ ₹25,000 required |
+| EMI-to-Income Ratio | EMI ≤ 40% of monthly income |
+| Debt-to-Income Ratio | Total debt ≤ 50% of monthly income |
 | Credit Check | Score based on employment type & income |
 | Risk Categories | LOW (≥750) \| MEDIUM (650-749) \| HIGH (<650) |
 | Approval Required | Credit check must pass before approval |
