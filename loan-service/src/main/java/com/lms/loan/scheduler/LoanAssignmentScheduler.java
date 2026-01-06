@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class LoanAssignmentScheduler {
 
-    private static final int STALE_TIMEOUT_HOURS = 36;
+    private static final int STALE_TIMEOUT_HOURS = 5;
     private final LoanService loanService;
 
     /**
