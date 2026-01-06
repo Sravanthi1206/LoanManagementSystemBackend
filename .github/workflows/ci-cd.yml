@@ -1,43 +1,36 @@
-name: Backend CI/CD Pipeline
+name: SonarQube Analysis
 
 on:
-  push:
-    branches: [main, master, develop]
-  pull_request:
-    branches: [main, master]
+  workflow_dispatch:
 
 env:
   JAVA_VERSION: '17'
 
 jobs:
-  build-and-test:
-    name: Build, Test & SonarCloud
+  sonarcloud:
+    name: SonarCloud Analysis
     runs-on: ubuntu-latest
     
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Required for SonarCloud
+          fetch-depth: 0
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           java-version: ${{ env.JAVA_VERSION }}
           distribution: 'temurin'
-          # Cache temporarily disabled to avoid corrupted metadata
 
       - name: Configure Maven with Google Mirror
         run: |
           mkdir -p ~/.m2
           cat > ~/.m2/settings.xml << 'EOF'
-          <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
-                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                    xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 https://maven.apache.org/xsd/settings-1.0.0.xsd">
+          <settings>
             <mirrors>
               <mirror>
                 <id>google-maven-central</id>
-                <name>Google Maven Central Mirror</name>
                 <url>https://maven-central.storage-download.googleapis.com/maven2/</url>
                 <mirrorOf>central</mirrorOf>
               </mirror>
@@ -45,59 +38,19 @@ jobs:
           </settings>
           EOF
 
-      - name: Build & Test with Maven
-        run: mvn clean verify -B
+      - name: Cache SonarCloud packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
 
-      - name: SonarCloud Scan
+      - name: Build and analyze
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
-          mvn sonar:sonar \
+          mvn verify sonar:sonar -B \
             -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }} \
             -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }} \
             -Dsonar.host.url=https://sonarcloud.io
-
-  docker:
-    name: Docker Build
-    runs-on: ubuntu-latest
-    needs: build-and-test
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          java-version: ${{ env.JAVA_VERSION }}
-          distribution: 'temurin'
-          # Cache temporarily disabled to avoid corrupted metadata
-
-      - name: Configure Maven with Google Mirror
-        run: |
-          mkdir -p ~/.m2
-          cat > ~/.m2/settings.xml << 'EOF'
-          <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
-                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                    xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 https://maven.apache.org/xsd/settings-1.0.0.xsd">
-            <mirrors>
-              <mirror>
-                <id>google-maven-central</id>
-                <name>Google Maven Central Mirror</name>
-                <url>https://maven-central.storage-download.googleapis.com/maven2/</url>
-                <mirrorOf>central</mirrorOf>
-              </mirror>
-            </mirrors>
-          </settings>
-          EOF
-
-      - name: Build JARs
-        run: mvn clean package -DskipTests -B
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build Docker images
-        run: docker-compose build
