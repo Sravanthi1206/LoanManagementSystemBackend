@@ -239,6 +239,29 @@ class LoanServiceTest {
         }
 
         @Test
+        @DisplayName("Should throw exception when loan already assigned to different officer")
+        void reviewLoan_AlreadyAssigned_ThrowsException() {
+            testLoan.setAssignedOfficerId(100L); // Already assigned to officer 100
+            when(repository.findById(1L)).thenReturn(Optional.of(testLoan));
+
+            assertThrows(IllegalStateException.class, 
+                () -> loanService.reviewLoan(1L, 200L)); // Officer 200 tries to take it
+        }
+
+        @Test
+        @DisplayName("Should allow same officer to review again")
+        void reviewLoan_SameOfficer_Success() {
+            testLoan.setAssignedOfficerId(100L); // Already assigned to officer 100
+            when(repository.findById(1L)).thenReturn(Optional.of(testLoan));
+            when(repository.save(any(Loan.class))).thenReturn(testLoan);
+
+            LoanApplicationResponse result = loanService.reviewLoan(1L, 100L); // Same officer
+
+            assertNotNull(result);
+            verify(repository).save(any(Loan.class));
+        }
+
+        @Test
         @DisplayName("Should approve loan")
         void approveLoan_Success() {
             testLoan.setStatus(Loan.LoanStatus.UNDER_REVIEW);

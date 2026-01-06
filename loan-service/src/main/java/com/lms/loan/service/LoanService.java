@@ -93,6 +93,12 @@ public class LoanService {
     public LoanApplicationResponse reviewLoan(Long id, Long officerId) {
         var loan = findLoan(id);
         requireStatus(loan, Loan.LoanStatus.APPLIED, "start review");
+        
+        // Ensure loan is not already assigned to another officer
+        if (loan.getAssignedOfficerId() != null && !loan.getAssignedOfficerId().equals(officerId)) {
+            throw new IllegalStateException("Loan is already assigned to another officer");
+        }
+        
         loan.setStatus(Loan.LoanStatus.UNDER_REVIEW);
         loan.setAssignedOfficerId(officerId);
         return toResponse(loans.save(loan));
