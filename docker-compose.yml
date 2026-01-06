@@ -1,15 +1,15 @@
 version: '3.8'
 
 services:
-  # DATABASES
+  # Databases
   mysql:
     image: mysql:8.0
     container_name: lms-mysql
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: root123
-      MYSQL_USER: lms_user
-      MYSQL_PASSWORD: lms_password
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     ports:
       - "3307:3306"
     volumes:
@@ -28,8 +28,8 @@ services:
     container_name: lms-mongodb
     restart: unless-stopped
     environment:
-      MONGO_INITDB_ROOT_USERNAME: admin
-      MONGO_INITDB_ROOT_PASSWORD: admin123
+      MONGO_INITDB_ROOT_USERNAME: ${MONGODB_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGODB_PASS}
     ports:
       - "27017:27017"
     volumes:
@@ -49,26 +49,25 @@ services:
     ports:
       - "8181:8081"
     environment:
-      ME_CONFIG_MONGODB_ADMINUSERNAME: admin
-      ME_CONFIG_MONGODB_ADMINPASSWORD: admin123
-      ME_CONFIG_MONGODB_URL: mongodb://admin:admin123@mongodb:27017/
+      ME_CONFIG_MONGODB_ADMINUSERNAME: ${MONGODB_USER}
+      ME_CONFIG_MONGODB_ADMINPASSWORD: ${MONGODB_PASS}
+      ME_CONFIG_MONGODB_URL: mongodb://${MONGODB_USER}:${MONGODB_PASS}@mongodb:27017/
     depends_on:
       - mongodb
     networks:
       - lms-network
 
-  # MESSAGE BROKER
-
+  # Message Broker
   rabbitmq:
     image: rabbitmq:3-management-alpine
     container_name: lms-rabbitmq
     restart: unless-stopped
     ports:
-      - "5672:5672"    # AMQP port
-      - "15672:15672"  # Management UI
+      - "5672:5672"
+      - "15672:15672"
     environment:
-      RABBITMQ_DEFAULT_USER: lms_user
-      RABBITMQ_DEFAULT_PASS: lms_password
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS}
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
     networks:
@@ -79,8 +78,7 @@ services:
       timeout: 5s
       retries: 5
 
-  # INFRASTRUCTURE SERVICES
-
+  # Infrastructure Services
   config-server:
     build:
       context: ./config-server
@@ -129,16 +127,14 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
-      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka
+      - JWT_SECRET=${JWT_SECRET}
     depends_on:
       discovery-server:
         condition: service_healthy
     networks:
       - lms-network
 
-
-  # APPLICATION SERVICES
-
+  # Application Services
   frontend:
     build:
       context: ../Frontend
@@ -162,10 +158,12 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
-      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka
-      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/lms_users?createDatabaseIfNotExist=true
-      - SPRING_DATASOURCE_USERNAME=lms_user
-      - SPRING_DATASOURCE_PASSWORD=lms_password
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - RABBITMQ_USER=${RABBITMQ_USER}
+      - RABBITMQ_PASS=${RABBITMQ_PASS}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRATION=${JWT_EXPIRATION}
     depends_on:
       - mysql
       - discovery-server
@@ -182,14 +180,10 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
-      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka
-      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/lms_loans?createDatabaseIfNotExist=true
-      - SPRING_DATASOURCE_USERNAME=lms_user
-      - SPRING_DATASOURCE_PASSWORD=lms_password
-      - SPRING_RABBITMQ_HOST=rabbitmq
-      - SPRING_RABBITMQ_PORT=5672
-      - SPRING_RABBITMQ_USERNAME=lms_user
-      - SPRING_RABBITMQ_PASSWORD=lms_password
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - RABBITMQ_USER=${RABBITMQ_USER}
+      - RABBITMQ_PASS=${RABBITMQ_PASS}
     volumes:
       - loan_uploads:/app/uploads
     depends_on:
@@ -209,8 +203,8 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
-      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka
-      - SPRING_DATA_MONGODB_URI=mongodb://admin:admin123@mongodb:27017/lms_emi?authSource=admin
+      - MONGODB_USER=${MONGODB_USER}
+      - MONGODB_PASS=${MONGODB_PASS}
     depends_on:
       - mongodb
       - discovery-server
@@ -227,10 +221,8 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
-      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka
-      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/lms_loans?createDatabaseIfNotExist=true
-      - SPRING_DATASOURCE_USERNAME=lms_user
-      - SPRING_DATASOURCE_PASSWORD=lms_password
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
     depends_on:
       - mysql
       - discovery-server
@@ -247,12 +239,14 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
-      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka
-      - SPRING_DATA_MONGODB_URI=mongodb://admin:admin123@mongodb:27017/lms_notifications?authSource=admin
-      - SPRING_RABBITMQ_HOST=rabbitmq
-      - SPRING_RABBITMQ_PORT=5672
-      - SPRING_RABBITMQ_USERNAME=lms_user
-      - SPRING_RABBITMQ_PASSWORD=lms_password
+      - MONGODB_USER=${MONGODB_USER}
+      - MONGODB_PASS=${MONGODB_PASS}
+      - RABBITMQ_USER=${RABBITMQ_USER}
+      - RABBITMQ_PASS=${RABBITMQ_PASS}
+      - MAIL_HOST=${MAIL_HOST}
+      - MAIL_PORT=${MAIL_PORT}
+      - MAIL_USERNAME=${MAIL_USERNAME}
+      - MAIL_PASSWORD=${MAIL_PASSWORD}
     depends_on:
       - mongodb
       - discovery-server
@@ -271,9 +265,7 @@ services:
       - "50000:50000"
     volumes:
       - jenkins_home:/var/jenkins_home
-      # Bind host docker socket to allow Jenkins to build/deploy containers
       - /var/run/docker.sock:/var/run/docker.sock
-    # Run as root to access the bounded docker socket easily
     user: root
     networks:
       - lms-network
