@@ -53,7 +53,7 @@
     <repositories>
         <repository>
             <id>central</id>
-            <url>https://repo.maven.apache.org/maven2</url>
+            <url>https://maven-central.storage-download.googleapis.com/maven2/</url>
         </repository>
         <repository>
             <id>spring-milestones</id>
@@ -67,7 +67,7 @@
     <pluginRepositories>
         <pluginRepository>
             <id>central</id>
-            <url>https://repo.maven.apache.org/maven2</url>
+            <url>https://maven-central.storage-download.googleapis.com/maven2/</url>
         </pluginRepository>
         <pluginRepository>
             <id>spring-milestones</id>
