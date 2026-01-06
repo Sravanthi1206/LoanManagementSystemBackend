@@ -87,7 +87,7 @@ public class NotificationService {
     }
 
     private Notification find(String id) {
-        return repo.findById(id).orElseThrow(() -> new RuntimeException("Not found: " + id));
+        return repo.findById(id).orElseThrow(() -> new com.lms.notification.exception.NotificationNotFoundException(id));
     }
 
     private boolean trySend(Notification n) {

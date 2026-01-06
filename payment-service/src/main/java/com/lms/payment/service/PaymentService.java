@@ -101,13 +101,13 @@ public class PaymentService {
 
     public PaymentResponse getPaymentById(Long id) {
         Payment payment = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Payment not found with id: " + id));
+                .orElseThrow(() -> new com.lms.payment.exception.PaymentNotFoundException(id));
         return mapToResponse(payment);
     }
 
     public PaymentResponse getPaymentByTransactionId(String transactionId) {
         Payment payment = repository.findByTransactionId(transactionId)
-                .orElseThrow(() -> new RuntimeException("Payment not found with transaction id: " + transactionId));
+                .orElseThrow(() -> new com.lms.payment.exception.PaymentNotFoundException(transactionId));
         return mapToResponse(payment);
     }
 
