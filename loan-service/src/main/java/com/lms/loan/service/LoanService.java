@@ -89,6 +89,19 @@ public class LoanService {
         return loans.findAll(p).map(this::toResponse);
     }
 
+    // Officer-specific queries
+    public Page<LoanApplicationResponse> getMyAssignedLoans(Long officerId, Pageable p) {
+        return loans.findByAssignedOfficerId(officerId, p).map(this::toResponse);
+    }
+
+    public Page<LoanApplicationResponse> getMyLoansByStatus(Long officerId, Loan.LoanStatus status, Pageable p) {
+        return loans.findByAssignedOfficerIdAndStatus(officerId, status, p).map(this::toResponse);
+    }
+
+    public Page<LoanApplicationResponse> getAvailableLoans(Pageable p) {
+        return loans.findByStatusAndAssignedOfficerIdIsNull(Loan.LoanStatus.APPLIED, p).map(this::toResponse);
+    }
+
     @Transactional
     public LoanApplicationResponse reviewLoan(Long id, Long officerId) {
         var loan = findLoan(id);

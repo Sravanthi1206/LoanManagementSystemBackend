@@ -12,4 +12,9 @@ import java.util.List;
 public interface LoanRepository extends JpaRepository<Loan, Long> {
     List<Loan> findByUserId(Long userId);
     Page<Loan> findByStatus(Loan.LoanStatus status, Pageable pageable);
+    
+    // Officer-specific queries
+    Page<Loan> findByAssignedOfficerId(Long officerId, Pageable pageable);
+    Page<Loan> findByAssignedOfficerIdAndStatus(Long officerId, Loan.LoanStatus status, Pageable pageable);
+    Page<Loan> findByStatusAndAssignedOfficerIdIsNull(Loan.LoanStatus status, Pageable pageable);
 }

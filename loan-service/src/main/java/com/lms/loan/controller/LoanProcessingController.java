@@ -46,6 +46,28 @@ public class LoanProcessingController {
         return ResponseEntity.ok(loanService.getLoansByStatus(status, pageable));
     }
 
+    // Officer-specific endpoints
+    @GetMapping("/my-loans")
+    public ResponseEntity<Page<LoanApplicationResponse>> getMyLoans(
+            @RequestHeader("X-User-Id") Long officerId,
+            @PageableDefault(size = 10) Pageable pageable) {
+        return ResponseEntity.ok(loanService.getMyAssignedLoans(officerId, pageable));
+    }
+
+    @GetMapping("/my-loans/{status}")
+    public ResponseEntity<Page<LoanApplicationResponse>> getMyLoansByStatus(
+            @RequestHeader("X-User-Id") Long officerId,
+            @PathVariable Loan.LoanStatus status,
+            @PageableDefault(size = 10) Pageable pageable) {
+        return ResponseEntity.ok(loanService.getMyLoansByStatus(officerId, status, pageable));
+    }
+
+    @GetMapping("/available")
+    public ResponseEntity<Page<LoanApplicationResponse>> getAvailableLoans(
+            @PageableDefault(size = 10) Pageable pageable) {
+        return ResponseEntity.ok(loanService.getAvailableLoans(pageable));
+    }
+
     @PutMapping("/{id}/review")
     public ResponseEntity<LoanApplicationResponse> startReview(
             @PathVariable Long id,
