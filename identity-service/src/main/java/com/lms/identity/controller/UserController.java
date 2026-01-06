@@ -44,4 +44,9 @@ public class UserController {
     public ResponseEntity<UserResponse> getCurrentUserProfile(@RequestHeader("X-User-Email") String email) {
         return ResponseEntity.ok(userService.getUserByEmail(email));
     }
+
+    @GetMapping("/officers")
+    public ResponseEntity<java.util.List<UserResponse>> getOfficers() {
+        return ResponseEntity.ok(userService.getOfficers());
+    }
 }

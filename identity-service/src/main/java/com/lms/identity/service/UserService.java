@@ -87,6 +87,13 @@ public class UserService {
         repository.save(user);
     }
 
+    public java.util.List<UserResponse> getOfficers() {
+        return repository.findByRoleAndActiveTrue(User.Role.LOAN_OFFICER)
+                .stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+
     private UserResponse mapToResponse(User user) {
         return UserResponse.builder()
                 .id(user.getId())
