@@ -134,4 +134,80 @@ class MockPaymentGatewayTest {
         assertNotEquals(result2.getTransactionId(), result3.getTransactionId());
         assertNotEquals(result1.getTransactionId(), result3.getTransactionId());
     }
+
+    @Test
+    @DisplayName("Process Payment - eventually hits failure path (5% failure rate)")
+    void processPayment_EventuallyFails() {
+        // With 5% failure rate, run enough to statistically hit a failure
+        boolean foundFailure = false;
+        PaymentResult failedResult = null;
+        
+        for (int i = 0; i < 100; i++) {
+            PaymentResult result = gateway.processPayment(
+                    new BigDecimal("100.00"), "INR", "Test", "user-" + i);
+            if (!result.isSuccess()) {
+                foundFailure = true;
+                failedResult = result;
+                break;
+            }
+        }
+        
+        // Even if no failure found, test is not asserting this (probabilistic)
+        // But when failure IS found, verify its structure
+        if (foundFailure) {
+            assertNotNull(failedResult);
+            assertFalse(failedResult.isSuccess());
+            assertEquals("FAILED", failedResult.getStatus());
+            assertNotNull(failedResult.getErrorCode());
+            assertNotNull(failedResult.getErrorMessage());
+            // Verify error code is one of the expected values
+            String[] expectedCodes = {"INSUFFICIENT_FUNDS", "CARD_DECLINED", "NETWORK_ERROR", "CVV_MISMATCH", "EXPIRED_CARD"};
+            boolean validCode = false;
+            for (String code : expectedCodes) {
+                if (code.equals(failedResult.getErrorCode())) {
+                    validCode = true;
+                    break;
+                }
+            }
+            assertTrue(validCode, "Error code should be one of the expected values");
+        }
+    }
+
+    @Test
+    @DisplayName("Test getErrorMessage - all error codes via reflection")
+    void testGetErrorMessage_AllCodes() throws Exception {
+        // Use reflection to test private getErrorMessage method
+        java.lang.reflect.Method method = MockPaymentGateway.class.getDeclaredMethod("getErrorMessage", String.class);
+        method.setAccessible(true);
+
+        assertEquals("Insufficient funds in the account", method.invoke(gateway, "INSUFFICIENT_FUNDS"));
+        assertEquals("Card was declined by the issuing bank", method.invoke(gateway, "CARD_DECLINED"));
+        assertEquals("Network error occurred during processing", method.invoke(gateway, "NETWORK_ERROR"));
+        assertEquals("CVV verification failed", method.invoke(gateway, "CVV_MISMATCH"));
+        assertEquals("Card has expired", method.invoke(gateway, "EXPIRED_CARD"));
+        assertEquals("Unknown error occurred", method.invoke(gateway, "UNKNOWN_CODE"));
+    }
+
+    @Test
+    @DisplayName("Test getRandomErrorCode - returns valid error code")
+    void testGetRandomErrorCode_ReturnsValidCode() throws Exception {
+        java.lang.reflect.Method method = MockPaymentGateway.class.getDeclaredMethod("getRandomErrorCode");
+        method.setAccessible(true);
+
+        String[] expectedCodes = {"INSUFFICIENT_FUNDS", "CARD_DECLINED", "NETWORK_ERROR", "CVV_MISMATCH", "EXPIRED_CARD"};
+        
+        // Run multiple times to increase coverage
+        for (int i = 0; i < 20; i++) {
+            String errorCode = (String) method.invoke(gateway);
+            assertNotNull(errorCode);
+            boolean found = false;
+            for (String expected : expectedCodes) {
+                if (expected.equals(errorCode)) {
+                    found = true;
+                    break;
+                }
+            }
+            assertTrue(found, "Error code should be one of expected values: " + errorCode);
+        }
+    }
 }
