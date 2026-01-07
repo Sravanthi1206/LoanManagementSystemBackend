@@ -1,0 +1,158 @@
+@startuml LMS_Entity_Relationship_Diagram
+
+skinparam backgroundColor #FEFEFE
+skinparam roundcorner 10
+
+title LMS - Entity Relationship Diagram (Verified)
+
+package "lms_identity (MySQL)" #E8F5E9 {
+    entity users {
+        * id : BIGINT <<PK>>
+        --
+        email : VARCHAR(255) <<UNIQUE>>
+        password_hash : VARCHAR(255)
+        first_name : VARCHAR(100)
+        last_name : VARCHAR(100)
+        phone : VARCHAR(15)
+        pan_card : VARCHAR(10) <<UNIQUE>>
+        date_of_birth : DATE
+        role : ENUM (CUSTOMER, LOAN_OFFICER, ADMIN, ROOT_ADMIN)
+        active : BOOLEAN
+        password_change_required : BOOLEAN
+        approved : BOOLEAN
+        approval_pending : BOOLEAN
+        created_by_user_id : BIGINT
+        created_at : TIMESTAMP
+        updated_at : TIMESTAMP
+    }
+}
+
+package "lms_loans (MySQL)" #FFF3E0 {
+    entity loan_applications {
+        * loan_id : BIGINT <<PK>>
+        --
+        user_id : BIGINT <<FK>>
+        user_email : VARCHAR(255)
+        type : ENUM (PERSONAL, HOME, VEHICLE, EDUCATION, BUSINESS)
+        amount_requested : DECIMAL(15,2)
+        tenure_months : INT
+        purpose : VARCHAR(500)
+        employment_type : ENUM (SALARIED, SELF_EMPLOYED, BUSINESS)
+        employer_name : VARCHAR(200)
+        monthly_income : DECIMAL(15,2)
+        annual_income : DECIMAL(15,2)
+        existing_loans : BOOLEAN
+        existing_emi_amount : DECIMAL(15,2)
+        interest_rate : DECIMAL(5,2)
+        amount_approved : DECIMAL(15,2)
+        status : ENUM (APPLIED, UNDER_REVIEW, APPROVED, REJECTED, DISBURSED, CLOSED, WITHDRAWN)
+        officer_remarks : TEXT
+        ..LOAN POOL FIELDS..
+        assigned_officer_id : BIGINT <<FK>>
+        assigned_at : TIMESTAMP
+        ..
+        credit_score : INT
+        risk_category : ENUM (LOW, MEDIUM, HIGH)
+        applied_on : TIMESTAMP
+        approved_on : TIMESTAMP
+        updated_at : TIMESTAMP
+    }
+
+    entity user_wallet {
+        * user_id : BIGINT <<PK>>
+        --
+        balance : DECIMAL(15,2)
+        last_updated : TIMESTAMP
+    }
+
+    entity wallet_transactions {
+        * id : BIGINT <<PK>>
+        --
+        transaction_id : VARCHAR(50) <<UNIQUE>>
+        user_id : BIGINT <<FK>>
+        loan_id : BIGINT <<FK>>
+        type : ENUM (CREDIT, DEBIT, DISBURSEMENT, EMI_PAYMENT, PENALTY, REFUND, TOP_UP)
+        amount : DECIMAL(15,2)
+        balance_after : DECIMAL(15,2)
+        description : VARCHAR(255)
+        created_at : TIMESTAMP
+    }
+
+    entity application_documents {
+        * id : BIGINT <<PK>>
+        --
+        application_id : BIGINT <<FK>>
+        document_type : ENUM (IDENTITY_PROOF, ADDRESS_PROOF, INCOME_PROOF, BANK_STATEMENT, PROPERTY_DOCUMENTS)
+        document_name : VARCHAR(255)
+        file_path : VARCHAR(500)
+        file_size : BIGINT
+        content_type : VARCHAR(100)
+        uploaded_at : TIMESTAMP
+    }
+}
+
+package "lms_emi (MySQL)" #E3F2FD {
+    entity repayment_schedules {
+        * id : BIGINT <<PK>>
+        --
+        loan_id : BIGINT <<FK>>
+        user_id : BIGINT <<FK>>
+        installment_no : INT
+        due_date : DATE
+        principal_amount : DECIMAL(15,2)
+        interest_amount : DECIMAL(15,2)
+        total_emi : DECIMAL(15,2)
+        status : ENUM (PENDING, PAID, OVERDUE)
+        paid_date : DATE
+    }
+}
+
+package "lms_payments (MySQL)" #FCE4EC {
+    entity payments {
+        * id : BIGINT <<PK>>
+        --
+        transaction_id : VARCHAR(50) <<UNIQUE>>
+        loan_id : BIGINT <<FK>>
+        user_id : BIGINT <<FK>>
+        payment_type : ENUM (DISBURSEMENT, EMI_REPAYMENT, PREPAYMENT, LATE_FEE)
+        amount : DECIMAL(15,2)
+        payment_method : ENUM (BANK_TRANSFER, ONLINE, UPI, DEBIT_CARD, CREDIT_CARD, CHEQUE, WALLET)
+        status : ENUM (INITIATED, SUCCESS, FAILED, REFUNDED)
+        reference_number : VARCHAR(100)
+        payment_date : TIMESTAMP
+        created_at : TIMESTAMP
+        updated_at : TIMESTAMP
+    }
+}
+
+package "lms_notifications (MongoDB)" #FFF9C4 {
+    entity notifications {
+        * _id : ObjectId <<PK>>
+        --
+        user_id : Long
+        loan_id : Long
+        type : ENUM (EMAIL, SMS, BOTH)
+        subject : String
+        message : String
+        status : ENUM (PENDING, SENT, FAILED, READ)
+        recipient : String
+        sent_at : DateTime
+        created_at : DateTime
+    }
+}
+
+' Relationships
+users ||--o{ loan_applications : "applies for"
+users ||--o| user_wallet : "has"
+users ||--o{ wallet_transactions : "records"
+users ||--o{ notifications : "receives"
+users ||--o{ loan_applications : "reviews (officer)"
+
+loan_applications ||--o{ wallet_transactions : "generates"
+loan_applications ||--o{ application_documents : "has"
+loan_applications ||--o{ repayment_schedules : "has schedule"
+loan_applications ||--o{ payments : "has payments"
+
+repayment_schedules }o--o| payments : "paid by"
+
+@enduml
