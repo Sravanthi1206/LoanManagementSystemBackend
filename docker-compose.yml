@@ -1,9 +1,14 @@
+# Use .env.docker for Docker-specific credentials (MySQL can't use root as MYSQL_USER)
+# Local development uses .env with root/root credentials
+
 services:
   # Databases
   mysql:
     image: mysql:8.0
     container_name: lms-mysql
     restart: unless-stopped
+    env_file:
+      - .env.docker
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_USER: ${MYSQL_USER}
@@ -24,6 +29,8 @@ services:
 
   mongodb:
     image: mongo:6.0
+    env_file:
+      - .env.docker
     container_name: lms-mongodb
     restart: unless-stopped
     environment:
