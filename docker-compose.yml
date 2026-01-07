@@ -151,11 +151,14 @@ services:
       - RABBITMQ_PASS=${RABBITMQ_PASS}
       - JWT_SECRET=${JWT_SECRET}
       - JWT_EXPIRATION=${JWT_EXPIRATION}
+      - ROOT_ADMIN_EMAIL=${ROOT_ADMIN_EMAIL}
+      - ROOT_ADMIN_PASSWORD=${ROOT_ADMIN_PASSWORD}
     depends_on:
       - mysql
       - discovery-server
     networks:
       - lms-network
+
 
   loan-service:
     build:

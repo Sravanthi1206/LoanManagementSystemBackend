@@ -23,10 +23,10 @@ public class DataInitializer implements CommandLineRunner {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    @Value("${app.seed.root-admin.email:root@lms.com}")
+    @Value("${app.seed.root-admin.email}")
     private String rootAdminEmail;
 
-    @Value("${app.seed.root-admin.password:RootAdmin@123}")
+    @Value("${app.seed.root-admin.password}")
     private String rootAdminPassword;
 
     @Override
