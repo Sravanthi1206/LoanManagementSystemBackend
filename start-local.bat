@@ -1,20 +1,21 @@
 @echo off
-setlocal enabledelayedexpansion
-
-REM Load .env file, ignoring comments
+REM Load .env file into current process environment (inheritable by child windows)
 if exist .env (
+    echo Loading .env file...
     for /f "usebackq tokens=1,* delims==" %%a in (".env") do (
-        set "key=%%a"
-        if "!key:~0,1!" neq "#" (
-            set "%%a=%%b"
+        set "line=%%a"
+        REM Skip comments (lines starting with #)
+        if not "%%a"=="" (
+            echo %%a | findstr /b "#" >nul || set "%%a=%%b"
         )
     )
+    echo Environment variables loaded.
 ) else (
     echo WARNING: .env file not found.
 )
 
-
-echo starting RabbitMQ (5762)...
+echo.
+echo Starting RabbitMQ (5672)...
 start "RabbitMQ" cmd /k "rabbitmq-server start"
 timeout /t 10 /nobreak > nul
 
