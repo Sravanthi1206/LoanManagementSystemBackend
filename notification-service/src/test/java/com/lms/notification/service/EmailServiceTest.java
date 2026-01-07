@@ -40,6 +40,8 @@ class EmailServiceTest {
     void setUp() {
         // Manually inject self-reference for @Lazy injection
         ReflectionTestUtils.setField(emailService, "self", emailService);
+        // Inject the from email address
+        ReflectionTestUtils.setField(emailService, "fromEmail", "test@loaneazy.com");
     }
 
     @Test
