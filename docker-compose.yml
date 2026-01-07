@@ -88,6 +88,9 @@ services:
       - SPRING_PROFILES_ACTIVE=docker,native
     volumes:
       - ../config-repo:/config-repo:ro
+    depends_on:
+      discovery-server:
+        condition: service_healthy
     networks:
       - lms-network
     healthcheck:
@@ -95,6 +98,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
+      start_period: 20s
 
   discovery-server:
     build:
@@ -103,19 +107,14 @@ services:
     container_name: lms-discovery-server
     ports:
       - "8761:8761"
-    environment:
-      - SPRING_PROFILES_ACTIVE=docker
-      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
-    depends_on:
-      config-server:
-        condition: service_healthy
     networks:
       - lms-network
     healthcheck:
       test: "wget --no-verbose --tries=1 --spider http://localhost:8761/actuator/health || exit 1"
-      interval: 10s
-      timeout: 5s
-      retries: 10
+      interval: 15s
+      timeout: 10s
+      retries: 15
+      start_period: 30s
 
   api-gateway:
     build:
@@ -128,6 +127,7 @@ services:
       - SPRING_PROFILES_ACTIVE=docker
       - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
       - JWT_SECRET=${JWT_SECRET}
+      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS}
     depends_on:
       discovery-server:
         condition: service_healthy
@@ -190,10 +190,10 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
-      - MONGODB_USER=${MONGODB_USER}
-      - MONGODB_PASS=${MONGODB_PASS}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
     depends_on:
-      - mongodb
+      - mysql
       - discovery-server
     networks:
       - lms-network

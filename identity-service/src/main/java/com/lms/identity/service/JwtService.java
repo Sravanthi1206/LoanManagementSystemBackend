@@ -15,11 +15,11 @@ import java.util.Map;
 @Service
 public class JwtService {
 
-    @Value("${jwt.secret:5367566B59703373367639792F423F4528482B4D6251655468576D5A71347437}")
+    @Value("${jwt.secret}")
     private String secret;
     
-    @Value("${jwt.expiration:1800000}")
-    private long expiration; // Default 30 mins
+    @Value("${jwt.expiration:86400000}")
+    private long expiration;
 
     public void validateToken(final String token) {
         Jwts.parserBuilder().setSigningKey(getSignKey()).build().parseClaimsJws(token);

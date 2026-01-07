@@ -11,6 +11,23 @@ spring:
           uri: https://github.com/Sravanthi1206/LoanManagementSystemConfigServer
           default-label: main
 
+# Eureka client config (registers AFTER startup, doesn't block)
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+    # Don't fail if Eureka isn't up yet
+    register-with-eureka: true
+    fetch-registry: false
+  instance:
+    prefer-ip-address: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
 ---
 spring:
   config:
@@ -24,8 +41,7 @@ spring:
         git:
           uri: ""
 
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info
+eureka:
+  client:
+    service-url:
+      defaultZone: http://discovery-server:8761/eureka

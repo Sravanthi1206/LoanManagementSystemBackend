@@ -19,14 +19,8 @@ public class EmailService {
 
     private final JavaMailSender mailSender;
     private final EmailService self;
+    private final String fromEmail;
     
-    // Lazy injection via constructor to avoid cycle
-    public EmailService(JavaMailSender mailSender, @org.springframework.context.annotation.Lazy EmailService self) {
-        this.mailSender = mailSender;
-        this.self = self;
-    }
-    
-    private static final String FROM_EMAIL = "sravanthigurram955@gmail.com";
     private static final String FROM_NAME = "LoanEazy";
     private static final String BRAND_COLOR = "#1a1a2e";
     private static final String SUCCESS_COLOR = "#10B981";
@@ -39,11 +33,19 @@ public class EmailService {
 
     private static final NumberFormat CURRENCY = NumberFormat.getCurrencyInstance(Locale.forLanguageTag("en-IN"));
 
+    public EmailService(JavaMailSender mailSender, 
+                        @org.springframework.context.annotation.Lazy EmailService self,
+                        @org.springframework.beans.factory.annotation.Value("${spring.mail.username}") String fromEmail) {
+        this.mailSender = mailSender;
+        this.self = self;
+        this.fromEmail = fromEmail;
+    }
+
     @Async
     public void sendSimpleEmail(String to, String subject, String body) {
         try {
             SimpleMailMessage message = new SimpleMailMessage();
-            message.setFrom(FROM_EMAIL);
+            message.setFrom(fromEmail);
             message.setTo(to);
             message.setSubject(subject);
             message.setText(body);
@@ -59,7 +61,7 @@ public class EmailService {
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-            helper.setFrom(FROM_EMAIL, FROM_NAME);
+            helper.setFrom(fromEmail, FROM_NAME);
             helper.setTo(to);
             helper.setSubject(subject);
             helper.setText(htmlBody, true);
