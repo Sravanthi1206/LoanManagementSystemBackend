@@ -7,17 +7,14 @@ services:
     image: mysql:8.0
     container_name: lms-mysql
     restart: unless-stopped
-    env_file:
-      - .env.docker
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_DOCKER_PASS}
+      MYSQL_USER: ${MYSQL_DOCKER_USER}
+      MYSQL_PASSWORD: ${MYSQL_DOCKER_PASS}
     ports:
       - "3307:3306"
     volumes:
       - mysql_data:/var/lib/mysql
-      - ./init-mysql.sql:/docker-entrypoint-initdb.d/init.sql:ro
     networks:
       - lms-network
     healthcheck:
@@ -29,8 +26,6 @@ services:
 
   mongodb:
     image: mongo:6.0
-    env_file:
-      - .env.docker
     container_name: lms-mongodb
     restart: unless-stopped
     environment:
@@ -162,8 +157,8 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
-      - MYSQL_USER=${MYSQL_USER}
-      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_USER=${MYSQL_DOCKER_USER}
+      - MYSQL_PASSWORD=${MYSQL_DOCKER_PASS}
       - RABBITMQ_USER=${RABBITMQ_USER}
       - RABBITMQ_PASS=${RABBITMQ_PASS}
       - JWT_SECRET=${JWT_SECRET}
@@ -190,8 +185,8 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
-      - MYSQL_USER=${MYSQL_USER}
-      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_USER=${MYSQL_DOCKER_USER}
+      - MYSQL_PASSWORD=${MYSQL_DOCKER_PASS}
       - RABBITMQ_USER=${RABBITMQ_USER}
       - RABBITMQ_PASS=${RABBITMQ_PASS}
     volumes:
@@ -216,8 +211,8 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
-      - MYSQL_USER=${MYSQL_USER}
-      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_USER=${MYSQL_DOCKER_USER}
+      - MYSQL_PASSWORD=${MYSQL_DOCKER_PASS}
     depends_on:
       mysql:
         condition: service_healthy
@@ -236,8 +231,8 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
-      - MYSQL_USER=${MYSQL_USER}
-      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_USER=${MYSQL_DOCKER_USER}
+      - MYSQL_PASSWORD=${MYSQL_DOCKER_PASS}
     depends_on:
       mysql:
         condition: service_healthy
