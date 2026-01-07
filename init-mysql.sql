@@ -12,8 +12,11 @@ FLUSH PRIVILEGES;
 -- Switch to lms_users database
 USE lms_users;
 
--- Users table (will be auto-created by JPA, but we define structure here)
-CREATE TABLE IF NOT EXISTS users (
+-- Drop and recreate tables for clean schema
+DROP TABLE IF EXISTS users;
+
+-- Users table
+CREATE TABLE users (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     email VARCHAR(255) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
@@ -22,8 +25,12 @@ CREATE TABLE IF NOT EXISTS users (
     phone VARCHAR(15) NOT NULL,
     date_of_birth DATE,
     pan_card VARCHAR(10),
-    role ENUM('CUSTOMER', 'LOAN_OFFICER', 'ADMIN') NOT NULL DEFAULT 'CUSTOMER',
+    role VARCHAR(50) NOT NULL DEFAULT 'CUSTOMER',
     active BOOLEAN DEFAULT TRUE,
+    password_change_required BOOLEAN DEFAULT FALSE,
+    approved BOOLEAN DEFAULT TRUE,
+    approval_pending BOOLEAN DEFAULT FALSE,
+    created_by_user_id BIGINT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_email (email),
