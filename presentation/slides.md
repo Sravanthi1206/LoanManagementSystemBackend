@@ -29,7 +29,7 @@ style: |
 <!-- _backgroundColor: #667eea -->
 <!-- _color: white -->
 
-# 🏦 LOAN MANAGEMENT SYSTEM
+# LOAN MANAGEMENT SYSTEM
 
 ### A Secure Full-Stack Microservices Application
 
@@ -38,12 +38,12 @@ January 2026
 
 ---
 
-## 📋 Problem Statement
+## Problem Statement
 
 <div class="columns">
 <div>
 
-### The Challenge ❌
+### The Challenge
 - Manual, paper-heavy loan processing
 - Lack of real-time tracking
 - Fragmented systems
@@ -53,36 +53,36 @@ January 2026
 </div>
 <div>
 
-### Our Solution ✅
+### Our Solution
 A modern, secure, **microservices-based** Loan Management System that automates the complete loan lifecycle.
 
-🟢 Automated | 🔵 Secure | 🟣 Scalable
+**Automated | Secure | Scalable**
 
 </div>
 </div>
 
 ---
 
-## ✨ Key Features
+## Key Features
 
 | Feature | Description |
 |---------|-------------|
-| 🔐 **Secure Authentication** | JWT-based login with role-based access control |
-| 📝 **Loan Application** | Apply for various loan types with validation |
-| ⚡ **EMI Calculator** | Real-time EMI calculation and schedule generation |
-| 💳 **Virtual Wallet** | Simulated disbursement & payment system |
-| 📧 **Notifications** | Email alerts for all loan status changes |
-| 👥 **Multi-Role Support** | Customer, Loan Officer, Admin, ROOT_ADMIN |
+| **Secure Authentication** | JWT-based login with role-based access control |
+| **Loan Application** | Apply for various loan types with validation |
+| **EMI Calculator** | Real-time EMI calculation and schedule generation |
+| **Virtual Wallet** | Simulated disbursement & payment system |
+| **Notifications** | Email alerts for all loan status changes |
+| **Multi-Role Support** | Customer, Loan Officer, Admin, ROOT_ADMIN |
 
 ---
 
-## 🏗 System Architecture
+## System Architecture
 
 ![bg contain](diagrams/ArchitectureDiagram.png)
 
 ---
 
-## 🔑 Architecture Highlights
+## Architecture Highlights
 
 | Component | Purpose |
 |-----------|---------|
@@ -94,7 +94,7 @@ A modern, secure, **microservices-based** Loan Management System that automates 
 
 ---
 
-## 🛠 Technology Stack
+## Technology Stack
 
 <div class="columns">
 <div>
@@ -121,7 +121,7 @@ A modern, secure, **microservices-based** Loan Management System that automates 
 
 ---
 
-## 📦 Microservices Overview
+## Microservices Overview
 
 | Service | Port | Database | Responsibilities |
 |---------|------|----------|-----------------|
@@ -131,23 +131,23 @@ A modern, secure, **microservices-based** Loan Management System that automates 
 | Payment | 8084 | MySQL | Transaction Recording |
 | Notification | 8085 | MongoDB | Email Alerts, Event Consumption |
 
-**Infrastructure:** Config Server `:8888` • Eureka `:8761` • Gateway `:8080`
+**Infrastructure:** Config Server `:8888` - Eureka `:8761` - Gateway `:8080`
 
 ---
 
-## 🗄 Database Design
+## Database Design
 
 ![bg contain](diagrams/ERDiagram.png)
 
 ---
 
-## 📊 Loan Status Flow
+## Loan Status Flow
 
 ![bg contain](diagrams/Complete_Application_Flow.png)
 
 ---
 
-## 🔐 Security Implementation
+## Security Implementation
 
 <div class="columns">
 <div>
@@ -163,67 +163,68 @@ A modern, secure, **microservices-based** Loan Management System that automates 
 ### RBAC Matrix
 | Role | Apply | Approve | Create Staff |
 |------|-------|---------|--------------|
-| Customer | ✅ | ❌ | ❌ |
-| Loan Officer | ❌ | ✅ | ❌ |
-| Admin | ❌ | ✅ | ✅ |
+| Customer | Yes | No | No |
+| Loan Officer | No | Yes | No |
+| Admin | No | Yes | Yes |
 
 </div>
 </div>
 
 ---
 
-## 🔄 CI/CD Pipeline
+## CI/CD Pipeline
 
 ![bg contain](diagrams/ci-cd_pipeline%20flow.png)
 
 ### Quality Gates
-✅ Coverage > 80% • ✅ No Critical Bugs • ✅ No Vulnerabilities
+Coverage > 80% | No Critical Bugs | No Vulnerabilities
 
 ---
 
-## 📜 Business Rules
+## Business Rules
 
-| Rule | Description |
-|------|-------------|
-| Minimum Income | Monthly income ≥ ₹25,000 required |
-| EMI-to-Income Ratio | EMI ≤ 40% of monthly income |
-| Debt-to-Income Ratio | Total debt ≤ 50% of monthly income |
-| Credit Check | Score based on employment type & income |
-| Risk Categories | LOW (≥750) \| MEDIUM (650-749) \| HIGH (<650) |
+| Rule | Implementation |
+|------|----------------|
+| Credit-Based Loan Limits | Score >=750: Rs.25L, >=700: Rs.15L, >=650: Rs.5L, >=600: Rs.1L |
+| Risk-Based Interest Rate | Excellent: 9%, Good: 10%, Fair: 11%, Minimum: 12% |
+| EMI-to-Income Ratio | New EMI must be <= 40% of monthly income |
+| Debt-to-Income Ratio | Total debt (existing + new) <= 50% of income |
+| Withdrawal Allowed | Only when status = APPLIED (before review starts) |
+| Approval Requires | Status = UNDER_REVIEW + Credit check completed |
 
 ---
 
-## 🎯 Challenges & Solutions
+## Challenges & Solutions
 
 | Challenge | Solution |
 |-----------|----------|
-| Inter-service Communication | Feign clients with Resilience4j circuit breakers |
-| Distributed Transactions | Eventual consistency via RabbitMQ events |
-| Configuration Management | Spring Cloud Config Server with Git backend |
-| Service Discovery | Eureka for dynamic registration |
+| Partial payment failure (wallet debited, EMI not marked paid) | Implemented eventual consistency with RabbitMQ; compensating transactions for rollback |
+| JWT token validation across 5 microservices | Centralized validation at API Gateway; propagated user claims via headers |
+| Race condition in loan officer assignment | Added optimistic locking with version field; database-level constraints |
+| Email delivery failures blocking main flow | Made notification async via message queue; failures logged, not blocking |
 
 ### Key Learnings
-📌 API-first design • 📌 Event-driven architecture • 📌 Test early & often
+Design for failure | Async over sync | Test edge cases early
 
 ---
 
-## 🚀 Future Scope
+## Future Scope
 
 <div class="columns">
 <div>
 
 ### Phase 2
-- 📱 Mobile App (Flutter)
-- 💳 Payment Gateway (Razorpay)
-- 📊 Analytics Dashboard
+- Mobile App (Flutter)
+- Payment Gateway (Razorpay)
+- Analytics Dashboard
 
 </div>
 <div>
 
 ### Phase 3
-- 🤖 AI Credit Scoring
-- ☁️ Cloud Deployment (AWS/Azure)
-- 🔄 Kubernetes Auto-scaling
+- AI Credit Scoring
+- Cloud Deployment (AWS/Azure)
+- Kubernetes Auto-scaling
 
 </div>
 </div>
@@ -234,10 +235,10 @@ A modern, secure, **microservices-based** Loan Management System that automates 
 <!-- _backgroundColor: #667eea -->
 <!-- _color: white -->
 
-# Thank You! 🙏
+# Thank You!
 
 ### Questions?
 
 **Sravanthi Gurram**
-🔗 github.com/Sravanthi1206
-📧 sravanthigurram955@gmail.com
+github.com/Sravanthi1206
+sravanthigurram955@gmail.com
