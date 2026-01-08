@@ -70,6 +70,13 @@ public class User {
     private Integer creditScore = 650;  // Default starting score for new users
     
     private LocalDateTime creditScoreUpdatedAt;
+    
+    // Financial profile for loan applications
+    private java.math.BigDecimal monthlyIncome;
+    private String employmentType;  // SALARIED, SELF_EMPLOYED, BUSINESS
+    private String employerName;
+    @Builder.Default
+    private Boolean existingLoans = false;
 
     @PrePersist
     protected void onCreate() {

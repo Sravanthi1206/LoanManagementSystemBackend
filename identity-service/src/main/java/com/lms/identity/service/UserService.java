@@ -115,6 +115,10 @@ public class UserService {
                 .passwordChangeRequired(user.getPasswordChangeRequired())
                 .creditScore(user.getCreditScore())
                 .creditScoreUpdatedAt(user.getCreditScoreUpdatedAt())
+                .monthlyIncome(user.getMonthlyIncome())
+                .employmentType(user.getEmploymentType())
+                .employerName(user.getEmployerName())
+                .existingLoans(user.getExistingLoans())
                 .createdAt(user.getCreatedAt())
                 .build();
     }
