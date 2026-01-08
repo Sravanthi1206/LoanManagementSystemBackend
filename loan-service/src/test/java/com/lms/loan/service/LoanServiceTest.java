@@ -69,7 +69,6 @@ class LoanServiceTest {
                 .status(Loan.LoanStatus.APPLIED)
                 .employmentType(Loan.EmploymentType.SALARIED)
                 .monthlyIncome(new BigDecimal("50000"))
-                .annualIncome(new BigDecimal("600000"))
                 .appliedOn(LocalDateTime.now())
                 .build();
 
@@ -81,7 +80,6 @@ class LoanServiceTest {
         applicationRequest.setTenure(24);
         applicationRequest.setEmploymentType(Loan.EmploymentType.SALARIED);
         applicationRequest.setMonthlyIncome(new BigDecimal("50000"));
-        applicationRequest.setAnnualIncome(new BigDecimal("600000"));
     }
 
     @Nested
@@ -115,6 +113,30 @@ class LoanServiceTest {
                 assertNotNull(result);
                 assertEquals(type, result.getType());
             }
+        }
+        
+        @Test
+        @DisplayName("Should throw exception when PERSONAL loan amount below minimum")
+        void applyLoanBelowMinimumThrowsException() {
+            applicationRequest.setType(Loan.LoanType.PERSONAL);
+            applicationRequest.setAmount(new BigDecimal("10000")); // Below 50000 minimum
+            
+            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> loanService.applyLoan(applicationRequest));
+            
+            assertTrue(exception.getMessage().contains("minimum amount"));
+        }
+        
+        @Test
+        @DisplayName("Should throw exception when HOME loan amount exceeds maximum")
+        void applyLoanAboveMaximumThrowsException() {
+            applicationRequest.setType(Loan.LoanType.HOME);
+            applicationRequest.setAmount(new BigDecimal("20000000")); // Above 10000000 maximum
+            
+            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> loanService.applyLoan(applicationRequest));
+            
+            assertTrue(exception.getMessage().contains("maximum amount"));
         }
     }
 
@@ -300,6 +322,25 @@ class LoanServiceTest {
         }
 
         @Test
+        @DisplayName("Should throw exception when approved amount exceeds requested")
+        void approveLoanExceedsRequestedAmountThrowsException() {
+            testLoan.setStatus(Loan.LoanStatus.UNDER_REVIEW);
+            testLoan.setCreditScore(750);
+            testLoan.setAmountRequested(new BigDecimal("100000"));
+            when(repository.findById(1L)).thenReturn(Optional.of(testLoan));
+
+            LoanApprovalRequest request = new LoanApprovalRequest();
+            request.setApprovedAmount(new BigDecimal("150000")); // More than requested
+            request.setInterestRate(new BigDecimal("12.5"));
+            request.setRemarks("Approved");
+
+            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, 
+                () -> loanService.approveLoan(1L, request));
+            
+            assertTrue(exception.getMessage().contains("cannot exceed requested amount"));
+        }
+
+        @Test
         @DisplayName("Should perform credit check with manual score")
         void performCreditCheckSuccess() {
             testLoan.setStatus(Loan.LoanStatus.UNDER_REVIEW);
@@ -313,21 +354,14 @@ class LoanServiceTest {
         }
 
         @Test
-        @DisplayName("Should perform automated credit check when score is null")
-        void performCreditCheckAutomatedSuccess() {
+        @DisplayName("Should throw exception when credit score is null")
+        void performCreditCheckWithNullScoreThrowsException() {
             testLoan.setStatus(Loan.LoanStatus.UNDER_REVIEW);
-            // Base 600 + Salaried 50 + Income 50 = 700
             when(repository.findById(1L)).thenReturn(Optional.of(testLoan));
-            when(repository.save(any(Loan.class))).thenReturn(testLoan);
 
-            LoanApplicationResponse result = loanService.performCreditCheck(1L, null, "Auto Check");
-
-            assertNotNull(result);
-            verify(repository).save(argThat(loan -> 
-                loan.getCreditScore() != null && 
-                loan.getCreditScore() >= 300 && 
-                loan.getCreditScore() <= 900
-            ));
+            // Credit score must now be provided by officer from external credit bureau
+            assertThrows(IllegalArgumentException.class, 
+                () -> loanService.performCreditCheck(1L, null, "Missing score"));
         }
 
         @Test

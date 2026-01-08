@@ -51,7 +51,6 @@ class LoanApplicationControllerTest {
         applicationRequest.setTenure(24);
         applicationRequest.setEmploymentType(Loan.EmploymentType.SALARIED);
         applicationRequest.setMonthlyIncome(new BigDecimal("50000"));
-        applicationRequest.setAnnualIncome(new BigDecimal("600000"));
 
         applicationResponse = LoanApplicationResponse.builder()
                 .loanId(1L)

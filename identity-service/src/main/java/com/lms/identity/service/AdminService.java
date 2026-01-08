@@ -6,6 +6,7 @@ import com.lms.identity.entity.User;
 import com.lms.identity.exception.DuplicateUserException;
 import com.lms.identity.exception.InvalidRoleException;
 import com.lms.identity.exception.UserNotFoundException;
+import com.lms.identity.messaging.NotificationPublisher;
 import com.lms.identity.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -24,6 +25,7 @@ public class AdminService {
 
     private final UserRepository repository;
     private final PasswordEncoder passwordEncoder;
+    private final NotificationPublisher notificationPublisher;
 
     @Transactional
     public UserResponse createStaffAccount(CreateStaffRequest request, Long creatorUserId) {
@@ -58,7 +60,21 @@ public class AdminService {
                 .passwordChangeRequired(true)
                 .build();
 
-        return mapToUserResponse(repository.save(user));
+        User savedUser = repository.save(user);
+        
+        // Send credentials email to the new staff member
+        try {
+            notificationPublisher.sendCredentialsNotification(
+                    request.getEmail(),
+                    request.getFirstName(),
+                    request.getPassword(),
+                    request.getRole().name()
+            );
+        } catch (Exception e) {
+            // Log but don't fail - account is created successfully
+        }
+        
+        return mapToUserResponse(savedUser);
     }
     
     // Overload for backward compatibility
@@ -163,6 +179,7 @@ public class AdminService {
                 .lastName(user.getLastName())
                 .phone(user.getPhone())
                 .dateOfBirth(user.getDateOfBirth())
+                .panCard(user.getPanCard())
                 .role(user.getRole())
                 .active(user.getActive())
                 .approved(user.getApproved())

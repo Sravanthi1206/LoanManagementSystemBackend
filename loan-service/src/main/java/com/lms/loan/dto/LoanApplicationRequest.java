@@ -14,9 +14,13 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 public class LoanApplicationRequest {
     
-    private Long userId; // In real app, extracted from JWT via Gateway header
+    private Long userId;
     
-    private String userEmail; // User's email for notifications
+    private String userEmail;
+    
+    private String firstName;
+    
+    private String lastName;
     
     @NotNull(message = "Loan type is required")
     private Loan.LoanType type;
@@ -44,10 +48,6 @@ public class LoanApplicationRequest {
     @NotNull(message = "Monthly income is required")
     @DecimalMin(value = "10000.0", message = "Minimum monthly income is ₹10,000")
     private BigDecimal monthlyIncome;
-    
-    @NotNull(message = "Annual income is required")
-    @DecimalMin(value = "120000.0", message = "Minimum annual income is ₹1,20,000")
-    private BigDecimal annualIncome;
     
     @Builder.Default
     private Boolean existingLoans = false;

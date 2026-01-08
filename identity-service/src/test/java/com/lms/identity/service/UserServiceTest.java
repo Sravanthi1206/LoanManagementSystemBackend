@@ -50,6 +50,7 @@ class UserServiceTest {
                 .email("test@example.com")
                 .firstName("John")
                 .lastName("Doe")
+                .passwordHash("encodedPassword")
                 .role(User.Role.CUSTOMER)
                 .active(true)
                 .build();
@@ -140,6 +141,7 @@ class UserServiceTest {
         @DisplayName("Should update user")
         void updateUser_Success() {
             when(repository.findById(1L)).thenReturn(Optional.of(testUser));
+            when(passwordEncoder.matches(anyString(), anyString())).thenReturn(true);
             when(repository.save(any(User.class))).thenReturn(testUser);
 
             UserResponse result = userService.updateUser(1L, registerRequest);

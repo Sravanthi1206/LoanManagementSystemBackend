@@ -103,6 +103,7 @@ public class AuthService {
                 .lastName(user.getLastName())
                 .phone(user.getPhone())
                 .dateOfBirth(user.getDateOfBirth())
+                .panCard(user.getPanCard())
                 .role(user.getRole())
                 .active(user.getActive())
                 .passwordChangeRequired(user.getPasswordChangeRequired())

@@ -25,6 +25,12 @@ public class Loan {
     
     @Column(length = 255)
     private String userEmail; // User's email for notifications
+    
+    @Column(length = 100)
+    private String firstName;
+    
+    @Column(length = 100)
+    private String lastName;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -47,9 +53,6 @@ public class Loan {
     
     @Column(precision = 15, scale = 2)
     private BigDecimal monthlyIncome;
-    
-    @Column(precision = 15, scale = 2)
-    private BigDecimal annualIncome;
     
     @Builder.Default
     private Boolean existingLoans = false;

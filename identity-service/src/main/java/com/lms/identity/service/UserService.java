@@ -66,6 +66,11 @@ public class UserService {
         User user = repository.findById(id)
                 .orElseThrow(() -> new UserNotFoundException(id));
 
+        // Verify password before allowing update
+        if (request.getPassword() == null || !passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
+            throw new IllegalArgumentException("Invalid password. Please provide your current password to update profile.");
+        }
+
         user.setFirstName(request.getFirstName());
         user.setLastName(request.getLastName());
         user.setPhone(request.getPhone());
@@ -102,6 +107,7 @@ public class UserService {
                 .lastName(user.getLastName())
                 .phone(user.getPhone())
                 .dateOfBirth(user.getDateOfBirth())
+                .panCard(user.getPanCard())
                 .role(user.getRole())
                 .active(user.getActive())
                 .passwordChangeRequired(user.getPasswordChangeRequired())

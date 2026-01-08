@@ -32,8 +32,8 @@ public class EmiService {
                 .annualInterestRate(annualRate)
                 .tenureMonths(tenureMonths)
                 .monthlyEmi(monthlyEmi)
-                .totalInterest(totalInterest.setScale(2, RoundingMode.HALF_UP))
-                .totalPayment(totalPayment.setScale(2, RoundingMode.HALF_UP))
+                .totalInterest(totalInterest)
+                .totalPayment(totalPayment)
                 .build();
     }
 
@@ -46,7 +46,7 @@ public class EmiService {
         List<RepaymentSchedule> schedules = new ArrayList<>();
 
         for (int i = 1; i <= tenureMonths; i++) {
-            BigDecimal interest = balance.multiply(monthlyRate).setScale(2, RoundingMode.HALF_UP);
+            BigDecimal interest = balance.multiply(monthlyRate, MC);
             BigDecimal principal = emi.subtract(interest);
             balance = balance.subtract(principal);
 
@@ -90,6 +90,6 @@ public class EmiService {
         BigDecimal powerFactor = onePlusR.pow(months, MC);
         BigDecimal numerator = principal.multiply(monthlyRate).multiply(powerFactor);
         BigDecimal denominator = powerFactor.subtract(BigDecimal.ONE);
-        return numerator.divide(denominator, 2, RoundingMode.HALF_UP);
+        return numerator.divide(denominator, MC);
     }
 }

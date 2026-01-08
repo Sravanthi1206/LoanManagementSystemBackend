@@ -124,7 +124,6 @@ class LoanEligibilityServiceTest {
             request.setAmount(new BigDecimal("500000"));
             request.setTenure(24);
             request.setMonthlyIncome(INCOME_100000);
-            request.setAnnualIncome(new BigDecimal("1200000"));
             request.setExistingEmiAmount(BigDecimal.ZERO);
             request.setType(Loan.LoanType.PERSONAL);
             return request;

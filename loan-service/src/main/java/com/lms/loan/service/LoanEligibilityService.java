@@ -192,10 +192,10 @@ public class LoanEligibilityService {
         BigDecimal denominator = power.subtract(BigDecimal.ONE);
         
         if (denominator.compareTo(BigDecimal.ZERO) == 0) {
-            return principal.divide(BigDecimal.valueOf(tenureMonths), 2, RoundingMode.HALF_UP);
+            return principal.divide(BigDecimal.valueOf(tenureMonths), 10, RoundingMode.HALF_UP);
         }
         
-        return numerator.divide(denominator, 2, RoundingMode.HALF_UP);
+        return numerator.divide(denominator, 10, RoundingMode.HALF_UP);
     }
 
     /**

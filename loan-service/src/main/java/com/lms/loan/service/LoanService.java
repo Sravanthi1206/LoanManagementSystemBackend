@@ -33,9 +33,14 @@ public class LoanService {
 
     @Transactional
     public LoanApplicationResponse applyLoan(LoanApplicationRequest req) {
+        // Validate loan amount based on loan type
+        validateLoanAmount(req.getType(), req.getAmount());
+        
         var loan = Loan.builder()
                 .userId(req.getUserId())
                 .userEmail(req.getUserEmail())
+                .firstName(req.getFirstName())
+                .lastName(req.getLastName())
                 .type(req.getType())
                 .amountRequested(req.getAmount())
                 .tenureMonths(req.getTenure())
@@ -43,7 +48,6 @@ public class LoanService {
                 .employmentType(req.getEmploymentType())
                 .employerName(req.getEmployerName())
                 .monthlyIncome(req.getMonthlyIncome())
-                .annualIncome(req.getAnnualIncome())
                 .existingLoans(req.getExistingLoans())
                 .existingEmiAmount(req.getExistingEmiAmount())
                 .status(Loan.LoanStatus.APPLIED)
@@ -124,24 +128,16 @@ public class LoanService {
         var loan = findLoan(id);
         requireStatus(loan, Loan.LoanStatus.UNDER_REVIEW, "credit check");
         
-        if (score == null || score == 0) {
-            int calculatedScore = 600;
-
-            if (loan.getEmploymentType() == Loan.EmploymentType.SALARIED) {
-                calculatedScore += 50;
-            } else if (loan.getEmploymentType() == Loan.EmploymentType.SELF_EMPLOYED) {
-                calculatedScore += 30;
-            }
-
-            if (loan.getMonthlyIncome() != null) {
-                int incomePoints = (loan.getMonthlyIncome().intValue() / 10000) * 10;
-                calculatedScore += Math.min(150, incomePoints);
-            }
-
-            score = Math.max(300, Math.min(900, calculatedScore));
+        // Credit score must be provided by officer from verified external source (credit bureau)
+        // User-provided data (income, employment) should NOT be used to calculate credit score
+        if (score == null || score < 300 || score > 900) {
+            throw new IllegalArgumentException(
+                "Credit score must be provided by verifying with external credit bureau (300-900 range)");
         }
         
         loan.setCreditScore(score);
+        
+        // Determine risk category based on verified credit score
         Loan.RiskCategory riskCategory;
         if (score >= 750) {
             riskCategory = Loan.RiskCategory.LOW;
@@ -154,7 +150,7 @@ public class LoanService {
         
         if (remarks != null && !remarks.isBlank()) {
             var existing = loan.getOfficerRemarks() != null ? loan.getOfficerRemarks() + "\n" : "";
-            loan.setOfficerRemarks(existing + "Credit: " + remarks);
+            loan.setOfficerRemarks(existing + "Credit Check: " + remarks);
         }
         return toResponse(loans.save(loan));
     }
@@ -166,6 +162,11 @@ public class LoanService {
         
         if (loan.getCreditScore() == null) {
             throw new IllegalStateException("Cannot approve loan without performing a credit check first.");
+        }
+        
+        // Ensure approved amount doesn't exceed requested amount
+        if (req.getApprovedAmount().compareTo(loan.getAmountRequested()) > 0) {
+            throw new IllegalArgumentException("Approved amount cannot exceed requested amount of ₹" + loan.getAmountRequested());
         }
         
         loan.setStatus(Loan.LoanStatus.APPROVED);
@@ -238,6 +239,30 @@ public class LoanService {
             throw new InvalidLoanStatusException("Cannot " + action + ". Status: " + loan.getStatus());
         }
     }
+    
+    private void validateLoanAmount(Loan.LoanType type, BigDecimal amount) {
+        record LoanRange(BigDecimal min, BigDecimal max) {}
+        
+        var ranges = java.util.Map.of(
+            Loan.LoanType.HOME, new LoanRange(new BigDecimal("500000"), new BigDecimal("10000000")),
+            Loan.LoanType.PERSONAL, new LoanRange(new BigDecimal("50000"), new BigDecimal("1000000")),
+            Loan.LoanType.VEHICLE, new LoanRange(new BigDecimal("100000"), new BigDecimal("5000000")),
+            Loan.LoanType.EDUCATION, new LoanRange(new BigDecimal("100000"), new BigDecimal("3000000")),
+            Loan.LoanType.BUSINESS, new LoanRange(new BigDecimal("200000"), new BigDecimal("5000000"))
+        );
+        
+        var range = ranges.get(type);
+        if (range != null) {
+            if (amount.compareTo(range.min()) < 0) {
+                throw new IllegalArgumentException(
+                    String.format("%s loan minimum amount is ₹%s", type, range.min().toPlainString()));
+            }
+            if (amount.compareTo(range.max()) > 0) {
+                throw new IllegalArgumentException(
+                    String.format("%s loan maximum amount is ₹%s", type, range.max().toPlainString()));
+            }
+        }
+    }
 
     private void notify(Loan l, String type, String subject, String msg) {
         String recipient = l.getUserEmail() != null ? l.getUserEmail() : "user" + l.getUserId() + "@lms.com";
@@ -245,9 +270,12 @@ public class LoanService {
     }
 
     private LoanApplicationResponse toResponse(Loan l) {
+        String customerName = (l.getFirstName() != null ? l.getFirstName() : "") + 
+                              (l.getLastName() != null ? " " + l.getLastName() : "");
         return LoanApplicationResponse.builder()
                 .loanId(l.getLoanId())
                 .userId(l.getUserId())
+                .customerName(customerName.trim())
                 .type(l.getType())
                 .amountRequested(l.getAmountRequested())
                 .tenureMonths(l.getTenureMonths())
@@ -255,7 +283,6 @@ public class LoanService {
                 .employmentType(l.getEmploymentType())
                 .employerName(l.getEmployerName())
                 .monthlyIncome(l.getMonthlyIncome())
-                .annualIncome(l.getAnnualIncome())
                 .existingLoans(l.getExistingLoans())
                 .existingEmiAmount(l.getExistingEmiAmount())
                 .interestRate(l.getInterestRate())

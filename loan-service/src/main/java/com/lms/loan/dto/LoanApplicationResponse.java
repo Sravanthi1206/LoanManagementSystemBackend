@@ -15,6 +15,7 @@ import java.time.LocalDateTime;
 public class LoanApplicationResponse {
     private Long loanId;
     private Long userId;
+    private String customerName;
     private Loan.LoanType type;
     private BigDecimal amountRequested;
     private Integer tenureMonths;
@@ -22,7 +23,6 @@ public class LoanApplicationResponse {
     private Loan.EmploymentType employmentType;
     private String employerName;
     private BigDecimal monthlyIncome;
-    private BigDecimal annualIncome;
     private Boolean existingLoans;
     private BigDecimal existingEmiAmount;
     private BigDecimal interestRate;

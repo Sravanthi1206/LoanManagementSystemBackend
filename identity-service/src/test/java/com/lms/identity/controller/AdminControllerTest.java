@@ -63,7 +63,7 @@ class AdminControllerTest {
         UserResponse response = UserResponse.builder().id(1L).active(false).build();
         when(adminService.deactivateUser(any(Long.class), any())).thenReturn(response);
 
-        mockMvc.perform(put("/admin/users/1/deactivate")
+        mockMvc.perform(put("/admin/users/1/status?active=false")
                         .header("X-User-Id", "99")
                         .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf()))
                 .andExpect(status().isOk())
@@ -76,7 +76,7 @@ class AdminControllerTest {
         UserResponse response = UserResponse.builder().id(1L).active(true).build();
         when(adminService.activateUser(any(Long.class), any())).thenReturn(response);
 
-        mockMvc.perform(put("/admin/users/1/activate")
+        mockMvc.perform(put("/admin/users/1/status?active=true")
                         .header("X-User-Id", "99")
                         .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf()))
                 .andExpect(status().isOk())
