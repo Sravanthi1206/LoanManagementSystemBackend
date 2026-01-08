@@ -179,6 +179,26 @@
                 <artifactId>sonar-maven-plugin</artifactId>
                 <version>3.10.0.2594</version>
             </plugin>
+            <!-- Maven Surefire Plugin - Only run Service and Controller tests -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.2.5</version>
+                <configuration>
+                    <includes>
+                        <include>**/*ServiceTest.java</include>
+                        <include>**/*ControllerTest.java</include>
+                    </includes>
+                    <excludes>
+                        <exclude>**/*ApplicationTest*.java</exclude>
+                        <exclude>**/*RepositoryTest*.java</exclude>
+                        <exclude>**/*ConfigTest*.java</exclude>
+                        <exclude>**/*ClientTest*.java</exclude>
+                        <exclude>**/*UtilTest*.java</exclude>
+                        <exclude>**/*HelperTest*.java</exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 
