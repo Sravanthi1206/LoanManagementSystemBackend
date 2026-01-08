@@ -30,4 +30,6 @@ public class RepaymentRequest {
     private Payment.PaymentMethod paymentMethod;
     
     private String referenceNumber;
+    
+    private String userEmail; // For sending payment confirmation notification
 }

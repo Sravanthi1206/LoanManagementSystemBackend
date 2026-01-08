@@ -64,6 +64,12 @@ public class User {
     
     @Column
     private LocalDateTime updatedAt;
+    
+    // Credit score for loan eligibility assessment
+    @Builder.Default
+    private Integer creditScore = 650;  // Default starting score for new users
+    
+    private LocalDateTime creditScoreUpdatedAt;
 
     @PrePersist
     protected void onCreate() {
@@ -80,6 +86,9 @@ public class User {
         }
         if (approvalPending == null) {
             approvalPending = false;
+        }
+        if (creditScore == null) {
+            creditScore = 650;
         }
     }
     

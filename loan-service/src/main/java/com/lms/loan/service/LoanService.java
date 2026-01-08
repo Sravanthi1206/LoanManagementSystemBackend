@@ -31,6 +31,7 @@ public class LoanService {
     private final LoanRepository loans;
     private final NotificationPublisher notifications;
     private final com.lms.loan.client.EmiClient emiClient;
+    private final com.lms.loan.client.IdentityClient identityClient;
 
     @Transactional
     public LoanApplicationResponse applyLoan(LoanApplicationRequest req) {
@@ -125,15 +126,31 @@ public class LoanService {
     }
 
     @Transactional
-    public LoanApplicationResponse performCreditCheck(Long id, Integer score, String remarks) {
+    public LoanApplicationResponse performCreditCheck(Long id, Integer manualScore, String remarks) {
         var loan = findLoan(id);
         requireStatus(loan, Loan.LoanStatus.UNDER_REVIEW, "credit check");
         
-        // Credit score must be provided by officer from verified external source (credit bureau)
-        // User-provided data (income, employment) should NOT be used to calculate credit score
-        if (score == null || score < 300 || score > 900) {
-            throw new IllegalArgumentException(
-                "Credit score must be provided by verifying with external credit bureau (300-900 range)");
+        Integer score;
+        
+        // Try to fetch user's credit score from identity-service
+        if (manualScore == null || manualScore <= 0) {
+            try {
+                var scoreResult = identityClient.getCreditScore(loan.getUserId());
+                score = scoreResult.getOrDefault("creditScore", -1);
+                if (score < 300 || score > 900) {
+                    throw new IllegalArgumentException(
+                        "Could not fetch valid credit score. Please enter manually (300-900).");
+                }
+            } catch (Exception e) {
+                throw new IllegalArgumentException(
+                    "Failed to fetch credit score from bureau. Please enter manually (300-900): " + e.getMessage());
+            }
+        } else {
+            // Use manually provided score
+            if (manualScore < 300 || manualScore > 900) {
+                throw new IllegalArgumentException("Credit score must be in 300-900 range");
+            }
+            score = manualScore;
         }
         
         loan.setCreditScore(score);

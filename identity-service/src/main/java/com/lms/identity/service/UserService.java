@@ -110,7 +110,11 @@ public class UserService {
                 .panCard(user.getPanCard())
                 .role(user.getRole())
                 .active(user.getActive())
+                .approved(user.getApproved())
+                .approvalPending(user.getApprovalPending())
                 .passwordChangeRequired(user.getPasswordChangeRequired())
+                .creditScore(user.getCreditScore())
+                .creditScoreUpdatedAt(user.getCreditScoreUpdatedAt())
                 .createdAt(user.getCreatedAt())
                 .build();
     }

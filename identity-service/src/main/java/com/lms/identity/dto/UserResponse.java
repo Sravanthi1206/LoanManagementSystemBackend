@@ -25,5 +25,7 @@ public class UserResponse {
     private Boolean approved;
     private Boolean approvalPending;
     private Boolean passwordChangeRequired;
+    private Integer creditScore;
+    private LocalDateTime creditScoreUpdatedAt;
     private LocalDateTime createdAt;
 }
