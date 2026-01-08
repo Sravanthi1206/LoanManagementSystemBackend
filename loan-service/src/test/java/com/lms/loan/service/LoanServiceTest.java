@@ -103,8 +103,18 @@ class LoanServiceTest {
         @Test
         @DisplayName("Should apply for different loan types")
         void applyLoanDifferentTypes() {
+            // Valid amounts for each loan type
+            java.util.Map<Loan.LoanType, BigDecimal> validAmounts = java.util.Map.of(
+                Loan.LoanType.HOME, new BigDecimal("500000"),
+                Loan.LoanType.PERSONAL, new BigDecimal("100000"),
+                Loan.LoanType.VEHICLE, new BigDecimal("200000"),
+                Loan.LoanType.EDUCATION, new BigDecimal("200000"),
+                Loan.LoanType.BUSINESS, new BigDecimal("300000")
+            );
+            
             for (Loan.LoanType type : Loan.LoanType.values()) {
                 applicationRequest.setType(type);
+                applicationRequest.setAmount(validAmounts.get(type));
                 testLoan.setType(type);
                 when(repository.save(any(Loan.class))).thenReturn(testLoan);
 
