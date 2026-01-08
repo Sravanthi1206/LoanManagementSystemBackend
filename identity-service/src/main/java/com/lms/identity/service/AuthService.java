@@ -46,6 +46,11 @@ public class AuthService {
             throw new InvalidCredentialsException("Invalid old password");
         }
         
+        // Prevent using the same password
+        if (request.getOldPassword().equals(request.getNewPassword())) {
+            throw new IllegalArgumentException("New password must be different from old password");
+        }
+        
         user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
         user.setPasswordChangeRequired(false);
         repository.save(user);
