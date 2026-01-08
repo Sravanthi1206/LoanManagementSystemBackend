@@ -74,9 +74,6 @@ public class User {
     // Financial profile for loan applications
     private java.math.BigDecimal monthlyIncome;
     private String employmentType;  // SALARIED, SELF_EMPLOYED, BUSINESS
-    private String employerName;
-    @Builder.Default
-    private Boolean existingLoans = false;
 
     @PrePersist
     protected void onCreate() {

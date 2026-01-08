@@ -29,7 +29,5 @@ public class UserResponse {
     private LocalDateTime creditScoreUpdatedAt;
     private java.math.BigDecimal monthlyIncome;
     private String employmentType;
-    private String employerName;
-    private Boolean existingLoans;
     private LocalDateTime createdAt;
 }
