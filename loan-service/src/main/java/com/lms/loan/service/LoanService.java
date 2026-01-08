@@ -241,26 +241,25 @@ public class LoanService {
     }
     
     private void validateLoanAmount(Loan.LoanType type, BigDecimal amount) {
-        record LoanRange(BigDecimal min, BigDecimal max) {}
+        BigDecimal min;
+        BigDecimal max;
         
-        var ranges = java.util.Map.of(
-            Loan.LoanType.HOME, new LoanRange(new BigDecimal("500000"), new BigDecimal("10000000")),
-            Loan.LoanType.PERSONAL, new LoanRange(new BigDecimal("50000"), new BigDecimal("1000000")),
-            Loan.LoanType.VEHICLE, new LoanRange(new BigDecimal("100000"), new BigDecimal("5000000")),
-            Loan.LoanType.EDUCATION, new LoanRange(new BigDecimal("100000"), new BigDecimal("3000000")),
-            Loan.LoanType.BUSINESS, new LoanRange(new BigDecimal("200000"), new BigDecimal("5000000"))
-        );
+        switch (type) {
+            case HOME -> { min = new BigDecimal("500000"); max = new BigDecimal("10000000"); }
+            case PERSONAL -> { min = new BigDecimal("50000"); max = new BigDecimal("1000000"); }
+            case VEHICLE -> { min = new BigDecimal("100000"); max = new BigDecimal("5000000"); }
+            case EDUCATION -> { min = new BigDecimal("100000"); max = new BigDecimal("3000000"); }
+            case BUSINESS -> { min = new BigDecimal("200000"); max = new BigDecimal("5000000"); }
+            default -> { return; }
+        }
         
-        var range = ranges.get(type);
-        if (range != null) {
-            if (amount.compareTo(range.min()) < 0) {
-                throw new IllegalArgumentException(
-                    String.format("%s loan minimum amount is ₹%s", type, range.min().toPlainString()));
-            }
-            if (amount.compareTo(range.max()) > 0) {
-                throw new IllegalArgumentException(
-                    String.format("%s loan maximum amount is ₹%s", type, range.max().toPlainString()));
-            }
+        if (amount.compareTo(min) < 0) {
+            throw new IllegalArgumentException(
+                String.format("%s loan minimum amount is ₹%s", type, min.toPlainString()));
+        }
+        if (amount.compareTo(max) > 0) {
+            throw new IllegalArgumentException(
+                String.format("%s loan maximum amount is ₹%s", type, max.toPlainString()));
         }
     }
 
