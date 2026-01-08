@@ -55,4 +55,11 @@ public class LoanApplicationRequest {
     @DecimalMin(value = "0.0", message = "Existing EMI amount cannot be negative")
     @Builder.Default
     private BigDecimal existingEmiAmount = BigDecimal.ZERO;
+    
+    @NotBlank(message = "Date of Birth is required to apply for a loan")
+    private String dateOfBirth;
+    
+    @NotBlank(message = "PAN Card is required to apply for a loan")
+    @Pattern(regexp = "[A-Z]{5}[0-9]{4}[A-Z]{1}", message = "Invalid PAN Card format")
+    private String panCard;
 }
