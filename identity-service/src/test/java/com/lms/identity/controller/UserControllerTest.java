@@ -3,6 +3,7 @@ package com.lms.identity.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lms.identity.dto.*;
 import com.lms.identity.entity.User;
+import com.lms.identity.service.CreditScoreService;
 import com.lms.identity.service.UserService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -42,6 +43,9 @@ class UserControllerTest {
 
     @MockBean
     private UserService userService;
+    
+    @MockBean
+    private CreditScoreService creditScoreService;
 
     private UserResponse userResponse;
 
