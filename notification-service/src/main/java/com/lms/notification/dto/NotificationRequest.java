@@ -33,4 +33,13 @@ public class NotificationRequest {
     
     @NotBlank(message = "Recipient is required")
     private String recipient;
+    
+    // Optional fields for event routing
+    private String eventType;
+    private String loanType;
+    
+    // Credential email fields (used for STAFF_ACCOUNT_CREATED events)
+    private String firstName;
+    private String temporaryPassword;
+    private String role;
 }

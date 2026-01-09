@@ -29,16 +29,6 @@
         <jacoco.version>0.8.11</jacoco.version>
         <sonar.java.coveragePlugin>jacoco</sonar.java.coveragePlugin>
         <sonar.coverage.jacoco.xmlReportPaths>${project.build.directory}/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
-        <!-- Exclude Lombok Generated Classes from Coverage Analysis -->
-        <sonar.coverage.exclusions>
-            **/dto/**,
-            **/entity/**,
-            **/request/**,
-            **/response/**,
-            **/model/**,
-            **/event/**,
-            **/messaging/NotificationEvent.java
-        </sonar.coverage.exclusions>
 	</properties>
 
     <dependencyManagement>
@@ -158,17 +148,11 @@
                             <goal>report</goal>
                         </goals>
                         <configuration>
-                            <excludes>
-                                <!-- DTOs and entities with Lombok -->
-                                <exclude>**/dto/**</exclude>
-                                <exclude>**/entity/**</exclude>
-                                <exclude>**/request/**</exclude>
-                                <exclude>**/response/**</exclude>
-                                <exclude>**/model/**</exclude>
-                                <exclude>**/event/**</exclude>
-                                <!-- Specific Lombok event classes -->
-                                <exclude>**/messaging/NotificationEvent.class</exclude>
-                            </excludes>
+                            <!-- Only include Service and Controller packages -->
+                            <includes>
+                                <include>**/service/**</include>
+                                <include>**/controller/**</include>
+                            </includes>
                         </configuration>
                     </execution>
                 </executions>

@@ -36,7 +36,7 @@ public class NotificationService {
                 .build();
         n = repo.save(n);
         
-        boolean sent = trySend(n);
+        boolean sent = trySend(n, req);
         n.setStatus(sent ? NotificationStatus.SENT : NotificationStatus.FAILED);
         if (sent) n.setSentAt(LocalDateTime.now());
         
@@ -90,13 +90,43 @@ public class NotificationService {
         return repo.findById(id).orElseThrow(() -> new com.lms.notification.exception.NotificationNotFoundException(id));
     }
 
-    private boolean trySend(Notification n) {
+    private boolean trySend(Notification n, NotificationRequest req) {
         log.info("Sending to {}: {}", n.getRecipient(), n.getSubject());
         try {
             if (n.getType() == NotificationType.EMAIL || n.getType() == NotificationType.BOTH) {
-                // Send styled HTML email for better presentation
-                String loanNumber = n.getLoanId() != null ? "#" + n.getLoanId() : "N/A";
-                emails.sendLoanStatusEmail(n.getRecipient(), loanNumber, n.getSubject(), n.getMessage());
+                // Route based on event type
+                String eventType = req.getEventType();
+                if ("STAFF_ACCOUNT_CREATED".equals(eventType)) {
+                    log.info("Sending credentials email to {}", n.getRecipient());
+                    emails.sendAccountCredentialsEmail(
+                            n.getRecipient(),
+                            req.getFirstName(),
+                            req.getRole(),
+                            n.getRecipient(),
+                            req.getTemporaryPassword()
+                    );
+                } else if ("ACCOUNT_ACTIVATED".equals(eventType)) {
+                    log.info("Sending activation email to {}", n.getRecipient());
+                    emails.sendAccountActivatedEmail(
+                            n.getRecipient(),
+                            req.getFirstName(),
+                            req.getRole()
+                    );
+                } else if ("ACCOUNT_DEACTIVATED".equals(eventType)) {
+                    log.info("Sending deactivation email to {}", n.getRecipient());
+                    emails.sendAccountDeactivatedEmail(
+                            n.getRecipient(),
+                            req.getFirstName(),
+                            req.getRole()
+                    );
+                } else {
+                    // Default: Send styled HTML email for loan notifications
+                    String loanNumber = n.getLoanId() != null ? "#" + n.getLoanId() : "N/A";
+                    String loanType = req.getLoanType() != null ? req.getLoanType().replace("_", " ") : "";
+                    String messageWithType = loanType.isEmpty() ? n.getMessage() : 
+                            "[" + loanType + " Loan] " + n.getMessage();
+                    emails.sendLoanStatusEmail(n.getRecipient(), loanNumber, n.getSubject(), messageWithType);
+                }
             }
             return true;
         } catch (Exception e) {

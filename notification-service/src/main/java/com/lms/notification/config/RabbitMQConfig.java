@@ -33,7 +33,7 @@ public class RabbitMQConfig {
         return BindingBuilder
                 .bind(notificationQueue)
                 .to(notificationExchange)
-                .with("notification.#");
+                .with("lms.notification.#");
     }
     
     @Bean

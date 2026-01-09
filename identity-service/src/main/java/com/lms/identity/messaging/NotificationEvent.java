@@ -21,4 +21,9 @@ public class NotificationEvent {
     private String message;
     private String recipient;
     private LocalDateTime timestamp;
+    
+    // Credential email fields (used for STAFF_ACCOUNT_CREATED events)
+    private String firstName;
+    private String temporaryPassword;
+    private String role;
 }

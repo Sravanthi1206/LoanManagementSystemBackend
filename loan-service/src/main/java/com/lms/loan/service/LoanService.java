@@ -283,7 +283,8 @@ public class LoanService {
 
     private void notify(Loan l, String type, String subject, String msg) {
         String recipient = l.getUserEmail() != null ? l.getUserEmail() : "user" + l.getUserId() + "@lms.com";
-        notifications.sendLoanNotification(l.getUserId(), l.getLoanId(), type, subject, msg, recipient);
+        String loanType = l.getType() != null ? l.getType().name() : "UNKNOWN";
+        notifications.sendLoanNotification(l.getUserId(), l.getLoanId(), type, subject, msg, recipient, loanType);
     }
 
     private LoanApplicationResponse toResponse(Loan l) {

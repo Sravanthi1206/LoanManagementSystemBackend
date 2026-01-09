@@ -6,6 +6,7 @@ import com.lms.identity.entity.User;
 import com.lms.identity.exception.DuplicateUserException;
 import com.lms.identity.exception.InvalidRoleException;
 import com.lms.identity.exception.UserNotFoundException;
+import com.lms.identity.messaging.NotificationPublisher;
 import com.lms.identity.repository.UserRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -30,6 +31,9 @@ class AdminServiceTest {
 
     @Mock
     private PasswordEncoder passwordEncoder;
+
+    @Mock
+    private NotificationPublisher notificationPublisher;
 
     @InjectMocks
     private AdminService adminService;

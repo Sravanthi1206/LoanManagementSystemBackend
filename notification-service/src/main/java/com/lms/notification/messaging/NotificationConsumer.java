@@ -34,10 +34,15 @@ public class NotificationConsumer {
                     .subject(event.getSubject())
                     .message(event.getMessage())
                     .recipient(event.getRecipient())
+                    .eventType(event.getEventType())
+                    .loanType(event.getLoanType())
+                    .firstName(event.getFirstName())
+                    .temporaryPassword(event.getTemporaryPassword())
+                    .role(event.getRole())
                     .build();
             
             notificationService.sendNotification(request);
-            log.info("Successfully processed notification for loan {}", event.getLoanId());
+            log.info("Successfully processed notification for event type {}", event.getEventType());
             
         } catch (Exception e) {
             log.error("Failed to process notification event for loan {}: {}", 

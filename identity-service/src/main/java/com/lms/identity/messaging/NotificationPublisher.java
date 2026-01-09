@@ -45,23 +45,46 @@ public class NotificationPublisher {
                 .loanId(0L)
                 .eventType("STAFF_ACCOUNT_CREATED")
                 .subject("Your LMS Account Created")
-                .message(buildCredentialsMessage(firstName, email, password, role))
+                .message("Account created with temporary password")
                 .recipient(email)
+                .firstName(firstName)
+                .temporaryPassword(password)
+                .role(role)
                 .build();
         publishNotification(event);
     }
     
-    private String buildCredentialsMessage(String firstName, String email, String password, String role) {
-        return String.format(
-            "Dear %s,\\n\\n" +
-            "Your %s account has been created in the Loan Management System.\\n\\n" +
-            "Login Credentials:\\n" +
-            "Email: %s\\n" +
-            "Password: %s\\n\\n" +
-            "IMPORTANT: Please change your password after first login.\\n\\n" +
-            "Best regards,\\n" +
-            "LMS Admin Team",
-            firstName, role.replace("_", " "), email, password
-        );
+    /**
+     * Send account activated notification.
+     */
+    public void sendAccountActivatedNotification(String email, String firstName, String role) {
+        NotificationEvent event = NotificationEvent.builder()
+                .userId(0L)
+                .loanId(0L)
+                .eventType("ACCOUNT_ACTIVATED")
+                .subject("Your LMS Account Has Been Activated")
+                .message("Your account has been activated")
+                .recipient(email)
+                .firstName(firstName)
+                .role(role)
+                .build();
+        publishNotification(event);
+    }
+    
+    /**
+     * Send account deactivated notification.
+     */
+    public void sendAccountDeactivatedNotification(String email, String firstName, String role) {
+        NotificationEvent event = NotificationEvent.builder()
+                .userId(0L)
+                .loanId(0L)
+                .eventType("ACCOUNT_DEACTIVATED")
+                .subject("Your LMS Account Has Been Deactivated")
+                .message("Your account has been deactivated")
+                .recipient(email)
+                .firstName(firstName)
+                .role(role)
+                .build();
+        publishNotification(event);
     }
 }

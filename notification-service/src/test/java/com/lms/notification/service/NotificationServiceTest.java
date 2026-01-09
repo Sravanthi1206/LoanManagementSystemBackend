@@ -235,5 +235,110 @@ class NotificationServiceTest {
         // Verify email was NOT sent for SMS type
         verify(emailService, never()).sendLoanStatusEmail(anyString(), anyString(), anyString(), anyString());
     }
+
+    @Test
+    @DisplayName("Send notification with STAFF_ACCOUNT_CREATED event type - Credentials email sent")
+    void sendNotification_StaffAccountCreated_CredentialsEmailSent() {
+        // Setup request with STAFF_ACCOUNT_CREATED event type
+        NotificationRequest credentialsRequest = NotificationRequest.builder()
+                .userId(0L)
+                .loanId(0L)
+                .type(Notification.NotificationType.EMAIL)
+                .subject("Your LMS Account Created")
+                .message("Account created with temporary password")
+                .recipient("newstaff@example.com")
+                .eventType("STAFF_ACCOUNT_CREATED")
+                .firstName("John")
+                .temporaryPassword("TempPass123")
+                .role("LOAN_OFFICER")
+                .build();
+        
+        Notification credentialsNotification = notification.toBuilder()
+                .recipient("newstaff@example.com")
+                .subject("Your LMS Account Created")
+                .build();
+        
+        when(repository.save(any(Notification.class))).thenReturn(credentialsNotification);
+        doNothing().when(emailService).sendAccountCredentialsEmail(anyString(), anyString(), anyString(), anyString(), anyString());
+
+        NotificationResponse response = notificationService.sendNotification(credentialsRequest);
+
+        assertNotNull(response);
+        // Verify credentials email was sent, not loan status email
+        verify(emailService, times(1)).sendAccountCredentialsEmail(
+                eq("newstaff@example.com"),
+                eq("John"),
+                eq("LOAN_OFFICER"),
+                eq("newstaff@example.com"),
+                eq("TempPass123")
+        );
+        verify(emailService, never()).sendLoanStatusEmail(anyString(), anyString(), anyString(), anyString());
+    }
+
+    @Test
+    @DisplayName("Send notification with ACCOUNT_ACTIVATED event type - Activation email sent")
+    void sendNotification_AccountActivated_ActivationEmailSent() {
+        NotificationRequest activationRequest = NotificationRequest.builder()
+                .userId(0L)
+                .loanId(0L)
+                .type(Notification.NotificationType.EMAIL)
+                .subject("Your LMS Account Has Been Activated")
+                .message("Your account has been activated")
+                .recipient("staff@example.com")
+                .eventType("ACCOUNT_ACTIVATED")
+                .firstName("Jane")
+                .role("LOAN_OFFICER")
+                .build();
+        
+        Notification activationNotification = notification.toBuilder()
+                .recipient("staff@example.com")
+                .build();
+        
+        when(repository.save(any(Notification.class))).thenReturn(activationNotification);
+        doNothing().when(emailService).sendAccountActivatedEmail(anyString(), anyString(), anyString());
+
+        NotificationResponse response = notificationService.sendNotification(activationRequest);
+
+        assertNotNull(response);
+        verify(emailService, times(1)).sendAccountActivatedEmail(
+                eq("staff@example.com"),
+                eq("Jane"),
+                eq("LOAN_OFFICER")
+        );
+        verify(emailService, never()).sendLoanStatusEmail(anyString(), anyString(), anyString(), anyString());
+    }
+
+    @Test
+    @DisplayName("Send notification with ACCOUNT_DEACTIVATED event type - Deactivation email sent")
+    void sendNotification_AccountDeactivated_DeactivationEmailSent() {
+        NotificationRequest deactivationRequest = NotificationRequest.builder()
+                .userId(0L)
+                .loanId(0L)
+                .type(Notification.NotificationType.EMAIL)
+                .subject("Your LMS Account Has Been Deactivated")
+                .message("Your account has been deactivated")
+                .recipient("staff@example.com")
+                .eventType("ACCOUNT_DEACTIVATED")
+                .firstName("Jane")
+                .role("LOAN_OFFICER")
+                .build();
+        
+        Notification deactivationNotification = notification.toBuilder()
+                .recipient("staff@example.com")
+                .build();
+        
+        when(repository.save(any(Notification.class))).thenReturn(deactivationNotification);
+        doNothing().when(emailService).sendAccountDeactivatedEmail(anyString(), anyString(), anyString());
+
+        NotificationResponse response = notificationService.sendNotification(deactivationRequest);
+
+        assertNotNull(response);
+        verify(emailService, times(1)).sendAccountDeactivatedEmail(
+                eq("staff@example.com"),
+                eq("Jane"),
+                eq("LOAN_OFFICER")
+        );
+        verify(emailService, never()).sendLoanStatusEmail(anyString(), anyString(), anyString(), anyString());
+    }
 }
 

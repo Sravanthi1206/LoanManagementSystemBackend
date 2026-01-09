@@ -102,7 +102,20 @@ public class AdminService {
         }
         
         user.setActive(false);
-        return mapToUserResponse(repository.save(user));
+        User savedUser = repository.save(user);
+        
+        // Send deactivation notification
+        try {
+            notificationPublisher.sendAccountDeactivatedNotification(
+                    user.getEmail(),
+                    user.getFirstName(),
+                    user.getRole().name()
+            );
+        } catch (Exception e) {
+            // Log but don't fail
+        }
+        
+        return mapToUserResponse(savedUser);
     }
     
     // Overload for backward compatibility
@@ -125,7 +138,20 @@ public class AdminService {
         }
         
         user.setActive(true);
-        return mapToUserResponse(repository.save(user));
+        User savedUser = repository.save(user);
+        
+        // Send activation notification
+        try {
+            notificationPublisher.sendAccountActivatedNotification(
+                    user.getEmail(),
+                    user.getFirstName(),
+                    user.getRole().name()
+            );
+        } catch (Exception e) {
+            // Log but don't fail
+        }
+        
+        return mapToUserResponse(savedUser);
     }
     
     // Overload for backward compatibility

@@ -97,7 +97,7 @@ class LoanServiceTest {
             assertEquals(testLoan.getLoanId(), result.getLoanId());
             assertEquals(Loan.LoanStatus.APPLIED, result.getStatus());
             verify(repository).save(any(Loan.class));
-            verify(notificationPublisher).sendLoanNotification(eq(1L), eq(1L), eq("LOAN_APPLIED"), anyString(), anyString(), anyString());
+            verify(notificationPublisher).sendLoanNotification(eq(1L), eq(1L), eq("LOAN_APPLIED"), anyString(), anyString(), anyString(), anyString());
         }
 
         @Test
@@ -314,7 +314,7 @@ class LoanServiceTest {
 
             assertNotNull(result);
             assertEquals(Loan.LoanStatus.APPROVED, result.getStatus());
-            verify(notificationPublisher).sendLoanNotification(anyLong(), anyLong(), eq("LOAN_APPROVED"), anyString(), anyString(), anyString());
+            verify(notificationPublisher).sendLoanNotification(anyLong(), anyLong(), eq("LOAN_APPROVED"), anyString(), anyString(), anyString(), anyString());
         }
 
         @Test
@@ -328,7 +328,7 @@ class LoanServiceTest {
 
             assertNotNull(result);
             assertEquals(Loan.LoanStatus.REJECTED, result.getStatus());
-            verify(notificationPublisher).sendLoanNotification(anyLong(), anyLong(), eq("LOAN_REJECTED"), anyString(), anyString(), anyString());
+            verify(notificationPublisher).sendLoanNotification(anyLong(), anyLong(), eq("LOAN_REJECTED"), anyString(), anyString(), anyString(), anyString());
         }
 
         @Test
@@ -388,7 +388,7 @@ class LoanServiceTest {
 
             assertNotNull(result);
             assertEquals(Loan.LoanStatus.DISBURSED, result.getStatus());
-            verify(notificationPublisher).sendLoanNotification(anyLong(), anyLong(), eq("LOAN_DISBURSED"), anyString(), anyString(), anyString());
+            verify(notificationPublisher).sendLoanNotification(anyLong(), anyLong(), eq("LOAN_DISBURSED"), anyString(), anyString(), anyString(), anyString());
             verify(emiClient).generateSchedule(anyLong(), anyLong(), any(BigDecimal.class), any(BigDecimal.class), anyInt());
         }
 
@@ -442,7 +442,7 @@ class LoanServiceTest {
             // Arrange
             when(repository.save(any(Loan.class))).thenReturn(testLoan);
             doThrow(new RuntimeException(RABBITMQ_DOWN))
-                .when(notificationPublisher).sendLoanNotification(anyLong(), anyLong(), anyString(), anyString(), anyString(), anyString());
+                .when(notificationPublisher).sendLoanNotification(anyLong(), anyLong(), anyString(), anyString(), anyString(), anyString(), anyString());
 
             // Act
             LoanApplicationResponse result = loanService.applyLoan(applicationRequest);
@@ -450,7 +450,7 @@ class LoanServiceTest {
             // Assert
             assertNotNull(result);
             verify(repository).save(any(Loan.class)); // Verifies DB save persisted
-            verify(notificationPublisher).sendLoanNotification(anyLong(), anyLong(), anyString(), anyString(), anyString(), anyString());
+            verify(notificationPublisher).sendLoanNotification(anyLong(), anyLong(), anyString(), anyString(), anyString(), anyString(), anyString());
         }
 
         @Test
@@ -462,7 +462,7 @@ class LoanServiceTest {
             when(repository.findById(1L)).thenReturn(Optional.of(testLoan));
             when(repository.save(any(Loan.class))).thenReturn(testLoan);
             doThrow(new RuntimeException(RABBITMQ_DOWN))
-                .when(notificationPublisher).sendLoanNotification(anyLong(), anyLong(), anyString(), anyString(), anyString(), anyString());
+                .when(notificationPublisher).sendLoanNotification(anyLong(), anyLong(), anyString(), anyString(), anyString(), anyString(), anyString());
 
             LoanApprovalRequest request = new LoanApprovalRequest();
             request.setApprovedAmount(AMOUNT_90000);
@@ -486,7 +486,7 @@ class LoanServiceTest {
             when(repository.findById(1L)).thenReturn(Optional.of(testLoan));
             when(repository.save(any(Loan.class))).thenReturn(testLoan);
             doThrow(new RuntimeException(RABBITMQ_DOWN))
-                .when(notificationPublisher).sendLoanNotification(anyLong(), anyLong(), anyString(), anyString(), anyString(), anyString());
+                .when(notificationPublisher).sendLoanNotification(anyLong(), anyLong(), anyString(), anyString(), anyString(), anyString(), anyString());
 
             // Act
             LoanApplicationResponse result = loanService.rejectLoan(1L, "Rejected");
@@ -508,7 +508,7 @@ class LoanServiceTest {
             when(repository.findById(1L)).thenReturn(Optional.of(testLoan));
             when(repository.save(any(Loan.class))).thenReturn(testLoan);
             doThrow(new RuntimeException(RABBITMQ_DOWN))
-                .when(notificationPublisher).sendLoanNotification(anyLong(), anyLong(), anyString(), anyString(), anyString(), anyString());
+                .when(notificationPublisher).sendLoanNotification(anyLong(), anyLong(), anyString(), anyString(), anyString(), anyString(), anyString());
 
             // Act
             LoanApplicationResponse result = loanService.disburseLoan(1L);

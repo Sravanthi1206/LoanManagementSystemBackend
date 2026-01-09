@@ -96,5 +96,103 @@ class UserControllerTest {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.content[0].id").value(1));
         }
+
+        @Test
+        @DisplayName("GET /users/officers - Get all officers")
+        void getOfficersShouldSucceed() throws Exception {
+            UserResponse officerResponse = UserResponse.builder()
+                    .id(2L)
+                    .email("officer@example.com")
+                    .firstName("Officer")
+                    .lastName("User")
+                    .role(User.Role.LOAN_OFFICER)
+                    .active(true)
+                    .build();
+            when(userService.getOfficers()).thenReturn(Arrays.asList(officerResponse));
+
+            mockMvc.perform(get("/users/officers"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$[0].id").value(2))
+                    .andExpect(jsonPath("$[0].role").value("LOAN_OFFICER"));
+        }
+    }
+
+    @Nested
+    @DisplayName("Credit Score Tests")
+    class CreditScoreTests {
+
+        @Test
+        @DisplayName("GET /users/{id}/credit-score - Success")
+        void getCreditScoreShouldSucceed() throws Exception {
+            when(creditScoreService.getCreditScore(1L)).thenReturn(750);
+
+            mockMvc.perform(get("/users/1/credit-score"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.creditScore").value(750));
+        }
+
+        @Test
+        @DisplayName("POST /users/{id}/credit-score/increment - Success")
+        void incrementCreditScoreShouldSucceed() throws Exception {
+            when(creditScoreService.incrementCreditScore(1L)).thenReturn(755);
+
+            mockMvc.perform(post("/users/1/credit-score/increment"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.creditScore").value(755));
+        }
+
+        @Test
+        @DisplayName("PUT /users/{id}/credit-score - Success")
+        void setCreditScoreShouldSucceed() throws Exception {
+            when(creditScoreService.setCreditScore(eq(1L), eq(800))).thenReturn(800);
+
+            mockMvc.perform(put("/users/1/credit-score")
+                            .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                            .content("{\"creditScore\": 800}"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.creditScore").value(800));
+        }
+    }
+
+    @Nested
+    @DisplayName("Update User Tests")
+    class UpdateUserTests {
+
+        @Test
+        @DisplayName("PUT /users/{id} - Success")
+        void updateUserShouldSucceed() throws Exception {
+            UserRegisterRequest updateRequest = new UserRegisterRequest();
+            updateRequest.setFirstName("Updated");
+            updateRequest.setLastName("Name");
+            updateRequest.setEmail(TEST_EMAIL);
+            updateRequest.setPassword("NewPass@123");
+            updateRequest.setPhone("+919876543210");
+
+            UserResponse updatedResponse = UserResponse.builder()
+                    .id(1L)
+                    .email(TEST_EMAIL)
+                    .firstName("Updated")
+                    .lastName("Name")
+                    .role(User.Role.CUSTOMER)
+                    .active(true)
+                    .build();
+
+            when(userService.updateUser(eq(1L), any(UserRegisterRequest.class))).thenReturn(updatedResponse);
+
+            mockMvc.perform(put("/users/1")
+                            .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(updateRequest)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.firstName").value("Updated"));
+        }
+
+        @Test
+        @DisplayName("DELETE /users/{id} - Deactivate Success")
+        void deactivateUserShouldSucceed() throws Exception {
+            doNothing().when(userService).deactivateUser(1L);
+
+            mockMvc.perform(delete("/users/1"))
+                    .andExpect(status().isNoContent());
+        }
     }
 }

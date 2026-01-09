@@ -25,5 +25,6 @@ public class NotificationEvent implements Serializable {
     private String subject;
     private String message;
     private String recipient;
+    private String loanType;
     private LocalDateTime timestamp;
 }

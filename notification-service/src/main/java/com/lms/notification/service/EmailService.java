@@ -258,6 +258,73 @@ public class EmailService {
         self.sendHtmlEmail(to, subject, wrapHtml("Wallet Transaction", content, THEME_INFO));
     }
 
+    // ============ ACCOUNT EMAILS ============
+
+    public void sendAccountCredentialsEmail(String to, String firstName, String role, String email, String password) {
+        String subject = "Your LMS Account Has Been Created";
+        String roleDisplay = role.replace("_", " ");
+        String content = String.format("""
+            <p>Dear %s,</p>
+            <p>Your <strong>%s</strong> account has been created in the Loan Management System.</p>
+            
+            <div class='info-box success-box'>
+                <h3>Login Credentials</h3>
+                <table class='details-table'>
+                    <tr><td>Email</td><td><strong>%s</strong></td></tr>
+                    <tr><td>Temporary Password</td><td><code>%s</code></td></tr>
+                    <tr><td>Role</td><td>%s</td></tr>
+                </table>
+            </div>
+            
+            <p><strong>⚠️ Important:</strong> Please change your password after first login for security.</p>
+            
+            <p><strong>Getting Started:</strong></p>
+            <ul>
+                <li>Login to the LMS portal using the credentials above</li>
+                <li>Update your temporary password immediately</li>
+                <li>Complete your profile information</li>
+            </ul>
+            """, firstName, roleDisplay, email, password, roleDisplay);
+        self.sendHtmlEmail(to, subject, wrapHtml("Account Created", content, THEME_SUCCESS));
+    }
+
+    public void sendAccountActivatedEmail(String to, String firstName, String role) {
+        String subject = "✅ Your LMS Account Has Been Activated";
+        String roleDisplay = role.replace("_", " ");
+        String content = String.format("""
+            <p>Dear %s,</p>
+            <p>Great news! Your <strong>%s</strong> account in the Loan Management System has been <span class='status-success'>ACTIVATED</span>.</p>
+            
+            <div class='info-box success-box'>
+                <p>You can now log in and access all your account features.</p>
+            </div>
+            
+            <p><strong>What you can do now:</strong></p>
+            <ul>
+                <li>Login to the LMS portal</li>
+                <li>Access your dashboard</li>
+                <li>Perform your role-specific tasks</li>
+            </ul>
+            """, firstName, roleDisplay);
+        self.sendHtmlEmail(to, subject, wrapHtml("Account Activated", content, THEME_SUCCESS));
+    }
+
+    public void sendAccountDeactivatedEmail(String to, String firstName, String role) {
+        String subject = "⚠️ Your LMS Account Has Been Deactivated";
+        String roleDisplay = role.replace("_", " ");
+        String content = String.format("""
+            <p>Dear %s,</p>
+            <p>Your <strong>%s</strong> account in the Loan Management System has been <span class='status-error'>DEACTIVATED</span>.</p>
+            
+            <div class='info-box warning-box'>
+                <p>You will no longer be able to log in or access your account features.</p>
+            </div>
+            
+            <p>If you believe this was done in error or have any questions, please contact your administrator or support team.</p>
+            """, firstName, roleDisplay);
+        self.sendHtmlEmail(to, subject, wrapHtml("Account Deactivated", content, THEME_WARNING));
+    }
+
     // ============ LEGACY METHODS ============
 
     public void sendLoanStatusEmail(String to, String loanNumber, String status, String messageContent) {

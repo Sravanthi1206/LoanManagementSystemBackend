@@ -47,10 +47,12 @@ class LoanApplicationControllerTest {
         applicationRequest.setUserId(1L);
         applicationRequest.setType(Loan.LoanType.PERSONAL);
         applicationRequest.setAmount(new BigDecimal("100000"));
-        applicationRequest.setPurpose("Home Renovation");
+        applicationRequest.setPurpose("Home Renovation for my apartment");
         applicationRequest.setTenure(24);
         applicationRequest.setEmploymentType(Loan.EmploymentType.SALARIED);
         applicationRequest.setMonthlyIncome(new BigDecimal("50000"));
+        applicationRequest.setDateOfBirth("1990-01-15");
+        applicationRequest.setPanCard("ABCDE1234F");
 
         applicationResponse = LoanApplicationResponse.builder()
                 .loanId(1L)

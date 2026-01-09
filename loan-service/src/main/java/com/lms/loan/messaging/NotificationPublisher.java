@@ -41,7 +41,8 @@ public class NotificationPublisher {
      * Convenience method to create and publish a loan notification.
      */
     public void sendLoanNotification(Long userId, Long loanId, String eventType, 
-                                      String subject, String message, String recipient) {
+                                      String subject, String message, String recipient,
+                                      String loanType) {
         NotificationEvent event = NotificationEvent.builder()
                 .userId(userId)
                 .loanId(loanId)
@@ -49,6 +50,7 @@ public class NotificationPublisher {
                 .subject(subject)
                 .message(message)
                 .recipient(recipient)
+                .loanType(loanType)
                 .build();
         publishNotification(event);
     }
