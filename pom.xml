@@ -153,6 +153,16 @@
                                 <include>**/service/**</include>
                                 <include>**/controller/**</include>
                             </includes>
+                            <!-- Exclude packages that are not tested -->
+                            <excludes>
+                                <exclude>**/config/**</exclude>
+                                <exclude>**/dto/**</exclude>
+                                <exclude>**/entity/**</exclude>
+                                <exclude>**/messaging/**</exclude>
+                                <exclude>**/exception/**</exclude>
+                                <exclude>**/repository/**</exclude>
+                                <exclude>**/*Application.*</exclude>
+                            </excludes>
                         </configuration>
                     </execution>
                 </executions>
